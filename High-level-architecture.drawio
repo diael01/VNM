@@ -1,0 +1,216 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.0.3 Chrome/140.0.7339.249 Electron/38.7.0 Safari/537.36" version="29.0.3">
+  <diagram name="Page-1" id="fQtqFDRJrEo1a3fzMRz4">
+    <mxGraphModel dx="1746" dy="1068" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-17" value="Prosumer / Energy Producer-Consumer" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="20" y="40" width="260" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-18" value="Platform Operator" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="330" y="40" width="191" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-19" value="Energy Regulator" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="571" y="40" width="181" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-20" value="External Meter Providers: Tuya, Shelly, Inverters" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="803" y="40" width="260" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-21" value="Multi-Site Energy Accounting Platform" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="414" y="196" width="260" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-22" value="Views balances &amp; simulations" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0;entryY=0.13;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-17" target="2RpmmTY05M4pKo_AMA3p-21">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="147" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-23" value="Configures rules &amp; sites" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.3;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-18" target="2RpmmTY05M4pKo_AMA3p-21">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="426" y="147" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-24" value="Audits reports" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.7;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-19" target="2RpmmTY05M4pKo_AMA3p-21">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="662" y="147" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-25" value="Meter readings" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=1;entryY=0.12;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-20" target="2RpmmTY05M4pKo_AMA3p-21">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="933" y="147" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-26" value="Meter Ingestion Service" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="398.5" y="300" width="227" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-27" value="Energy Event Service" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="20" y="559" width="170" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-28" value="Allocation Engine Service:IP Core" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="230" y="547" width="220" height="63" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-29" value="Ledger &amp; Balance Service" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="500" y="550" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-30" value="Reporting &amp; Compliance Service" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="690" y="548.5" width="210" height="53" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-31" value="Simulation Service" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="930" y="551.5" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-32" value="Prediction &amp; Analytics Service" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1110.5" y="551.5" width="179.5" height="48.5" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-33" value="RabbitMQ&#xa;Event Bus" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="470" y="370" width="84" height="93" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-34" value="PostgreSQL" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="533" y="675" width="94" height="71" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-35" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-26" target="2RpmmTY05M4pKo_AMA3p-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-36" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0;exitY=0.56;entryX=0.48;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-33" target="2RpmmTY05M4pKo_AMA3p-27">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="115" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-37" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.77;exitY=0;entryX=0;entryY=0.57;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-27" target="2RpmmTY05M4pKo_AMA3p-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="257" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-38" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0;exitY=0.58;entryX=0.5;entryY=0;rounded=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-33" target="2RpmmTY05M4pKo_AMA3p-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="277" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-39" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.83;exitY=0;entryX=0.145;entryY=1;rounded=0;entryDx=0;entryDy=-2.9;entryPerimeter=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-28" target="2RpmmTY05M4pKo_AMA3p-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-40" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.58;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-33" target="2RpmmTY05M4pKo_AMA3p-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="711" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-41" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-29" target="2RpmmTY05M4pKo_AMA3p-34">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-42" value="" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.61;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-33" target="2RpmmTY05M4pKo_AMA3p-30">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1012" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-43" value="" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.56;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-33" target="2RpmmTY05M4pKo_AMA3p-31">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1288" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-44" value="" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.54;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-33" target="2RpmmTY05M4pKo_AMA3p-32">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1564" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-45" value="Allocation Command Handler" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="20" y="650" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-46" value="Rule &amp; Input Validator" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="23.5" y="730" width="193" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-47" value="Deterministic Allocation Engine" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="20" y="800" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-48" value="Ledger Event Adapter" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="20" y="878" width="196.5" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-49" value="Event Publisher" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="30" y="960" width="180" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-50" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-45" target="2RpmmTY05M4pKo_AMA3p-46">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-51" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-46" target="2RpmmTY05M4pKo_AMA3p-47">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-52" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-47" target="2RpmmTY05M4pKo_AMA3p-48">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-53" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-48" target="2RpmmTY05M4pKo_AMA3p-49">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-54" value="Historical Events" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;strokeWidth=2;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="330" y="800" width="135" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-55" value="Replay Engine" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="521" y="812" width="160" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-56" value="Allocation Engine" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="730" y="812" width="130" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-57" value="Ledger Reconstruction" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="920" y="812" width="160" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-58" value="Audit Report" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1148.25" y="812" width="104" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-59" value="" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-54" target="2RpmmTY05M4pKo_AMA3p-55">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-60" value="" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-55" target="2RpmmTY05M4pKo_AMA3p-56">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-61" value="" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-56" target="2RpmmTY05M4pKo_AMA3p-57">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2RpmmTY05M4pKo_AMA3p-62" value="" style="curved=1;startArrow=none;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;rounded=0;" edge="1" parent="1" source="2RpmmTY05M4pKo_AMA3p-57" target="2RpmmTY05M4pKo_AMA3p-58">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

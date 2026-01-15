@@ -1,0 +1,6 @@
+@EventBusMock_HostAddress = http://localhost:5042
+
+GET {{EventBusMock_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

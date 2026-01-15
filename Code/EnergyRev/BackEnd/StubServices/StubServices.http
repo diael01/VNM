@@ -1,0 +1,6 @@
+@StubServices_HostAddress = http://localhost:5110
+
+GET {{StubServices_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

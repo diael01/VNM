@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.4.0" />
+
+  <ItemGroup>
+  
+   <ProjectReference Include="..\MeterIngestionService\MeterIngestionService.csproj" />
+    <ProjectReference Include="..\MultiSiteEnergyPlatform\MultiSiteEnergyPlatform.csproj" />
+    <ProjectReference Include="..\StubServices\StubServices.csproj" />
+    <ProjectReference Include="..\EventBusMock\EventBusMock.csproj" />
+    <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" IsAspireProjectResource="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" Version="9.4.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.4.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+
+</Project>
