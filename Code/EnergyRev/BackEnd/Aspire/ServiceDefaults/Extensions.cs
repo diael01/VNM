@@ -58,7 +58,6 @@ public static class Extensions
                     })
                     .AddSource("MeterIngestionService")
                     .AddSource("MultiSiteEnergyService")
-                    .AddSource("EventBusMock")
                     .AddSource("StubServices");
 
                 // Configure sampling based on environment
@@ -97,7 +96,6 @@ public static class Extensions
                     .AddMeter("System.Net.Http")
                     .AddMeter("MeterIngestionService")
                     .AddMeter("MultiSiteEnergyService")
-                    .AddMeter("EventBusMock")
                     .AddMeter("StubServices");
             });
 

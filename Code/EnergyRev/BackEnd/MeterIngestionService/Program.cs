@@ -1,9 +1,11 @@
 using ServiceDefaults;
 using Scalar.AspNetCore;
 using Serilog;
+using EventBusClient;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddEventBus(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 

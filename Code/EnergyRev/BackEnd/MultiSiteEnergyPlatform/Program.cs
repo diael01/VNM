@@ -2,9 +2,11 @@ using ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using EventBusClient;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddEventBus(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 

@@ -3,10 +3,9 @@
 
   <ItemGroup>
   
-   <ProjectReference Include="..\MeterIngestionService\MeterIngestionService.csproj" />
-    <ProjectReference Include="..\MultiSiteEnergyPlatform\MultiSiteEnergyPlatform.csproj" />
-    <ProjectReference Include="..\StubServices\StubServices.csproj" />
-    <ProjectReference Include="..\EventBusMock\EventBusMock.csproj" />
+   <ProjectReference Include="..\..\MeterIngestionService\MeterIngestionService.csproj" />
+    <ProjectReference Include="..\..\MultiSiteEnergyPlatform\MultiSiteEnergyPlatform.csproj" />
+    <ProjectReference Include="..\..\StubServices\StubServices.csproj" />
     <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 

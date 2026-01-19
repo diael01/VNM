@@ -10,10 +10,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" />
+  <ProjectReference Include="..\EventBusClient\EventBusClient.csproj" IsAspireProjectResource="false" />
+   <ProjectReference Include="..\Aspire\ServiceDefaults\ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

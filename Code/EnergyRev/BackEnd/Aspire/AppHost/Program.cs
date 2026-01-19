@@ -1,5 +1,5 @@
 ﻿var builder = DistributedApplication.CreateBuilder(args);
-builder.AddProject<Projects.EventBusMock>("EventBusMock");
+//builder.AddProject<Projects.EventBusClient>("EventBusclient");
 
 builder.AddProject<Projects.MeterIngestionService>("MeterIngestionService");
 
