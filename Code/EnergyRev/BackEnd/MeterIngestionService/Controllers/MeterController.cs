@@ -1,20 +1,31 @@
 using Microsoft.AspNetCore.Mvc;
-using EventBusClient;
-using System.Threading.Tasks;
+using MassTransit;
+using EventBusCore.Events;
 
-namespace MeterIngestionService.Controllers
+namespace MeterIngestionService.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class MeterController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class MeterController : ControllerBase
-    {
-        private readonly EventBusClientService _eventBus = new EventBusClientService();
+    private readonly IPublishEndpoint _publishEndpoint;
 
-        [HttpPost("ingest")]
-        public async Task<IActionResult> IngestData([FromBody] object meterData)
+    public MeterController(IPublishEndpoint publishEndpoint)
+    {
+        _publishEndpoint = publishEndpoint;
+    }
+
+    [HttpPost("ingest")]
+    public async Task<IActionResult> IngestData([FromBody] MeterIngestRequest request)
+    {
+        var evt = new MeterDataIngestedEvent
         {
-            await _eventBus.PublishAsync("MeterEvents", meterData);
-            return Ok(new { Status = "Data ingested" });
-        }
+            MeterId = request.MeterId,
+            Value = request.Value,
+        };
+
+        await _publishEndpoint.Publish(evt);
+
+        return Ok(new { Status = "Data ingested" });
     }
 }

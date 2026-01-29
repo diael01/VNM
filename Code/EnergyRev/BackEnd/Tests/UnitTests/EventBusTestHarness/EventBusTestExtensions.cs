@@ -4,11 +4,16 @@ using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using EventBusTestHarness.Consumers;
+using System.Reflection;
+
+using Dashboard.Consumers;
+using MeterIngestionService.Consumers;
+
+
 
 namespace EventBusTestHarness
 {
-    public static class TestBusExtensions
+    public static class EventBusTestExtensions
     {
         public static IHostBuilder AddTestEventBus(this IHostBuilder hostBuilder)
         {
@@ -17,28 +22,27 @@ namespace EventBusTestHarness
                 var resourceBuilder = ResourceBuilder.CreateDefault()
                     .AddService("EventBusTestHarness", "1.0.0");
 
-                // OpenTelemetry
+                // OpenTelemetry: optional but useful for tracing test messages
                 services.AddOpenTelemetry()
                     .WithTracing(tracing =>
                     {
                         tracing
                             .SetResourceBuilder(resourceBuilder)
-                            .AddMassTransitInstrumentation()
-                            .AddConsoleExporter(); // Optional, can be OTLP
+                            .AddConsoleExporter(); // Optional, can switch to OTLP
                     })
                     .WithMetrics(metrics =>
                     {
                         metrics
                             .SetResourceBuilder(resourceBuilder)
-                            .AddMassTransitInstrumentation()
                             .AddConsoleExporter();
                     });
 
                 // MassTransit Test Harness
                 services.AddMassTransitTestHarness(cfg =>
                 {
-                    cfg.AddConsumer<MeterIngestionConsumer>();
-                    cfg.AddConsumer<DashboardConsumer>();
+                    // Auto-register all consumers from the service assemblies
+                    cfg.AddConsumers(typeof(MeterIngestionService.Consumers.MeterEventConsumer).Assembly);
+                    cfg.AddConsumers(typeof(Dashboard.Consumers.DashboardConsumer).Assembly);
 
                     cfg.UsingInMemory((context, cfgBus) =>
                     {

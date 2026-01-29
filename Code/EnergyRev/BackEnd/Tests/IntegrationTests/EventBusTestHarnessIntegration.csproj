@@ -37,7 +37,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-    <ProjectReference Include="..\EventBusClient\EventBusClient.csproj" />
+    <ProjectReference Include="..\EventBusCore\EventBusCore.csproj" />
     <ProjectReference Include="..\MeterIngestionService\MeterIngestionService.csproj" />
     <ProjectReference Include="..\MultiSiteEnergyPlatform\MultiSiteEnergyPlatform.csproj" />
   </ItemGroup>

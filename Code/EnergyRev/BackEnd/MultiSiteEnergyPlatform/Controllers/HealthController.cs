@@ -8,6 +8,6 @@ namespace MultiSiteEnergyPlatform.Controllers
     public class HealthController : ControllerBase
     {
         [HttpGet]
-        public IActionResult Get() => Ok(new { status = "Healthy", service = "meter-ingestion" });
+        public IActionResult Get() => Ok(new { status = "Healthy", service = "multi-site-energy-platform" });
     }
 }

@@ -1,20 +1,19 @@
 using ServiceDefaults;
 using Scalar.AspNetCore;
 using Serilog;
-using EventBusClient;
+using EventBusCore;
+using MeterIngestionService.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
-builder.Services.AddEventBus(builder.Configuration);
+builder.Services.AddEventBus(builder.Configuration, typeof(MeterEventConsumer).Assembly);
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 app.UseSerilogRequestLogging();
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    // Enable Swagger only in Development
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {

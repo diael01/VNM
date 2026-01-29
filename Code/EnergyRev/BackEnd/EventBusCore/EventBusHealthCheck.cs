@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace EventBusClient;
+namespace EventBusCore;
 public class EventBusHealthCheck : IHealthCheck
 {
     public Task<HealthCheckResult> CheckHealthAsync(
