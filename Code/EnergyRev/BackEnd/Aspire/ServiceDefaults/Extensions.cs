@@ -57,7 +57,8 @@ public static class Extensions
                         options.RecordException = true;
                     })
                     .AddSource("MeterIngestionService")
-                    .AddSource("MultiSiteEnergyService");
+                    .AddSource("MultiSiteEnergyService")
+                    .AddSource("InverterSimulator");
 
                 // Configure sampling based on environment
                 var samplingStrategy = builder.Configuration["OpenTelemetry:Sampling:Strategy"] ?? "default";
@@ -94,7 +95,8 @@ public static class Extensions
                     .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
                     .AddMeter("System.Net.Http")
                     .AddMeter("MeterIngestionService")
-                    .AddMeter("MultiSiteEnergyService");
+                    .AddMeter("MultiSiteEnergyService")
+                    .AddMeter("InverterSimulator");
             });
 
         builder.AddOpenTelemetryExporters();

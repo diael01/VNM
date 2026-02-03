@@ -1,0 +1,10 @@
+{
+  "Port": 15000,
+  "MinPower": 0,
+  "MaxPower": 2200,
+  "MinVoltage": 210,
+  "MaxVoltage": 240,
+  "MinCurrent": 0,
+  "MaxCurrent": 10,
+  "UpdateIntervalMs": 1000
+}

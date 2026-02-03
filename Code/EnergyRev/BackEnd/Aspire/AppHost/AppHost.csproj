@@ -5,6 +5,7 @@
   
    <ProjectReference Include="..\..\MeterIngestionService\MeterIngestionService.csproj" />
     <ProjectReference Include="..\..\MultiSiteEnergyPlatform\MultiSiteEnergyPlatform.csproj" />
+      <ProjectReference Include="..\..\InverterSimulator\InverterSimulator.csproj" />
     <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
