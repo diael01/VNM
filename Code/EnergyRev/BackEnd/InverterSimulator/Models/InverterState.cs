@@ -1,4 +1,5 @@
 namespace InverterSimulator.Models;
+
 public class InverterState
 {
     public string SerialNumber { get; set; } = "SIM-INV-001";

@@ -2,6 +2,7 @@ using MassTransit;
 using EventBusCore.Events;
 
 namespace MeterIngestionService.Consumers;
+
 public class MeterEventConsumer
     : IConsumer<MeterDataIngestedEvent>
 {

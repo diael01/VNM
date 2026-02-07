@@ -44,7 +44,7 @@ namespace EventBusCore
                     cfg.UseMessageRetry(r => r.Interval(retryCount, TimeSpan.FromSeconds(retryIntervalSec)));
 
                     // Read delayed redelivery settings from config
-                    string redeliveryIntervals = configuration["EventBus:Redelivery:IntervalsSeconds"] 
+                    string redeliveryIntervals = configuration["EventBus:Redelivery:IntervalsSeconds"]
                                                  ?? "10,60,300"; // defaults in seconds
 
                     var intervals = redeliveryIntervals

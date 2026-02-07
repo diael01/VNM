@@ -1,5 +1,6 @@
 
 namespace InverterSimulator.Models;
+
 public enum InverterStatus
 {
     Offline,

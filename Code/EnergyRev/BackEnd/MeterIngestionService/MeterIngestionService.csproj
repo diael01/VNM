@@ -1,9 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>29b17ac9-a153-47b3-beaa-36a8f23a0d84</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
 <PackageReference Include="MassTransit" Version="8.0.9" />
 <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
 <ProjectReference Include="..\EventBusCore\EventBusCore.csproj" IsAspireProjectResource="false" />
+<ProjectReference Include="..\Infrastructure\Infrastructure.csproj" IsAspireProjectResource="false" />
  <ProjectReference Include="..\Aspire\ServiceDefaults\ServiceDefaults.csproj" />
   </ItemGroup>
 

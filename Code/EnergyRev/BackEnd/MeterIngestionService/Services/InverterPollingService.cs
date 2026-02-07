@@ -6,6 +6,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace InverterPolling.Services
 {
@@ -24,18 +26,18 @@ namespace InverterPolling.Services
         private readonly ILogger<InverterPollingService> _logger;
         private readonly IInverterPoller _poller;
         private readonly InverterPollingOptions _options;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IDbContextFactory<SolarDbContext> _dbFactory;
 
         public InverterPollingService(
             ILogger<InverterPollingService> logger,
             IInverterPoller poller,
             IOptions<InverterPollingOptions> options,
-            IServiceProvider serviceProvider) // <-- inject IServiceProvider
+            IDbContextFactory<SolarDbContext> dbFactory) // inject factory
         {
             _logger = logger;
             _poller = poller;
             _options = options.Value;
-            _serviceProvider = serviceProvider;
+            _dbFactory = dbFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,9 +48,8 @@ namespace InverterPolling.Services
             {
                 try
                 {
-                    // Create a scoped DbContext per polling cycle
-                    using var scope = _serviceProvider.CreateScope();
-                    var dbContext = scope.ServiceProvider.GetRequiredService<SolarDbContext>();
+                    // ✅ Create a new DbContext per polling cycle
+                    await using var dbContext = await _dbFactory.CreateDbContextAsync(stoppingToken);
 
                     var reading = await _poller.PollAsync(stoppingToken);
 

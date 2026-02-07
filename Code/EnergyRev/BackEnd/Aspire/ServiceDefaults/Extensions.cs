@@ -119,7 +119,7 @@ public static class Extensions
 
             // Check if OTLP endpoint is configured (Aspire will set this automatically)
             //var otlpEndpoint = !builder.Environment.IsDevelopment() && 
-                 //     !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
+            //     !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
             var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
             if (!string.IsNullOrWhiteSpace(otlpEndpoint))
             {

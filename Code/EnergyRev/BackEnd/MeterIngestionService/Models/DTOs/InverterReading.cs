@@ -7,7 +7,7 @@ namespace InverterPolling.Services
     public class InverterReading
     {
         // Primary key
-        public int Id { get; set; }  
+        public int Id { get; set; }
 
         /// <summary>UTC timestamp of the reading</summary>
         public DateTime TimestampUtc { get; set; }

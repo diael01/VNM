@@ -8,6 +8,7 @@ using InverterPolling.Services;
 using InverterPolling.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Infrastructure.Polling;
 
 // ---------------------
 // Build the application
@@ -45,24 +46,13 @@ builder.Services.AddHttpClient();
 // ---------------------
 // DbContext (Scoped)
 // ---------------------
-builder.Services.AddDbContext<SolarDbContext>(options =>
+builder.Services.AddDbContextFactory<SolarDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
 
 // ---------------------
 // Inverter Poller Factory & Poller (singleton)
 // ---------------------
-builder.Services.AddSingleton<IInverterPollerFactory, InverterPollerFactory>();
-builder.Services.AddSingleton<IInverterPoller>(sp =>
-{
-    var options = sp.GetRequiredService<IOptions<InverterPollingOptions>>().Value;
-    var factory = sp.GetRequiredService<IInverterPollerFactory>();
-    return factory.Create(options);
-});
-
-// ---------------------
-// Hosted service (polling)
-// ---------------------
-builder.Services.AddHostedService<InverterPollingService>();
+builder.Services.AddInverterPolling();
 
 // ---------------------
 // Aspire / Service defaults
@@ -84,6 +74,7 @@ app.UseSerilogRequestLogging();
 // ---------------------
 if (app.Environment.IsDevelopment())
 {
+    builder.Configuration.AddUserSecrets<Program>();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -104,11 +95,13 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapDefaultEndpoints(); // health, metrics, etc
 
-//create database if it doesn't exist
+// ---------------------
+// Ensure database exists on startup
+// ---------------------
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SolarDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate(); // Applies migrations or creates DB if missing
 }
 
 // ---------------------

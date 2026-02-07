@@ -8,6 +8,7 @@ using EventBusCore.Events; // <-- Use your new event DTOs
 using MassTransit;
 
 namespace EventBusTestHarness.Tests;
+
 public class MeterIngestionTests
 {
     [Fact]

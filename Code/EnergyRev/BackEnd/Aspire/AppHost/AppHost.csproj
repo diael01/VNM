@@ -1,8 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Sdk Name="Aspire.AppHost.Sdk" Version="9.4.0" />
 
+<PropertyGroup>
+ <NuGetAuditMode>direct</NuGetAuditMode>
+  <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+</PropertyGroup>
+
   <ItemGroup>
-  
    <ProjectReference Include="..\..\MeterIngestionService\MeterIngestionService.csproj" />
     <ProjectReference Include="..\..\MultiSiteEnergyPlatform\MultiSiteEnergyPlatform.csproj" />
       <ProjectReference Include="..\..\InverterSimulator\InverterSimulator.csproj" />

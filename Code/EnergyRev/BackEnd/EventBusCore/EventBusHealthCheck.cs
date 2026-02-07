@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 
 namespace EventBusCore;
+
 public class EventBusHealthCheck : IHealthCheck
 {
     public Task<HealthCheckResult> CheckHealthAsync(
