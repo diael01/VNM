@@ -9,17 +9,48 @@ using InverterPolling.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-
+// ---------------------
+// Build the application
+// ---------------------
 var builder = WebApplication.CreateBuilder(args);
 
+// ---------------------
+// Event Bus
+// ---------------------
 builder.Services.AddEventBus(builder.Configuration, typeof(MeterEventConsumer).Assembly);
+
+// ---------------------
+// Controllers & Swagger
+// ---------------------
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks().AddCheck("fail", () => HealthCheckResult.Unhealthy());
 
+// ---------------------
+// Health Checks
+// ---------------------
+builder.Services.AddHealthChecks()
+       .AddCheck("basic", () => HealthCheckResult.Healthy("Service is running"));
+
+// ---------------------
+// Configuration Options
+// ---------------------
 builder.Services.Configure<InverterPollingOptions>(
     builder.Configuration.GetSection("InverterPolling"));
 
+// ---------------------
+// HTTP client for polling
+// ---------------------
+builder.Services.AddHttpClient();
+
+// ---------------------
+// DbContext (Scoped)
+// ---------------------
+builder.Services.AddDbContext<SolarDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
+
+// ---------------------
+// Inverter Poller Factory & Poller (singleton)
+// ---------------------
 builder.Services.AddSingleton<IInverterPollerFactory, InverterPollerFactory>();
 builder.Services.AddSingleton<IInverterPoller>(sp =>
 {
@@ -27,29 +58,60 @@ builder.Services.AddSingleton<IInverterPoller>(sp =>
     var factory = sp.GetRequiredService<IInverterPollerFactory>();
     return factory.Create(options);
 });
-builder.Services.AddHttpClient();
+
+// ---------------------
+// Hosted service (polling)
+// ---------------------
 builder.Services.AddHostedService<InverterPollingService>();
 
-builder.Services.AddDbContext<SolarDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
-
+// ---------------------
+// Aspire / Service defaults
+// ---------------------
 builder.AddServiceDefaults();
 
+// ---------------------
+// Build the app
+// ---------------------
 var app = builder.Build();
+
+// ---------------------
+// Logging
+// ---------------------
 app.UseSerilogRequestLogging();
+
+// ---------------------
+// Swagger UI in Development
+// ---------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "MeterIngestion API V1");
-        c.RoutePrefix = string.Empty; // Swagger UI at root
+        c.RoutePrefix = string.Empty; // Serve at root
     });
 }
 
+// ---------------------
+// Middleware
+// ---------------------
 app.UseHttpsRedirection();
 app.UseAuthorization();
-app.MapControllers();
-app.MapDefaultEndpoints();
-app.Run();
 
+// ---------------------
+// Endpoints
+// ---------------------
+app.MapControllers();
+app.MapDefaultEndpoints(); // health, metrics, etc
+
+//create database if it doesn't exist
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SolarDbContext>();
+    db.Database.EnsureCreated();
+}
+
+// ---------------------
+// Run the app
+// ---------------------
+app.Run();

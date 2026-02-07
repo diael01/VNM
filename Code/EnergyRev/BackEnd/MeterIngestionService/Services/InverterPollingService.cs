@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
 using InverterPolling.Data;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace InverterPolling.Services
 {
@@ -21,20 +22,20 @@ namespace InverterPolling.Services
     public class InverterPollingService : BackgroundService
     {
         private readonly ILogger<InverterPollingService> _logger;
-        private readonly SolarDbContext _dbContext;
         private readonly IInverterPoller _poller;
         private readonly InverterPollingOptions _options;
+        private readonly IServiceProvider _serviceProvider;
 
         public InverterPollingService(
             ILogger<InverterPollingService> logger,
-            SolarDbContext dbContext,
             IInverterPoller poller,
-            IOptions<InverterPollingOptions> options)
+            IOptions<InverterPollingOptions> options,
+            IServiceProvider serviceProvider) // <-- inject IServiceProvider
         {
             _logger = logger;
-            _dbContext = dbContext;
             _poller = poller;
             _options = options.Value;
+            _serviceProvider = serviceProvider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,13 +46,18 @@ namespace InverterPolling.Services
             {
                 try
                 {
+                    // Create a scoped DbContext per polling cycle
+                    using var scope = _serviceProvider.CreateScope();
+                    var dbContext = scope.ServiceProvider.GetRequiredService<SolarDbContext>();
+
                     var reading = await _poller.PollAsync(stoppingToken);
+
                     if (reading != null)
                     {
                         reading.Source = _options.Source;
 
-                        _dbContext.InverterReadings.Add(reading);
-                        await _dbContext.SaveChangesAsync(stoppingToken);
+                        dbContext.InverterReadings.Add(reading);
+                        await dbContext.SaveChangesAsync(stoppingToken);
 
                         _logger.LogInformation(
                             "Saved inverter reading: {PowerW} W, {VoltageV} V, {CurrentA} A at {Timestamp}",
