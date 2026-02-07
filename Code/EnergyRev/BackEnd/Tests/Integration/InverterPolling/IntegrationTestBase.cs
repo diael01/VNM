@@ -53,7 +53,6 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         {
             InitialCatalog = TestDb,
             Password = password,
-            TrustServerCertificate = true
         };
         var testDbConnString = builder.ConnectionString;
 
