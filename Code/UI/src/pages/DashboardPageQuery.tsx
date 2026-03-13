@@ -1,49 +1,29 @@
-import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { fetchInverterData } from "../api/inverterApi"
-import type { InverterData } from "../types/inverter"
 
-export default function DashboardPage() {
-  const [data, setData] = useState<InverterData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function DashboardPageQuery() {
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["inverter-data"],
+    queryFn: fetchInverterData,
+  })
 
-  useEffect(() => {
-    let isMounted = true
-
-    async function load() {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const result = await fetchInverterData()
-
-        if (isMounted) {
-          setData(result)
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : "Failed to load inverter data")
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    load()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  if (loading) {
+  if (isLoading) {
     return <p>Loading inverter data...</p>
   }
 
-  if (error) {
-    return <p>{error}</p>
+  if (isError) {
+    return (
+      <div style={{ padding: "24px", fontFamily: "Arial, sans-serif" }}>
+        <p>{error instanceof Error ? error.message : "Failed to load inverter data"}</p>
+        <button onClick={() => refetch()}>Retry</button>
+      </div>
+    )
   }
 
   if (!data) {
@@ -73,6 +53,10 @@ export default function DashboardPage() {
           <strong>Timestamp</strong>
           <div>{new Date(data.timestamp).toLocaleString()}</div>
         </div>
+      </div>
+
+      <div style={{ marginTop: "16px" }}>
+        <button onClick={() => refetch()}>Refresh</button>
       </div>
     </div>
   )

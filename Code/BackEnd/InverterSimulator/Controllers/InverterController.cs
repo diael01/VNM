@@ -23,7 +23,7 @@ public class InverterController : ControllerBase
         var data = new InverterData(
             Power: _rand.Next(_options.MinPower, _options.MaxPower + 1),
             Voltage: _rand.Next(_options.MinVoltage, _options.MaxVoltage + 1),
-            EnergyToday: _rand.Next(_options.MinCurrent, _options.MaxCurrent + 1),
+            Current: _rand.Next(_options.MinCurrent, _options.MaxCurrent + 1),
             Timestamp: DateTime.UtcNow
         );
 
