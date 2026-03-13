@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- xUnit for unit testing -->
+    <PackageReference Include="xunit" Version="2.5.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+
+    <!-- MassTransit -->
+    <PackageReference Include="MassTransit" Version="8.0.9" />
+  
+
+    <!-- Hosting support -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+
+    <!-- OpenTelemetry for tracing/metrics in tests -->
+    <PackageReference Include="OpenTelemetry" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+   <ProjectReference Include="../../../EventBusCore/EventBusCore.csproj" />
+<ProjectReference Include="../../../MeterIngestionService/MeterIngestionService.csproj" />
+<ProjectReference Include="../../../MultiSiteEnergyPlatform/MultiSiteEnergyPlatform.csproj" />
+  </ItemGroup>
+
+</Project>
