@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using InverterSimulator.Configuration;
 using InverterSimulator.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace InverterSimulator.Controllers;
 
 [ApiController]
 [Route("api/inverter")]
+//[Authorize]
+[Authorize(Roles = "admin")]
 public class InverterController : ControllerBase
 {
     private readonly InverterSimulatorOptions _options;

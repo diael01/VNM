@@ -4,6 +4,7 @@ using InverterPolling.Services;
 using InverterPolling.Data;
 
 namespace Infrastructure.Polling;
+
 public static class InverterPollingServiceCollectionExtensions
 {
     public static IServiceCollection AddInverterPolling(this IServiceCollection services)

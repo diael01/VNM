@@ -12,7 +12,11 @@ public static class Config
         new IdentityResource[]
         {
             new IdentityResources.OpenId(),
-            new IdentityResources.Profile()
+            new IdentityResources.Profile(),
+            new IdentityResource(
+                name: "roles",
+                displayName: "User roles",
+                userClaims: new[] { JwtClaimTypes.Role })
         };
 
     public static IEnumerable<ApiScope> ApiScopes =>
@@ -68,6 +72,7 @@ public static class Config
                 {
                     "openid",
                     "profile",
+                    "roles",
                     "meteringestion.read",
                     "inverter.read"
                 },

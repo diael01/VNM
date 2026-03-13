@@ -21,10 +21,12 @@ try
         .ConfigurePipeline();
 
     app.Run();
-} catch (Exception ex)
+}
+catch (Exception ex)
 {
     Log.Fatal(ex, "Unhandled exception");
-} finally
+}
+finally
 {
     Log.Information("Shut down complete");
     Log.CloseAndFlush();

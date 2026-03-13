@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 
 namespace VNM.Infrastructure.Extensions;
@@ -12,7 +14,7 @@ namespace VNM.Infrastructure.Extensions;
 /// </summary>
 public static class AuthenticationExtension
 {
-     /// <summary>
+    /// <summary>
     /// Registers cookie and OpenID Connect authentication for the BFF.
     /// </summary>
     /// <param name="services">The service collection.</param>
@@ -44,7 +46,7 @@ public static class AuthenticationExtension
                 options.Cookie.SameSite = SameSiteMode.None;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             })
-            .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+           .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
                 options.Authority = authority;
                 options.ClientId = clientId;
@@ -57,12 +59,17 @@ public static class AuthenticationExtension
                 options.Scope.Clear();
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
+                options.Scope.Add("roles");
                 options.Scope.Add("meteringestion.read");
                 options.Scope.Add("inverter.read");
 
+                options.ClaimActions.MapUniqueJsonKey("role", "role");
+
+                options.TokenValidationParameters.NameClaimType = "name";
+                options.TokenValidationParameters.RoleClaimType = "role";
+
                 options.CallbackPath = "/signin-oidc";
                 options.SignedOutCallbackPath = "/signout-callback-oidc";
-
                 options.RequireHttpsMetadata = true;
             });
 

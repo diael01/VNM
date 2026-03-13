@@ -103,11 +103,13 @@ public class Index : PageModel
 
                 // emit event
                 await _events.RaiseAsync(new ConsentGrantedEvent(User.GetSubjectId(), request.Client.ClientId, request.ValidatedResources.RawScopeValues, grantedConsent.ScopesValuesConsented, grantedConsent.RememberConsent));
-            } else
+            }
+            else
             {
                 ModelState.AddModelError("", ConsentOptions.MustChooseOneErrorMessage);
             }
-        } else
+        }
+        else
         {
             ModelState.AddModelError("", ConsentOptions.InvalidSelectionErrorMessage);
         }

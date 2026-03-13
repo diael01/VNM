@@ -1,57 +1,52 @@
 import { useQuery } from "@tanstack/react-query"
-import { fetchInverterData } from "../api/inverterApi"
+import { fetchDashboardData } from "../api/dashboardApi"
 
 export default function DashboardPageQuery() {
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["inverter-data"],
-    queryFn: fetchInverterData,
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["dashboard-data"],
+    queryFn: fetchDashboardData,
   })
 
   if (isLoading) {
-    return <p>Loading inverter data...</p>
+    return <p>Loading dashboard data...</p>
   }
 
   if (isError) {
     return (
-      <div style={{ padding: "24px", fontFamily: "Arial, sans-serif" }}>
-        <p>{error instanceof Error ? error.message : "Failed to load inverter data"}</p>
+      <div>
+        <p>{error instanceof Error ? error.message : "Failed to load dashboard data"}</p>
         <button onClick={() => refetch()}>Retry</button>
       </div>
     )
   }
 
-  if (!data) {
-    return <p>No data available.</p>
+  if (!data?.inverter) {
+    return <p>No inverter data available.</p>
   }
 
   return (
-    <div style={{ padding: "24px", fontFamily: "Arial, sans-serif" }}>
+    <div>
+      <h2>Dashboard</h2>
 
-      <div style={{ display: "grid", gap: "12px", maxWidth: "400px" }}>
-        <div style={{ border: "1px solid #ddd", padding: "12px", borderRadius: "8px" }}>
+      <div style={{ display: "grid", gap: "16px", maxWidth: "500px" }}>
+        <div style={cardStyle}>
           <strong>Power</strong>
-          <div>{data.power} W</div>
+          <div>{data.inverter.power} W</div>
         </div>
 
-        <div style={{ border: "1px solid #ddd", padding: "12px", borderRadius: "8px" }}>
+        <div style={cardStyle}>
           <strong>Voltage</strong>
-          <div>{data.voltage} V</div>
+          <div>{data.inverter.voltage} V</div>
         </div>
 
-        <div style={{ border: "1px solid #ddd", padding: "12px", borderRadius: "8px" }}>
+        <div style={cardStyle}>
           <strong>Current</strong>
-          <div>{data.current} A</div>
+          <div>{data.inverter.current} A</div>
         </div>
 
-        <div style={{ border: "1px solid #ddd", padding: "12px", borderRadius: "8px" }}>
+        <div style={cardStyle}>
           <strong>Timestamp</strong>
-          <div>{new Date(data.timestamp).toLocaleString()}</div>
+          <div>{new Date(data.inverter.timestamp).toLocaleString()}</div>
         </div>
       </div>
 
@@ -60,4 +55,11 @@ export default function DashboardPageQuery() {
       </div>
     </div>
   )
+}
+
+const cardStyle: React.CSSProperties = {
+  backgroundColor: "#fff",
+  border: "1px solid #ddd",
+  borderRadius: "8px",
+  padding: "16px",
 }

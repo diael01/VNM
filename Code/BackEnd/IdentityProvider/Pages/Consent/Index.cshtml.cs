@@ -86,11 +86,13 @@ public class Index : PageModel
 
                 // emit event
                 await _events.RaiseAsync(new ConsentGrantedEvent(User.GetSubjectId(), request.Client.ClientId, request.ValidatedResources.RawScopeValues, grantedConsent.ScopesValuesConsented, grantedConsent.RememberConsent));
-            } else
+            }
+            else
             {
                 ModelState.AddModelError("", ConsentOptions.MustChooseOneErrorMessage);
             }
-        } else
+        }
+        else
         {
             ModelState.AddModelError("", ConsentOptions.InvalidSelectionErrorMessage);
         }
@@ -122,7 +124,8 @@ public class Index : PageModel
         if (request != null)
         {
             return CreateConsentViewModel(model, returnUrl, request);
-        } else
+        }
+        else
         {
             _logger.LogError("No consent request matching request: {0}", returnUrl);
         }

@@ -88,11 +88,13 @@ public class Consent : PageModel
 
                 // emit event
                 await _events.RaiseAsync(new ConsentGrantedEvent(User.GetSubjectId(), request.Client.ClientId, request.ValidatedResources.RawScopeValues, result.ScopesValuesConsented, false));
-            } else
+            }
+            else
             {
                 ModelState.AddModelError("", ConsentOptions.MustChooseOneErrorMessage);
             }
-        } else
+        }
+        else
         {
             ModelState.AddModelError("", ConsentOptions.InvalidSelectionErrorMessage);
         }
@@ -116,7 +118,8 @@ public class Consent : PageModel
         if (request != null && request.Subject.GetSubjectId() == User.GetSubjectId())
         {
             return CreateConsentViewModel(model, id, request);
-        } else
+        }
+        else
         {
             _logger.LogError("No backchannel login request matching id: {id}", id);
         }

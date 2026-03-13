@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MassTransit;
 using EventBusCore.Events;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MeterIngestionService.Controllers;
 
@@ -16,6 +17,7 @@ public class MeterController : ControllerBase
     }
 
     [HttpPost("ingest")]
+    // [Authorize(Roles = "admin")]
     public async Task<IActionResult> IngestData([FromBody] MeterIngestRequest request)
     {
         var evt = new MeterDataIngestedEvent

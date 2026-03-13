@@ -79,7 +79,8 @@ public class Index : PageModel
                 }
 
                 return Redirect(Input.ReturnUrl);
-            } else
+            }
+            else
             {
                 // since we don't have a valid context, then we just go back to the home page
                 return Redirect("~/");
@@ -104,7 +105,8 @@ public class Index : PageModel
                         IsPersistent = true,
                         ExpiresUtc = DateTimeOffset.UtcNow.Add(LoginOptions.RememberMeLoginDuration)
                     };
-                };
+                }
+                ;
 
                 // issue authentication cookie with subject ID and username
                 var isuser = new IdentityServerUser(user.SubjectId)
@@ -131,10 +133,12 @@ public class Index : PageModel
                 if (Url.IsLocalUrl(Input.ReturnUrl))
                 {
                     return Redirect(Input.ReturnUrl);
-                } else if (string.IsNullOrEmpty(Input.ReturnUrl))
+                }
+                else if (string.IsNullOrEmpty(Input.ReturnUrl))
                 {
                     return Redirect("~/");
-                } else
+                }
+                else
                 {
                     // user might have clicked on a malicious link - should be logged
                     throw new Exception("invalid return URL");

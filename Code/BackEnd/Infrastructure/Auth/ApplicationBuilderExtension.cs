@@ -8,7 +8,7 @@ namespace VNM.Infrastructure.Extensions;
 /// </summary>
 public static class ApplicationBuilderExtensions
 {
-     /// <summary>
+    /// <summary>
     /// Adds authentication and authorization middleware to the pipeline.
     /// </summary>
     /// <param name="app">The application builder.</param>

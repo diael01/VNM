@@ -34,7 +34,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-            .AddUserSecrets<Program>() 
+            .AddUserSecrets<Program>()
             .AddEnvironmentVariables()// for SA_PASSWORD
             .Build();
 
