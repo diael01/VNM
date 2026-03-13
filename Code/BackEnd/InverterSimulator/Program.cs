@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using EventBusCore;
 using Serilog;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using VNM.Infrastructure.Extensions;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,7 +29,7 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-
+builder.Services.AddJwtAuthentication(builder.Configuration);
 var app = builder.Build();
 app.UseSerilogRequestLogging();
 

@@ -3,5 +3,6 @@
 builder.AddProject<Projects.MultiSiteEnergyPlatform>("MultiSiteEnergyPlatform");
 builder.AddProject<Projects.MeterIngestionService>("MeterIngestionService");
 builder.AddProject<Projects.InverterSimulator>("InverterSimulator");
+builder.AddProject<Projects.Vnm_Idp>("VnmIdp");
 
 builder.Build().Run();

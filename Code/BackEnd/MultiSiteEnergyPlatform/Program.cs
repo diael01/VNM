@@ -6,6 +6,7 @@ using EventBusCore;
 using Dashboard.Consumers;
 using Serilog;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using VNM.Infrastructure.Extensions;
 
 
 
@@ -17,6 +18,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddHealthChecks().AddCheck("fail", () => HealthCheckResult.Unhealthy());
 builder.AddServiceDefaults();
+builder.Services.AddBffAuthentication(builder.Configuration);
 var app = builder.Build();
 app.UseSerilogRequestLogging();
 if (app.Environment.IsDevelopment())

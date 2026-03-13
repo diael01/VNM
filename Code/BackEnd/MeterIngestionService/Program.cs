@@ -9,6 +9,7 @@ using InverterPolling.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Infrastructure.Polling;
+using VNM.Infrastructure.Extensions;
 
 // ---------------------
 // Build the application
@@ -59,6 +60,7 @@ builder.Services.AddInverterPolling();
 // ---------------------
 builder.AddServiceDefaults();
 
+builder.Services.AddJwtAuthentication(builder.Configuration);
 // ---------------------
 // Build the app
 // ---------------------
