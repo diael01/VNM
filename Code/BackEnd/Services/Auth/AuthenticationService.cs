@@ -1,9 +1,9 @@
-using DashboardBff.Models.Auth;
+using Models.Auth;
 using System.Security.Claims;
 
-namespace DashboardBff.Services.Auth;
+namespace Services.Auth;
 
-public sealed class AuthService : IAuthService
+public sealed class AuthenticationService : IAuthenticationService
 {
     public CurrentUserDto GetCurrentUser(ClaimsPrincipal user)
     {

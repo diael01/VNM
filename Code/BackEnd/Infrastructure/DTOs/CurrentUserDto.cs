@@ -1,4 +1,4 @@
-namespace DashboardBff.Models.Auth;
+namespace Models.Auth;
 
 public sealed class CurrentUserDto
 {

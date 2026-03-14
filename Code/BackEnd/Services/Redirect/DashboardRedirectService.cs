@@ -1,24 +1,24 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
-using DashboardBff.Models.Dashboard;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using System.Net.Http.Json;
+using Models.Dashboard;
 
-namespace DashboardBff.Services.Dashboard;
+namespace Services.Redirect;
 
-public sealed class DashboardService : IDashboardService
+public sealed class DashboardRedirectService : IDashboardRedirectService
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public DashboardService(IHttpClientFactory httpClientFactory)
+    public DashboardRedirectService(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
     }
 
     public async Task<DashboardResponseDto> GetDashboardAsync(
-        HttpContext httpContext,
+        string accessToken,
         CancellationToken cancellationToken = default)
-    {
-        var accessToken = await httpContext.GetTokenAsync("access_token");
+    {       
         Console.WriteLine("Access token exists: " + !string.IsNullOrWhiteSpace(accessToken));
         if (string.IsNullOrWhiteSpace(accessToken))
         {

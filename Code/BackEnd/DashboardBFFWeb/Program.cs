@@ -4,9 +4,8 @@ using EventBusCore;
 using Dashboard.Consumers;
 using Serilog;
 using VNM.Infrastructure.Extensions;
-using DashboardBff.Services.Auth;
-using DashboardBff.Endpoints;
-using DashboardBff.Services.Dashboard;
+using Services.Auth;
+using Services.Redirect;
 
 var builder = WebApplication.CreateBuilder(args);
 // Platform
@@ -25,8 +24,7 @@ builder.Services.AddBffAuthentication(builder.Configuration);
 builder.Services.AddDownstreamServiceClients(builder.Configuration);
 
 //Application Services
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddBffApplicationServices();
 
 var app = builder.Build();
 app.UseSerilogRequestLogging();
@@ -46,8 +44,6 @@ app.UseCors(CorsExtensions.FrontendCorsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapAuthEndpoints();
-app.MapDashboardEndpoints();
 app.MapControllers();
 app.MapDefaultEndpoints();
 

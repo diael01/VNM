@@ -1,4 +1,4 @@
-namespace DashboardBff.Models.Dashboard;
+namespace Models.Dashboard;
 
 public sealed class DashboardResponseDto
 {
