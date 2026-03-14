@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using InverterPolling.Data;
 using System.Threading.Tasks;
 
-namespace MeterIngestionService.IntegrationTests;
+namespace MeterIngestionWeb.IntegrationTests;
 
 [CollectionDefinition("IntegrationTests")]
 public class IntegrationTestCollection : ICollectionFixture<CustomWebApplicationFactory> { }
@@ -34,3 +34,4 @@ public class InverterPollingIntegrationTests : IntegrationTestBase
     }
 
 }
+

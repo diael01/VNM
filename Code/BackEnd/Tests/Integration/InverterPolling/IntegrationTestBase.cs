@@ -8,7 +8,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace MeterIngestionService.IntegrationTests;
+namespace MeterIngestionWeb.IntegrationTests;
 
 public abstract class IntegrationTestBase : IAsyncLifetime
 {
@@ -98,3 +98,4 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 }
+

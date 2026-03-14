@@ -12,7 +12,7 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.TestHost;
 
-namespace MeterIngestionService.IntegrationTests;
+namespace MeterIngestionWeb.IntegrationTests;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -74,3 +74,4 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 }
+

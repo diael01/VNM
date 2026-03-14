@@ -7,7 +7,7 @@ using OpenTelemetry.Trace;
 using System.Reflection;
 
 using Dashboard.Consumers;
-using MeterIngestionService.Consumers;
+using MeterIngestionWeb.Consumers;
 
 
 
@@ -41,7 +41,7 @@ namespace EventBusTestHarness
                 services.AddMassTransitTestHarness(cfg =>
                 {
                     // Auto-register all consumers from the service assemblies
-                    cfg.AddConsumers(typeof(MeterIngestionService.Consumers.MeterEventConsumer).Assembly);
+                    cfg.AddConsumers(typeof(MeterIngestionWeb.Consumers.MeterEventConsumer).Assembly);
                     cfg.AddConsumers(typeof(Dashboard.Consumers.DashboardConsumer).Assembly);
 
                     cfg.UsingInMemory((context, cfgBus) =>
