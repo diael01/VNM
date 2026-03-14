@@ -27,8 +27,6 @@ public class AspNetIdentityServiceTests
         var userClaimRepo = new AspNetUserClaimRepository(context);
         var service = new AspNetIdentityService(roleRepo, roleClaimRepo, userRepo, userClaimRepo, context);
 
-        await service.SeedDefaultPermissionsAsync();
-
         var roles = (await service.GetAllRolesAsync()).ToList();
         Assert.Contains(roles, r => r.Name == "admin");
         Assert.Contains(roles, r => r.Name == "contributors");

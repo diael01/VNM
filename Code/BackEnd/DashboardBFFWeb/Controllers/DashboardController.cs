@@ -82,6 +82,7 @@ namespace DashboardBFFWeb.Controllers
             return Ok(currentUser);
         }
 
+        //todo: use exception middleware  instea dof try-catch in controller
         [HttpGet("/api/dashboard")]
         [Authorize]
         public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
@@ -89,6 +90,11 @@ namespace DashboardBFFWeb.Controllers
             try
             {
                 var accessToken = await HttpContext.GetTokenAsync("access_token");
+                if (string.IsNullOrWhiteSpace(accessToken))
+                {
+                    throw new UnauthorizedAccessException("Access token is missing.");
+                }
+
                 var result = await _dashboardService.GetDashboardAsync(accessToken, cancellationToken);
                 return Ok(result);
             }

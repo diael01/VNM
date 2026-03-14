@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Services.Auth;
 using Services.Redirect;
+using VNM.Infrastructure.Auth;
 
 namespace VNM.Infrastructure.Extensions;
 
@@ -17,6 +18,7 @@ public static class ApplicationServicesExtensions
     {
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IDashboardRedirectService, DashboardRedirectService>();
+        services.AddScoped<IUserPermissionResolver, DbUserPermissionResolver>();
 
         return services;
     }

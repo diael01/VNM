@@ -18,6 +18,7 @@ public interface IAspNetIdentityService
 
     Task<AspNetUser> CreateUserAsync(AspNetUser user, CancellationToken cancellationToken = default);
     Task<AspNetUser?> GetUserByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<AspNetUser?> GetUserByExternalSubjectIdAsync(string externalSubjectId, CancellationToken cancellationToken = default);
     Task<AspNetUser?> GetUserByUserNameAsync(string userName, CancellationToken cancellationToken = default);
     Task<IEnumerable<AspNetUser>> GetAllUsersAsync(CancellationToken cancellationToken = default);
     Task<AspNetUser> UpdateUserAsync(AspNetUser user, CancellationToken cancellationToken = default);
@@ -31,8 +32,6 @@ public interface IAspNetIdentityService
     Task<IEnumerable<string>> GetUserRoleIdsAsync(string userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<AspNetRole>> GetUserRolesAsync(string userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<(string ClaimType, string ClaimValue)>> GetEffectiveUserClaimsAsync(string userId, CancellationToken cancellationToken = default);
-
-    Task SeedDefaultPermissionsAsync(CancellationToken cancellationToken = default);
 }
 
 public class AspNetIdentityService : IAspNetIdentityService
@@ -105,6 +104,11 @@ public class AspNetIdentityService : IAspNetIdentityService
     public async Task<AspNetUser?> GetUserByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         return await _userRepository.GetByIdAsync(id, cancellationToken);
+    }
+
+    public async Task<AspNetUser?> GetUserByExternalSubjectIdAsync(string externalSubjectId, CancellationToken cancellationToken = default)
+    {
+        return await _userRepository.GetByExternalSubjectIdAsync(externalSubjectId, cancellationToken);
     }
 
     public async Task<AspNetUser?> GetUserByUserNameAsync(string userName, CancellationToken cancellationToken = default)
@@ -193,75 +197,5 @@ public class AspNetIdentityService : IAspNetIdentityService
         claims.AddRange(user.AspNetUserClaims.Select(c => (c.ClaimType ?? string.Empty, c.ClaimValue ?? string.Empty)));
         claims.AddRange(user.Roles.SelectMany(r => r.AspNetRoleClaims).Select(c => (c.ClaimType ?? string.Empty, c.ClaimValue ?? string.Empty)));
         return claims.Distinct();
-    }
-
-    public async Task SeedDefaultPermissionsAsync(CancellationToken cancellationToken = default)
-    {
-        // Roles
-        var admin = await GetRoleByNameAsync("admin", cancellationToken);
-        if (admin == null)
-        {
-            admin = await CreateRoleAsync(new AspNetRole { Id = Guid.NewGuid().ToString(), Name = "admin" }, cancellationToken);
-        }
-
-        var contributors = await GetRoleByNameAsync("contributors", cancellationToken);
-        if (contributors == null)
-        {
-            contributors = await CreateRoleAsync(new AspNetRole { Id = Guid.NewGuid().ToString(), Name = "contributors" }, cancellationToken);
-        }
-
-        // Users
-        var alice = await GetUserByUserNameAsync("alice", cancellationToken);
-        if (alice == null)
-        {
-            alice = await CreateUserAsync(new AspNetUser
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserName = "alice",
-                Email = "alice@example.com",
-                PhoneNumber = "123-456-0000",
-                ExternalSubjectId = "alice-subject"
-            }, cancellationToken);
-        }
-
-        var bob = await GetUserByUserNameAsync("bob", cancellationToken);
-        if (bob == null)
-        {
-            bob = await CreateUserAsync(new AspNetUser
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserName = "bob",
-                Email = "bob@example.com",
-                PhoneNumber = "123-456-1111",
-                ExternalSubjectId = "bob-subject"
-            }, cancellationToken);
-        }
-
-        // Assign roles
-        if (admin != null && alice != null)
-        {
-            await AssignRoleToUserAsync(alice.Id, admin.Id, cancellationToken);
-        }
-        if (contributors != null && bob != null)
-        {
-            await AssignRoleToUserAsync(bob.Id, contributors.Id, cancellationToken);
-        }
-
-        // Role claims for permissions
-        var adminClaims = await GetClaimsByRoleIdAsync(admin.Id, cancellationToken);
-        if (!adminClaims.Any(c => c.ClaimType == "permission" && c.ClaimValue == "dashboard:read"))
-        {
-            await CreateRoleClaimAsync(new AspNetRoleClaim { RoleId = admin.Id, ClaimType = "permission", ClaimValue = "dashboard:read" }, cancellationToken);
-        }
-        if (!adminClaims.Any(c => c.ClaimType == "permission" && c.ClaimValue == "dashboard:retry"))
-        {
-            await CreateRoleClaimAsync(new AspNetRoleClaim { RoleId = admin.Id, ClaimType = "permission", ClaimValue = "dashboard:retry" }, cancellationToken);
-        }
-
-        var contributorClaims = await GetClaimsByRoleIdAsync(contributors.Id, cancellationToken);
-        if (!contributorClaims.Any(c => c.ClaimType == "permission" && c.ClaimValue == "dashboard:read"))
-        {
-            await CreateRoleClaimAsync(new AspNetRoleClaim { RoleId = contributors.Id, ClaimType = "permission", ClaimValue = "dashboard:read" }, cancellationToken);
-        }
     }
 }

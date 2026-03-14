@@ -20,11 +20,7 @@ public sealed class DashboardRedirectService : IDashboardRedirectService
         CancellationToken cancellationToken = default)
     {       
         Console.WriteLine("Access token exists: " + !string.IsNullOrWhiteSpace(accessToken));
-        if (string.IsNullOrWhiteSpace(accessToken))
-        {
-            throw new UnauthorizedAccessException("Access token is missing.");
-        }
-
+      
         var inverterClient = _httpClientFactory.CreateClient("inverter-api");
         inverterClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
