@@ -10,6 +10,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Infrastructure.Polling;
 using VNM.Infrastructure.Extensions;
+using Repositories.Data;
+using Repositories.CRUD.Extensions;
+using Services.DependencyInjection;
 
 // ---------------------
 // Build the application
@@ -49,6 +52,12 @@ builder.Services.AddHttpClient();
 // ---------------------
 builder.Services.AddDbContextFactory<SolarDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
+
+builder.Services.AddDbContext<VnmDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
+
+builder.Services.AddRepositoriesCrud();
+builder.Services.AddAppServices();
 
 // ---------------------
 // Inverter Poller Factory & Poller (singleton)
