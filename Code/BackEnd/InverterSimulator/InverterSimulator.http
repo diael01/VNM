@@ -1,6 +1,0 @@
-@InverterSimulator_HostAddress = https://localhost:5286
-
-GET {{InverterSimulator_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

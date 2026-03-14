@@ -9,41 +9,26 @@ using DashboardBff.Endpoints;
 using DashboardBff.Services.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// Platform
+builder.AddServiceDefaults();
 builder.Services.AddEventBus(builder.Configuration, typeof(DashboardConsumer).Assembly);
+
+// MVC / API
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddHealthChecks()
     .AddCheck("fail", () => HealthCheckResult.Unhealthy());
 
-builder.AddServiceDefaults();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("ReactDev", policy =>
-    {
-        policy
-            .WithOrigins("http://localhost:5173")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
-
+//Infrastructure
+builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddBffAuthentication(builder.Configuration);
+builder.Services.AddDownstreamServiceClients(builder.Configuration);
+
+//Application Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-
-builder.Services.AddHttpClient("inverter-api", client =>
-{
-    client.BaseAddress = new Uri("https://localhost:5286/");
-});
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
-
 var app = builder.Build();
-
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -57,7 +42,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("ReactDev");
+app.UseCors(CorsExtensions.FrontendCorsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 
