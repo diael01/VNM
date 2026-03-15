@@ -18,14 +18,14 @@ public sealed class DashboardRedirectService : IDashboardRedirectService
     public async Task<DashboardResponseDto> GetDashboardAsync(
         string accessToken,
         CancellationToken cancellationToken = default)
-    {       
+    {
         Console.WriteLine("Access token exists: " + !string.IsNullOrWhiteSpace(accessToken));
-      
+
         var inverterClient = _httpClientFactory.CreateClient("inverter-api");
         inverterClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var inverterResponse = await inverterClient.GetAsync("api/inverter/data", cancellationToken);
+        var inverterResponse = await inverterClient.GetAsync("api/v1/inverter/data", cancellationToken);
 
         if (!inverterResponse.IsSuccessStatusCode)
         {

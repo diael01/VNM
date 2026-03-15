@@ -1,4 +1,5 @@
 namespace Models.Dashboard;
+
 public class GetDashboardStatsRequest
 {
     public DateTime From { get; set; }

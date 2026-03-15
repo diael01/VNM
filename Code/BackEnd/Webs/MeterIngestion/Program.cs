@@ -23,20 +23,7 @@ if (builder.Environment.IsDevelopment())
     builder.Configuration.AddUserSecrets<Program>(optional: true);
 }
 
-if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("VnmDb")))
-{
-    var password = builder.Configuration["SA_PASSWORD"]
-        ?? builder.Configuration["Parameters:sql-password"];
-
-    if (!string.IsNullOrWhiteSpace(password))
-    {
-        var host = builder.Configuration["SQL_HOST"] ?? "localhost";
-        var port = builder.Configuration["SQL_PORT"] ?? "1433";
-
-        builder.Configuration["ConnectionStrings:VnmDb"] =
-            $"Server=tcp:{host},{port};Database=VNM;User ID=sa;Password={password};Encrypt=True;TrustServerCertificate=True;";
-    }
-}
+builder.TryConfigureLocalVnmDbConnection();
 
 // ---------------------
 // Event Bus
@@ -47,7 +34,7 @@ builder.Services.AddEventBus(builder.Configuration, typeof(MeterEventConsumer).A
 // Controllers & Swagger
 // ---------------------
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwager();
 
 // ---------------------
 // Health Checks
@@ -93,25 +80,20 @@ var app = builder.Build();
 // ---------------------
 // Logging
 // ---------------------
-app.UseSerilogRequestLogging();
+app.UseGlobalExceptionHandling();
+app.UseStructuredRequestLogging();
 
 // ---------------------
 // Swagger UI in Development
 // ---------------------
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MeterIngestion API V1");
-        c.RoutePrefix = string.Empty; // Serve at root
-    });
-}
+//Swagger
+app.UseSwagerInDevelopment();
 
 // ---------------------
 // Middleware
 // ---------------------
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // ---------------------

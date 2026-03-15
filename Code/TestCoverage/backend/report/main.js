@@ -288,62 +288,27 @@ for (i = 0, l = charts.length; i < l; i++) {
 
 var assemblies = [
   {
-    "name": "DashboardBFF",
-    "classes": [
-      { "name": "Dashboard.Consumers.DashboardConsumer", "rp": "DashboardBFF_DashboardConsumer.html", "cl": 4, "ucl": 0, "cal": 4, "tl": 18, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "DashboardBFF.Controllers.DashboardController", "rp": "DashboardBFF_DashboardController.html", "cl": 0, "ucl": 98, "cal": 98, "tl": 170, "cb": 0, "tb": 10, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "DashboardBFF.Controllers.PermissionsController", "rp": "DashboardBFF_PermissionsController.html", "cl": 0, "ucl": 26, "cal": 26, "tl": 56, "cb": 0, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Microsoft.AspNetCore.OpenApi.Generated", "rp": "DashboardBFF_Generated.html", "cl": 0, "ucl": 381, "cal": 381, "tl": 599, "cb": 0, "tb": 204, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Program", "rp": "DashboardBFF_Program.html", "cl": 0, "ucl": 32, "cal": 32, "tl": 56, "cb": 0, "tb": 2, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "System.Runtime.CompilerServices", "rp": "DashboardBFF_CompilerServices.html", "cl": 0, "ucl": 3, "cal": 3, "tl": 23, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "VNM.Infrastructure.Extensions.ApplicationServicesExtensions", "rp": "DashboardBFF_ApplicationServicesExtensions.html", "cl": 0, "ucl": 6, "cal": 6, "tl": 25, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-    ]},
-  {
-    "name": "EventBusCore",
-    "classes": [
-      { "name": "EventBusCore.EventBusHealthCheck", "rp": "EventBusCore_EventBusHealthCheck.html", "cl": 0, "ucl": 3, "cal": 3, "tl": 17, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "EventBusCore.Events.DashboardStatusEvent", "rp": "EventBusCore_DashboardStatusEvent.html", "cl": 3, "ucl": 0, "cal": 3, "tl": 9, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "EventBusCore.Events.MeterDataIngestedEvent", "rp": "EventBusCore_MeterDataIngestedEvent.html", "cl": 4, "ucl": 0, "cal": 4, "tl": 9, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "EventBusCore.ServiceCollectionExtensions", "rp": "EventBusCore_ServiceCollectionExtensions.html", "cl": 0, "ucl": 47, "cal": 47, "tl": 65, "cb": 0, "tb": 20, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-    ]},
-  {
     "name": "Infrastructure",
     "classes": [
-      { "name": "Infrastructure.Exceptions.ExceptionMiddleWare", "rp": "Infrastructure_ExceptionMiddleWare.html", "cl": 0, "ucl": 31, "cal": 31, "tl": 60, "cb": 0, "tb": 10, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Infrastructure.Exceptions.ExceptionMiddleWare", "rp": "Infrastructure_ExceptionMiddleWare.html", "cl": 0, "ucl": 32, "cal": 32, "tl": 61, "cb": 0, "tb": 10, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Infrastructure.Logging.SerilogMiddleware", "rp": "Infrastructure_SerilogMiddleware.html", "cl": 0, "ucl": 44, "cal": 44, "tl": 84, "cb": 0, "tb": 14, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Models.Auth.ClaimDto", "rp": "Infrastructure_ClaimDto.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 14, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Models.Auth.CurrentUserDto", "rp": "Infrastructure_CurrentUserDto.html", "cl": 0, "ucl": 3, "cal": 3, "tl": 14, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Models.Dashboard.DashboardResponseDto", "rp": "Infrastructure_DashboardResponseDto.html", "cl": 0, "ucl": 1, "cal": 1, "tl": 14, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Models.Dashboard.GetDashboardStatsRequest", "rp": "Infrastructure_GetDashboardStatsRequest.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 12, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Models.Dashboard.GetDashboardStatsResponse", "rp": "Infrastructure_GetDashboardStatsResponse.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 12, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Models.Dashboard.GetDashboardStatsRequest", "rp": "Infrastructure_GetDashboardStatsRequest.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 13, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Models.Dashboard.GetDashboardStatsResponse", "rp": "Infrastructure_GetDashboardStatsResponse.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 13, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Models.Dashboard.InverterDataDto", "rp": "Infrastructure_InverterDataDto.html", "cl": 0, "ucl": 4, "cal": 4, "tl": 14, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Configuration.EndpointsOptions", "rp": "Infrastructure_EndpointsOptions.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 7, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Configuration.FrontendOptions", "rp": "Infrastructure_FrontendOptions.html", "cl": 0, "ucl": 1, "cal": 1, "tl": 6, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Extensions.ApplicationBuilderExtensions", "rp": "Infrastructure_ApplicationBuilderExtensions.html", "cl": 0, "ucl": 5, "cal": 5, "tl": 23, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Extensions.AuthenticationExtension", "rp": "Infrastructure_AuthenticationExtension.html", "cl": 0, "ucl": 92, "cal": 92, "tl": 126, "cb": 0, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Extensions.ClientRegistrationExtension", "rp": "Infrastructure_ClientRegistrationExtension.html", "cl": 0, "ucl": 31, "cal": 31, "tl": 53, "cb": 0, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "VNM.Infrastructure.Extensions.ConnectionStringBootstrapExtensions", "rp": "Infrastructure_ConnectionStringBootstrapExtensions.html", "cl": 0, "ucl": 15, "cal": 15, "tl": 31, "cb": 0, "tb": 10, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Extensions.CorsExtensions", "rp": "Infrastructure_CorsExtensions.html", "cl": 0, "ucl": 26, "cal": 26, "tl": 49, "cb": 0, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Extensions.JwtAuthenticationExtensions", "rp": "Infrastructure_JwtAuthenticationExtensions.html", "cl": 0, "ucl": 38, "cal": 38, "tl": 62, "cb": 0, "tb": 2, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "VNM.Infrastructure.Extensions.MiddlewarePipelineExtensions", "rp": "Infrastructure_MiddlewarePipelineExtensions.html", "cl": 0, "ucl": 8, "cal": 8, "tl": 20, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "VNM.Infrastructure.Extensions.SqlServerDataAccessExtensions", "rp": "Infrastructure_SqlServerDataAccessExtensions.html", "cl": 0, "ucl": 30, "cal": 30, "tl": 78, "cb": 0, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-    ]},
-  {
-    "name": "MeterIngestion",
-    "classes": [
-      { "name": "Infrastructure.Polling.InverterPollingServiceCollectionExtensions", "rp": "MeterIngestion_InverterPollingServiceCollectionExtensions.html", "cl": 0, "ucl": 11, "cal": 11, "tl": 22, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "InverterPollerFactory", "rp": "MeterIngestion_InverterPollerFactory.html", "cl": 0, "ucl": 16, "cal": 16, "tl": 27, "cb": 0, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "InverterPolling.Services.HttpInverterPoller", "rp": "MeterIngestion_HttpInverterPoller.html", "cl": 24, "ucl": 0, "cal": 24, "tl": 43, "cb": 1, "tb": 2, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "InverterPolling.Services.InverterPollingOptions", "rp": "MeterIngestion_InverterPollingOptions.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 85, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "InverterPolling.Services.InverterPollingService", "rp": "MeterIngestion_InverterPollingService.html", "cl": 0, "ucl": 42, "cal": 42, "tl": 85, "cb": 0, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "InverterPolling.Services.InverterReading", "rp": "MeterIngestion_InverterReading.html", "cl": 6, "ucl": 0, "cal": 6, "tl": 28, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "InverterPolling.Services.TcpInverterPoller", "rp": "MeterIngestion_TcpInverterPoller.html", "cl": 33, "ucl": 3, "cal": 36, "tl": 73, "cb": 5, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "InverterPollingOptions", "rp": "MeterIngestion_InverterPollingOptions.2.html", "cl": 0, "ucl": 6, "cal": 6, "tl": 11, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "MeterIngestion.Consumers.MeterEventConsumer", "rp": "MeterIngestion_MeterEventConsumer.html", "cl": 5, "ucl": 0, "cal": 5, "tl": 18, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "MeterIngestion.Controllers.InverterReadingsController", "rp": "MeterIngestion_InverterReadingsController.html", "cl": 0, "ucl": 16, "cal": 16, "tl": 39, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "MeterIngestion.Controllers.MeterController", "rp": "MeterIngestion_MeterController.html", "cl": 0, "ucl": 13, "cal": 13, "tl": 34, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "MeterIngestRequest", "rp": "MeterIngestion_MeterIngestRequest.html", "cl": 0, "ucl": 2, "cal": 2, "tl": 5, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Microsoft.AspNetCore.OpenApi.Generated", "rp": "MeterIngestion_Generated.html", "cl": 0, "ucl": 381, "cal": 381, "tl": 599, "cb": 0, "tb": 204, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Program", "rp": "MeterIngestion_Program.html", "cl": 0, "ucl": 47, "cal": 47, "tl": 127, "cb": 0, "tb": 14, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "System.Runtime.CompilerServices", "rp": "MeterIngestion_CompilerServices.html", "cl": 0, "ucl": 3, "cal": 3, "tl": 23, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "VNM.Infrastructure.Extensions.SwagerExtensions", "rp": "Infrastructure_SwagerExtensions.html", "cl": 0, "ucl": 22, "cal": 22, "tl": 41, "cb": 0, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "Repositories",
@@ -361,12 +326,6 @@ var assemblies = [
       { "name": "Repositories.Models.AspNetUser", "rp": "Repositories_AspNetUser.html", "cl": 7, "ucl": 0, "cal": 7, "tl": 21, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Repositories.Models.AspNetUserClaim", "rp": "Repositories_AspNetUserClaim.html", "cl": 4, "ucl": 1, "cal": 5, "tl": 17, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Repositories.Models.InverterReading", "rp": "Repositories_InverterReading.html", "cl": 6, "ucl": 0, "cal": 6, "tl": 19, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-    ]},
-  {
-    "name": "ServiceDefaults",
-    "classes": [
-      { "name": "ServiceDefaults.CustomSampler", "rp": "ServiceDefaults_CustomSampler.html", "cl": 0, "ucl": 31, "cal": 31, "tl": 63, "cb": 0, "tb": 32, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "ServiceDefaults.Extensions", "rp": "ServiceDefaults_Extensions.html", "cl": 0, "ucl": 150, "cal": 150, "tl": 196, "cb": 0, "tb": 28, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "Services",
@@ -392,106 +351,22 @@ var riskHotspotMetrics = [
 
 var riskHotspots = [
   {
-    "assembly": "DashboardBFF", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "DashboardBFF_Generated.html", "methodName": "TransformAsync(Microsoft.OpenApi.OpenApiOperation,Microsoft.AspNetCore.OpenApi.OpenApiOperationTransformerContext,System.Threading.CancellationToken)", "methodShortName": "TransformAsync(...)", "fileIndex": 0, "line": 353,
-    "metrics": [
-      { "value": 8556, "exceeded": true },
-      { "value": 92, "exceeded": true },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "MeterIngestion_Generated.html", "methodName": "TransformAsync(Microsoft.OpenApi.OpenApiOperation,Microsoft.AspNetCore.OpenApi.OpenApiOperationTransformerContext,System.Threading.CancellationToken)", "methodShortName": "TransformAsync(...)", "fileIndex": 0, "line": 353,
-    "metrics": [
-      { "value": 8556, "exceeded": true },
-      { "value": 92, "exceeded": true },
-    ]},
-  {
-    "assembly": "DashboardBFF", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "DashboardBFF_Generated.html", "methodName": "TransformAsync(Microsoft.OpenApi.OpenApiSchema,Microsoft.AspNetCore.OpenApi.OpenApiSchemaTransformerContext,System.Threading.CancellationToken)", "methodShortName": "TransformAsync(...)", "fileIndex": 0, "line": 518,
-    "metrics": [
-      { "value": 1190, "exceeded": true },
-      { "value": 34, "exceeded": true },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "MeterIngestion_Generated.html", "methodName": "TransformAsync(Microsoft.OpenApi.OpenApiSchema,Microsoft.AspNetCore.OpenApi.OpenApiSchemaTransformerContext,System.Threading.CancellationToken)", "methodShortName": "TransformAsync(...)", "fileIndex": 0, "line": 518,
-    "metrics": [
-      { "value": 1190, "exceeded": true },
-      { "value": 34, "exceeded": true },
-    ]},
-  {
-    "assembly": "ServiceDefaults", "class": "ServiceDefaults.CustomSampler", "reportPath": "ServiceDefaults_CustomSampler.html", "methodName": "ShouldSample(System.Runtime.InteropServices.InAttribute))", "methodShortName": "ShouldSample(...)", "fileIndex": 0, "line": 13,
-    "metrics": [
-      { "value": 1056, "exceeded": true },
-      { "value": 32, "exceeded": true },
-    ]},
-  {
-    "assembly": "DashboardBFF", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "DashboardBFF_Generated.html", "methodName": "GetTypeDocId(System.Type,System.Boolean,System.Boolean)", "methodShortName": "GetTypeDocId(...)", "fileIndex": 0, "line": 246,
-    "metrics": [
-      { "value": 812, "exceeded": true },
-      { "value": 28, "exceeded": true },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "MeterIngestion_Generated.html", "methodName": "GetTypeDocId(System.Type,System.Boolean,System.Boolean)", "methodShortName": "GetTypeDocId(...)", "fileIndex": 0, "line": 246,
-    "metrics": [
-      { "value": 812, "exceeded": true },
-      { "value": 28, "exceeded": true },
-    ]},
-  {
-    "assembly": "EventBusCore", "class": "EventBusCore.ServiceCollectionExtensions", "reportPath": "EventBusCore_ServiceCollectionExtensions.html", "methodName": "AddEventBus(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration,System.Reflection.Assembly[])", "methodShortName": "AddEventBus(...)", "fileIndex": 0, "line": 16,
-    "metrics": [
-      { "value": 420, "exceeded": true },
-      { "value": 20, "exceeded": true },
-    ]},
-  {
     "assembly": "Services", "class": "Services.Auth.AuthenticationService", "reportPath": "Services_AuthenticationService.html", "methodName": "GetCurrentUser(System.Security.Claims.ClaimsPrincipal)", "methodShortName": "GetCurrentUser(...)", "fileIndex": 0, "line": 9,
     "metrics": [
       { "value": 420, "exceeded": true },
       { "value": 20, "exceeded": true },
     ]},
   {
-    "assembly": "DashboardBFF", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "DashboardBFF_Generated.html", "methodName": "CreateDocumentationId(System.Reflection.MethodInfo)", "methodShortName": "CreateDocumentationId(...)", "fileIndex": 0, "line": 176,
-    "metrics": [
-      { "value": 342, "exceeded": true },
-      { "value": 18, "exceeded": true },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "MeterIngestion_Generated.html", "methodName": "CreateDocumentationId(System.Reflection.MethodInfo)", "methodShortName": "CreateDocumentationId(...)", "fileIndex": 0, "line": 176,
-    "metrics": [
-      { "value": 342, "exceeded": true },
-      { "value": 18, "exceeded": true },
-    ]},
-  {
-    "assembly": "ServiceDefaults", "class": "ServiceDefaults.Extensions", "reportPath": "ServiceDefaults_Extensions.html", "methodName": "ConfigureOpenTelemetry(Microsoft.Extensions.Hosting.IHostApplicationBuilder)", "methodShortName": "ConfigureOpenTelemetry(...)", "fileIndex": 0, "line": 40,
-    "metrics": [
-      { "value": 272, "exceeded": true },
-      { "value": 16, "exceeded": true },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Program", "reportPath": "MeterIngestion_Program.html", "methodName": "<Main>$(System.String[])", "methodShortName": "<Main>$(...)", "fileIndex": 0, "line": 18,
-    "metrics": [
-      { "value": 210, "exceeded": true },
-      { "value": 14, "exceeded": false },
-    ]},
-  {
-    "assembly": "DashboardBFF", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "DashboardBFF_Generated.html", "methodName": "CreateDocumentationId(System.Reflection.PropertyInfo)", "methodShortName": "CreateDocumentationId(...)", "fileIndex": 0, "line": 108,
+    "assembly": "Infrastructure", "class": "Infrastructure.Exceptions.ExceptionMiddleWare", "reportPath": "Infrastructure_ExceptionMiddleWare.html", "methodName": "HandleExceptionAsync()", "methodShortName": "HandleExceptionAsync()", "fileIndex": 0, "line": 31,
     "metrics": [
       { "value": 110, "exceeded": true },
       { "value": 10, "exceeded": false },
     ]},
   {
-    "assembly": "Infrastructure", "class": "Infrastructure.Exceptions.ExceptionMiddleWare", "reportPath": "Infrastructure_ExceptionMiddleWare.html", "methodName": "HandleExceptionAsync()", "methodShortName": "HandleExceptionAsync()", "fileIndex": 0, "line": 30,
+    "assembly": "Infrastructure", "class": "VNM.Infrastructure.Extensions.ConnectionStringBootstrapExtensions", "reportPath": "Infrastructure_ConnectionStringBootstrapExtensions.html", "methodName": "TryConfigureLocalVnmDbConnection(Microsoft.AspNetCore.Builder.WebApplicationBuilder)", "methodShortName": "TryConfigureLocalVnmDbConnection(...)", "fileIndex": 0, "line": 9,
     "metrics": [
       { "value": 110, "exceeded": true },
       { "value": 10, "exceeded": false },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "MeterIngestion_Generated.html", "methodName": "CreateDocumentationId(System.Reflection.PropertyInfo)", "methodShortName": "CreateDocumentationId(...)", "fileIndex": 0, "line": 108,
-    "metrics": [
-      { "value": 110, "exceeded": true },
-      { "value": 10, "exceeded": false },
-    ]},
-  {
-    "assembly": "DashboardBFF", "class": "DashboardBFF.Controllers.DashboardController", "reportPath": "DashboardBFF_DashboardController.html", "methodName": "GetCurrentUser()", "methodShortName": "GetCurrentUser()", "fileIndex": 0, "line": 98,
-    "metrics": [
-      { "value": 72, "exceeded": true },
-      { "value": 8, "exceeded": false },
     ]},
   {
     "assembly": "Infrastructure", "class": "Infrastructure.Logging.SerilogMiddleware", "reportPath": "Infrastructure_SerilogMiddleware.html", "methodName": "Invoke()", "methodShortName": "Invoke()", "fileIndex": 0, "line": 26,
@@ -504,42 +379,6 @@ var riskHotspots = [
     "metrics": [
       { "value": 72, "exceeded": true },
       { "value": 8, "exceeded": false },
-    ]},
-  {
-    "assembly": "ServiceDefaults", "class": "ServiceDefaults.Extensions", "reportPath": "ServiceDefaults_Extensions.html", "methodName": "ConfigureSerilogWithOpenTelemetry(Microsoft.Extensions.Hosting.IHostApplicationBuilder)", "methodShortName": "ConfigureSerilogWithOpenTelemetry(...)", "fileIndex": 0, "line": 109,
-    "metrics": [
-      { "value": 72, "exceeded": true },
-      { "value": 8, "exceeded": false },
-    ]},
-  {
-    "assembly": "DashboardBFF", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "DashboardBFF_Generated.html", "methodName": "NormalizeDocId(System.String)", "methodShortName": "NormalizeDocId(...)", "fileIndex": 0, "line": 328,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
-    ]},
-  {
-    "assembly": "DashboardBFF", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "DashboardBFF_Generated.html", "methodName": "UnwrapOpenApiParameter(Microsoft.OpenApi.IOpenApiParameter)", "methodShortName": "UnwrapOpenApiParameter(...)", "fileIndex": 0, "line": 491,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "InverterPolling.Services.InverterPollingService", "reportPath": "MeterIngestion_InverterPollingService.html", "methodName": "ExecuteAsync()", "methodShortName": "ExecuteAsync()", "fileIndex": 0, "line": 45,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "MeterIngestion_Generated.html", "methodName": "NormalizeDocId(System.String)", "methodShortName": "NormalizeDocId(...)", "fileIndex": 0, "line": 328,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
-    ]},
-  {
-    "assembly": "MeterIngestion", "class": "Microsoft.AspNetCore.OpenApi.Generated", "reportPath": "MeterIngestion_Generated.html", "methodName": "UnwrapOpenApiParameter(Microsoft.OpenApi.IOpenApiParameter)", "methodShortName": "UnwrapOpenApiParameter(...)", "fileIndex": 0, "line": 491,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
     ]},
   {
     "assembly": "Services", "class": "Services.Auth.DbUserPermissionResolver", "reportPath": "Services_DbUserPermissionResolver.html", "methodName": "GetPermissionsAsync()", "methodShortName": "GetPermissionsAsync()", "fileIndex": 0, "line": 19,

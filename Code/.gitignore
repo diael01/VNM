@@ -1,0 +1,4 @@
+# Repository-wide generated artifacts
+/Logs/
+/TestCoverage/
+/coverage/

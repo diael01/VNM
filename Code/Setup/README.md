@@ -6,7 +6,7 @@ Environment-aware setup and bootstrap guide for VNM infrastructure and database 
 
 - `Setup/setup.ps1`: orchestration script (local/stg/prod modes)
 - `Database/*.sql`: SQL artifacts applied by setup
-- `BackEnd/Aspire/AppHost`: one caller/orchestrator for local development
+- `Aspire/AppHost`: one caller/orchestrator for local development
 
 ## Prerequisites
 
@@ -125,7 +125,7 @@ Do you need code changes?
 1. Set SQL password for AppHost parameter:
 
 ```powershell
-dotnet user-secrets set "Parameters:sql-password" "YourPassword" --project BackEnd/Aspire/AppHost/AppHost.csproj
+dotnet user-secrets set "Parameters:sql-password" "YourPassword" --project Aspire/AppHost/AppHost.csproj
 ```
 
 This password is used by AppHost to start the SQL container, but it is not shown as a separate resource row in the Aspire dashboard.
@@ -133,11 +133,11 @@ This password is used by AppHost to start the SQL container, but it is not shown
 2. Start AppHost:
 
 ```powershell
-dotnet run --project BackEnd/Aspire/AppHost/AppHost.csproj
+dotnet run --project Aspire/AppHost/AppHost.csproj
 ```
 
 By default, AppHost auto-opens the UI URL in the browser after the UI is reachable.
-You can disable this in `BackEnd/Aspire/AppHost/appsettings.json`:
+You can disable this in `Aspire/AppHost/appsettings.json`:
 
 ```json
 {
@@ -235,6 +235,35 @@ From terminal at repo root:
 start .\TestCoverage\index.html
 ```
 
+## Logging retention and Application Insights
+
+For net10 web services using `AddServiceDefaults()` (`DashboardBFF`, `MeterIngestion`, `InverterSimulator`):
+
+- Logs are written to rolling files under `Logs/<ApplicationName>/log-<date>.txt`
+- File logs are recyclable by default:
+	- daily rolling
+	- roll on size limit
+	- size limit: `10 MB` per file
+	- retained files: `3`
+
+Environment behavior for file logs:
+
+- Development: enabled by default
+- Stg/Prod: disabled by default (to prefer platform log collection / App Insights)
+- Override with `Logging:File:Enabled=true|false`
+
+Optional settings (appsettings or environment variables):
+
+- `Logging:File:RootPath` (default: `Logs`)
+- `Logging:File:Enabled` (default: `true` in Development, `false` otherwise)
+- `Logging:File:FileSizeLimitBytes` (default: `10485760`)
+- `Logging:File:RetainedFileCountLimit` (default: `3`)
+
+Application Insights provision:
+
+- Set `ApplicationInsights:ConnectionString` (or `APPLICATIONINSIGHTS_CONNECTION_STRING`) to enable Serilog trace export to App Insights.
+- If not set, App Insights sink stays disabled.
+
 ## SSMS access after setup
 
 Connect with:
@@ -281,7 +310,7 @@ Test-NetConnection -ComputerName 127.0.0.1 -Port <mapped-port>
 ### Why `InverterReadings` may not be empty
 
 `res01-initial-setup` recreates databases, so `InverterReadings` starts empty.
-After setup finishes, services start and `MeterIngestionWeb` polling can insert new readings quickly.
+After setup finishes, services start and `MeterIngestion` polling can insert new readings quickly.
 So seeing rows there shortly after startup is expected behavior.
 
 ## About local SQL password
@@ -300,7 +329,7 @@ User-secrets works on macOS exactly the same as Windows/Linux.
 Example:
 
 ```powershell
-dotnet user-secrets set "Parameters:sql-password" "YourPassword" --project BackEnd/Aspire/AppHost/AppHost.csproj
+dotnet user-secrets set "Parameters:sql-password" "YourPassword" --project Aspire/AppHost/AppHost.csproj
 ```
 
 macOS storage location:

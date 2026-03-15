@@ -1,38 +1,23 @@
 Summary
-  Generated on: 3/15/2026 - 9:07:22 PM
-  Coverage date: 3/15/2026 - 9:06:50 PM - 3/15/2026 - 9:07:18 PM
-  Parser: MultiReport (6x Cobertura)
-  Assemblies: 7
-  Classes: 64
-  Files: 58
-  Line coverage: 16.8%
-  Covered lines: 361
-  Uncovered lines: 1777
-  Coverable lines: 2138
-  Total lines: 3856
-  Branch coverage: 7.6% (52 of 678)
-  Covered branches: 52
-  Total branches: 678
-  Method coverage: 34.4% (84 of 244)
-  Full method coverage: 33.1% (81 of 244)
-  Covered methods: 84
-  Fully covered methods: 81
-  Total methods: 244
-
-DashboardBFF                                                           0.7%
-  Dashboard.Consumers.DashboardConsumer                                100%
-  DashboardBFF.Controllers.DashboardController                           0%
-  DashboardBFF.Controllers.PermissionsController                         0%
-  Microsoft.AspNetCore.OpenApi.Generated                                 0%
-  Program                                                                0%
-  System.Runtime.CompilerServices                                        0%
-  VNM.Infrastructure.Extensions.ApplicationServicesExtensions            0%
-
-EventBusCore                                                          12.2%
-  EventBusCore.EventBusHealthCheck                                       0%
-  EventBusCore.Events.DashboardStatusEvent                             100%
-  EventBusCore.Events.MeterDataIngestedEvent                           100%
-  EventBusCore.ServiceCollectionExtensions                               0%
+  Generated on: 3/15/2026 - 10:11:20 PM
+  Coverage date: 3/15/2026 - 10:09:33 PM
+  Parser: MultiReport (2x Cobertura)
+  Assemblies: 3
+  Classes: 39
+  Files: 36
+  Line coverage: 35.8%
+  Covered lines: 282
+  Uncovered lines: 504
+  Coverable lines: 786
+  Total lines: 1556
+  Branch coverage: 29.4% (46 of 156)
+  Covered branches: 46
+  Total branches: 156
+  Method coverage: 48.1% (64 of 133)
+  Full method coverage: 46.6% (62 of 133)
+  Covered methods: 64
+  Fully covered methods: 62
+  Total methods: 133
 
 Infrastructure                                                           0%
   Infrastructure.Exceptions.ExceptionMiddleWare                          0%
@@ -48,26 +33,12 @@ Infrastructure                                                           0%
   VNM.Infrastructure.Extensions.ApplicationBuilderExtensions             0%
   VNM.Infrastructure.Extensions.AuthenticationExtension                  0%
   VNM.Infrastructure.Extensions.ClientRegistrationExtension              0%
+  VNM.Infrastructure.Extensions.ConnectionStringBootstrapExtensions      0%
   VNM.Infrastructure.Extensions.CorsExtensions                           0%
   VNM.Infrastructure.Extensions.JwtAuthenticationExtensions              0%
+  VNM.Infrastructure.Extensions.MiddlewarePipelineExtensions             0%
   VNM.Infrastructure.Extensions.SqlServerDataAccessExtensions            0%
-
-MeterIngestion                                                        11.1%
-  Infrastructure.Polling.InverterPollingServiceCollectionExtensions      0%
-  InverterPollerFactory                                                  0%
-  InverterPolling.Services.HttpInverterPoller                          100%
-  InverterPolling.Services.InverterPollingOptions                        0%
-  InverterPolling.Services.InverterPollingService                        0%
-  InverterPolling.Services.InverterReading                             100%
-  InverterPolling.Services.TcpInverterPoller                          91.6%
-  InverterPollingOptions                                                 0%
-  MeterIngestion.Consumers.MeterEventConsumer                          100%
-  MeterIngestion.Controllers.InverterReadingsController                  0%
-  MeterIngestion.Controllers.MeterController                             0%
-  MeterIngestRequest                                                     0%
-  Microsoft.AspNetCore.OpenApi.Generated                                 0%
-  Program                                                                0%
-  System.Runtime.CompilerServices                                        0%
+  VNM.Infrastructure.Extensions.SwagerExtensions                         0%
 
 Repositories                                                          87.1%
   Repositories.CRUD.Extensions.ServiceCollectionExtensions               0%
@@ -83,10 +54,6 @@ Repositories                                                          87.1%
   Repositories.Models.AspNetUser                                       100%
   Repositories.Models.AspNetUserClaim                                   80%
   Repositories.Models.InverterReading                                  100%
-
-ServiceDefaults                                                          0%
-  ServiceDefaults.CustomSampler                                          0%
-  ServiceDefaults.Extensions                                             0%
 
 Services                                                              53.2%
   Services.Auth.AuthenticationService                                    0%

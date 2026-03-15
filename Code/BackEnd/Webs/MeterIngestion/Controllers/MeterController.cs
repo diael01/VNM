@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace MeterIngestion.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class MeterController : ControllerBase
 {
     private readonly IPublishEndpoint _publishEndpoint;

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace InverterSimulator.Controllers;
 
 [ApiController]
-[Route("api/inverter")]
+[Route("api/v1/inverter")]
 [Authorize]
 //[Authorize(Roles = "admin")] //in this case bob cant query coz he is a contributor
 public class InverterController : ControllerBase

@@ -5,7 +5,7 @@ using Services.Inverter;
 namespace MeterIngestion.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class InverterReadingsController : ControllerBase
 {
     private readonly IInverterReadingService _inverterReadingService;

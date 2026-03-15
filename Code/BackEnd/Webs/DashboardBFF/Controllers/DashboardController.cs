@@ -15,6 +15,7 @@ using IAuthenticationService = Services.Auth.IAuthenticationService;
 namespace DashboardBFF.Controllers
 {
     [ApiController]
+    [Route("api/v1/dashboard")]
     public class DashboardController : ControllerBase
     {
         private readonly IPublishEndpoint _publishEndpoint;
@@ -41,7 +42,6 @@ namespace DashboardBFF.Controllers
         }
 
         [HttpGet("status")]
-        [Route("api/dashboard/status")]
         public async Task<IActionResult> GetStatus()
         {
             var evt = new DashboardStatusEvent
@@ -54,7 +54,7 @@ namespace DashboardBFF.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("/api/system/ready")]
+        [HttpGet("/api/v1/system/ready")]
         public async Task<IActionResult> GetBackendReadiness(CancellationToken cancellationToken)
         {
             var meterReady = await ProbeServiceAsync("meter-api", cancellationToken);
@@ -93,7 +93,7 @@ namespace DashboardBFF.Controllers
             await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, properties);
         }
 
-        [HttpGet("/api/auth/me")]
+        [HttpGet("/api/v1/auth/me")]
         public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
         {
             if (!(User.Identity?.IsAuthenticated ?? false))
@@ -126,30 +126,18 @@ namespace DashboardBFF.Controllers
             return Ok(currentUser);
         }
 
-        //todo: use exception middleware  instea dof try-catch in controller
-        [HttpGet("/api/dashboard")]
+        [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
         {
-            try
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            if (string.IsNullOrWhiteSpace(accessToken))
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                if (string.IsNullOrWhiteSpace(accessToken))
-                {
-                    throw new UnauthorizedAccessException("Access token is missing.");
-                }
+                throw new UnauthorizedAccessException("Access token is missing.");
+            }
 
-                var result = await _dashboardService.GetDashboardAsync(accessToken, cancellationToken);
-                return Ok(result);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
-            }
-            catch (Exception ex)
-            {
-                return Problem(ex.Message);
-            }
+            var result = await _dashboardService.GetDashboardAsync(accessToken, cancellationToken);
+            return Ok(result);
         }
 
         private async Task<bool> ProbeServiceAsync(string clientName, CancellationToken cancellationToken)

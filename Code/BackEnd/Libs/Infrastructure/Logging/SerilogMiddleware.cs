@@ -39,9 +39,9 @@ namespace Infrastructure.Logging
                 log.Write(level, MessageTemplate, httpContext.Request.Method, GetPath(httpContext), statusCode, elapsedMs);
             }
             // Never caught, because `LogException()` returns false.
-            catch (Exception ex) when 
-            (LogException(httpContext, GetElapsedMilliseconds(start, Stopwatch.GetTimestamp()), ex)) 
-            { 
+            catch (Exception ex) when
+            (LogException(httpContext, GetElapsedMilliseconds(start, Stopwatch.GetTimestamp()), ex))
+            {
 
             }
         }

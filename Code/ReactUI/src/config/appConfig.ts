@@ -20,12 +20,12 @@ function resolveFrontendBaseUrl(): string {
 const apiBaseUrl = trimTrailingSlash(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL)
 const frontendBaseUrl = resolveFrontendBaseUrl()
 
-const authMePath = import.meta.env.VITE_AUTH_ME_PATH || "/api/auth/me"
+const authMePath = import.meta.env.VITE_AUTH_ME_PATH || "/api/v1/auth/me"
 const loginPath = import.meta.env.VITE_LOGIN_PATH || "/login"
 const logoutPath = import.meta.env.VITE_LOGOUT_PATH || "/logout"
-const backendReadyPath = import.meta.env.VITE_BACKEND_READY_PATH || "/api/system/ready"
-const dashboardPath = import.meta.env.VITE_DASHBOARD_PATH || "/api/dashboard"
-const inverterDataPath = import.meta.env.VITE_INVERTER_DATA_PATH || "/api/inverter/data"
+const backendReadyPath = import.meta.env.VITE_BACKEND_READY_PATH || "/api/v1/system/ready"
+const dashboardPath = import.meta.env.VITE_DASHBOARD_PATH || "/api/v1/dashboard"
+const inverterDataPath = import.meta.env.VITE_INVERTER_DATA_PATH || "/api/v1/inverter/data"
 
 function combine(baseUrl: string, path: string): string {
   if (path.startsWith("http://") || path.startsWith("https://")) {

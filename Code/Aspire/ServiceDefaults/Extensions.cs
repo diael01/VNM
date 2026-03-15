@@ -11,6 +11,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.ApplicationInsights.TelemetryConverters;
 using Serilog.Sinks.OpenTelemetry;
 
 namespace ServiceDefaults;
@@ -109,13 +110,32 @@ public static class Extensions
     {
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {
+            var appName = builder.Environment.ApplicationName;
+            var logsRoot = builder.Configuration["Logging:File:RootPath"] ?? "Logs";
+            var fileLoggingEnabled = builder.Configuration.GetValue<bool?>("Logging:File:Enabled")
+                ?? builder.Environment.IsDevelopment();
+            var retainedFileCount = builder.Configuration.GetValue<int?>("Logging:File:RetainedFileCountLimit") ?? 3;
+            var fileSizeLimitBytes = builder.Configuration.GetValue<long?>("Logging:File:FileSizeLimitBytes") ?? 10_485_760;
+
             loggerConfiguration
                 .ReadFrom.Configuration(builder.Configuration)
                 .Enrich.FromLogContext()
-                .Enrich.WithProperty("ApplicationName", builder.Environment.ApplicationName)
+                .Enrich.WithProperty("ApplicationName", appName)
                 .WriteTo.Console(
                     outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
                 );
+
+            if (fileLoggingEnabled)
+            {
+                loggerConfiguration.WriteTo.File(
+                    path: Path.Combine(logsRoot, appName, "log-.txt"),
+                    rollingInterval: RollingInterval.Day,
+                    rollOnFileSizeLimit: true,
+                    retainedFileCountLimit: retainedFileCount,
+                    fileSizeLimitBytes: fileSizeLimitBytes,
+                    shared: true,
+                    flushToDiskInterval: TimeSpan.FromSeconds(5));
+            }
 
             // Check if OTLP endpoint is configured (Aspire will set this automatically)
             //var otlpEndpoint = !builder.Environment.IsDevelopment() && 
@@ -138,6 +158,17 @@ public static class Extensions
                         ["deployment.environment"] = builder.Environment.EnvironmentName
                     };
                 });
+            }
+
+            var appInsightsConnectionString =
+                builder.Configuration["ApplicationInsights:ConnectionString"]
+                ?? builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+            if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
+            {
+                loggerConfiguration.WriteTo.ApplicationInsights(
+                    connectionString: appInsightsConnectionString,
+                    telemetryConverter: TelemetryConverter.Traces);
             }
 
             if (builder.Environment.IsDevelopment())

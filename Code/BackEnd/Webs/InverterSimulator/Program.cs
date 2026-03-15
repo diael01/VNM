@@ -17,7 +17,7 @@ builder.Services.Configure<InverterSimulatorOptions>(
 // MVC
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwager();
 builder.Services.AddHealthChecks()
     .AddCheck("basic", () => HealthCheckResult.Healthy("Service is running"));
 
@@ -26,17 +26,11 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseSerilogRequestLogging();
+app.UseGlobalExceptionHandling();
+app.UseStructuredRequestLogging();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "InverterSimulator API V1");
-        c.RoutePrefix = string.Empty;
-    });
-}
+//Swagger
+app.UseSwagerInDevelopment();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

@@ -20,7 +20,8 @@ namespace Infrastructure.Exceptions
             try
             {
                 await next(httpContext);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 await HandleExceptionAsync(httpContext, ex);
             }
@@ -34,9 +35,9 @@ namespace Infrastructure.Exceptions
             switch (exception)
             {
                 //case ContabApiException:                
-                    //var ex = exception as ContabApiException;
-                    //await context.Response.WriteAsync(ex!.ToJson());
-                    //return;
+                //var ex = exception as ContabApiException;
+                //await context.Response.WriteAsync(ex!.ToJson());
+                //return;
                 case UnauthorizedAccessException:
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     break;

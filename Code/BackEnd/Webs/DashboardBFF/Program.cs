@@ -11,13 +11,21 @@ using Repositories.CRUD.Extensions;
 using Services.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>(optional: true);
+}
+
+builder.TryConfigureLocalVnmDbConnection();
+
 // Platform
 builder.AddServiceDefaults();
 builder.Services.AddEventBus(builder.Configuration, typeof(DashboardConsumer).Assembly);
 
 // MVC / API
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwager();
 builder.Services.AddHealthChecks()
     .AddCheck("basic", () => HealthCheckResult.Healthy("Service is running"));
 
@@ -33,22 +41,15 @@ builder.Services.AddAppServices();
 builder.Services.AddBffApplicationServices();
 
 var app = builder.Build();
-app.UseSerilogRequestLogging();
+app.UseGlobalExceptionHandling();
+app.UseStructuredRequestLogging();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dashboard BFF API V1");
-        c.RoutePrefix = string.Empty;
-    });
-}
+//Swagger
+app.UseSwagerInDevelopment();
 
 app.UseHttpsRedirection();
 app.UseCors(CorsExtensions.FrontendCorsPolicy);
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseBffSecurity();
 
 app.MapControllers();
 app.MapDefaultEndpoints();
