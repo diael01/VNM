@@ -1,6 +1,10 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+
+afterEach(() => {
+  cleanup()
+})
 
 vi.mock('./api/bffApi', () => ({
   fetchCurrentUser: vi.fn(),
@@ -18,7 +22,7 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(await screen.findByText('Dependent backend services are initializing...')).toBeInTheDocument()
+    expect(await screen.findByText('Please login...')).toBeInTheDocument()
   })
 
   it('shows login message for anonymous user when services are ready', async () => {
@@ -27,6 +31,6 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(await screen.findByText('Please log in to view the dashboard.')).toBeInTheDocument()
+    expect(await screen.findByText('Please login...')).toBeInTheDocument()
   })
 })

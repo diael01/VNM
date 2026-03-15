@@ -155,6 +155,8 @@ After `res01-initial-setup` succeeds, all services waiting on setup will start.
 
 If Docker is installed but not running, `res00-prereq-check` attempts to start Docker Desktop and waits for daemon readiness.
 If Docker is missing (or cannot be started), `res00-prereq-check` fails with a clear error and dependent resources do not start.
+If required containers are missing, `res00-prereq-check` now creates them (`vnm-sqlserver` and `vnm-rabbitmq`) before continuing.
+For SQL container creation, a password must be available from `Parameters:sql-password` (AppHost secret), or from `APPHOST_SQL_PASSWORD` / `SA_PASSWORD` when running the script directly.
 
 ## What res01-initial-setup does
 
@@ -188,7 +190,8 @@ In `stg/prod` mode the script uses host `sqlcmd` (no `docker exec`).
 
 ## SQL and RabbitMQ images/containers
 
-- AppHost resources create/start containers.
+- `res00-prereq-check` ensures required local containers exist and are running.
+- Missing containers are created automatically (`vnm-sqlserver` from `mcr.microsoft.com/mssql/server:2022-latest`, `vnm-rabbitmq` from `rabbitmq:3-management`).
 - If image is missing, Docker pulls it automatically.
 - `res01-initial-setup` initializes databases; it does not create RabbitMQ container.
 

@@ -1,7 +1,10 @@
 #Requires -Version 5.1
 param(
     [switch] $RequireDocker,
-    [string[]] $EnsureContainer
+    [string[]] $EnsureContainer,
+    [string] $SqlContainerImage = 'mcr.microsoft.com/mssql/server:2022-latest',
+    [string] $RabbitMqContainerImage = 'rabbitmq:3-management',
+    [string] $SqlSaPassword
 )
 
 Set-StrictMode -Version Latest
@@ -104,6 +107,71 @@ function Get-ContainerStatus {
     }
 }
 
+function New-ContainerIfMissing {
+    param([string] $Name)
+
+    switch ($Name) {
+        'vnm-sqlserver' {
+            $sqlPassword = $SqlSaPassword
+            if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
+                $sqlPassword = $env:APPHOST_SQL_PASSWORD
+            }
+
+            if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
+                $sqlPassword = $env:SA_PASSWORD
+            }
+
+            if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
+                throw "Container '$Name' is missing and cannot be created because no SQL SA password was provided. Pass -SqlSaPassword or set APPHOST_SQL_PASSWORD/SA_PASSWORD."
+            }
+
+            Write-Host "Creating SQL container '$Name' from image '$SqlContainerImage'..."
+            $sqlRunArgs = @(
+                'run',
+                '-d',
+                '--name', $Name,
+                '--restart', 'unless-stopped',
+                '-P',
+                '-e', 'ACCEPT_EULA=Y',
+                '-e', 'MSSQL_PID=Developer',
+                '-e', "MSSQL_SA_PASSWORD=$sqlPassword",
+                $SqlContainerImage
+            )
+
+            & docker @sqlRunArgs 1>$null
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create SQL container '$Name'."
+            }
+
+            return $true
+        }
+        'vnm-rabbitmq' {
+            Write-Host "Creating RabbitMQ container '$Name' from image '$RabbitMqContainerImage'..."
+            $rabbitRunArgs = @(
+                'run',
+                '-d',
+                '--name', $Name,
+                '--restart', 'unless-stopped',
+                '-P',
+                $RabbitMqContainerImage
+            )
+
+            & docker @rabbitRunArgs 1>$null
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create RabbitMQ container '$Name'."
+            }
+
+            return $true
+        }
+        default {
+            Write-Host "Container '$Name' does not exist and has no prereq auto-create rule."
+            return $false
+        }
+    }
+}
+
 function Ensure-ContainerRunning {
     param([string] $Name)
 
@@ -114,7 +182,11 @@ function Ensure-ContainerRunning {
     $status = Get-ContainerStatus -Name $Name
 
     if (-not $status) {
-        Write-Host "Container '$Name' does not exist yet. It will be created by Aspire if needed."
+        if (-not (New-ContainerIfMissing -Name $Name)) {
+            return
+        }
+
+        Write-Host "Container '$Name' created successfully."
         return
     }
 
@@ -164,7 +236,13 @@ if ($RequireDocker) {
 
     Write-Host "Docker prerequisite check passed."
 
-    foreach ($containerName in ($EnsureContainer | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)) {
+    $containersToEnsure = $EnsureContainer |
+        ForEach-Object { ($_ -split ',') } |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        Select-Object -Unique
+
+    foreach ($containerName in $containersToEnsure) {
         Ensure-ContainerRunning -Name $containerName
     }
 }

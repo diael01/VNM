@@ -29,8 +29,16 @@ public static class PrereqHostingExtensions
             "prereq-check.ps1",
             "-RequireDocker",
             "-EnsureContainer",
-            "vnm-sqlserver",
-            "-EnsureContainer",
-            "vnm-rabbitmq");
+            "vnm-sqlserver,vnm-rabbitmq")
+            .WithEnvironment(context =>
+            {
+                var sqlPassword = builder.Configuration["Parameters:sql-password"]
+                    ?? builder.Configuration["SA_PASSWORD"];
+
+                if (!string.IsNullOrWhiteSpace(sqlPassword))
+                {
+                    context.EnvironmentVariables["APPHOST_SQL_PASSWORD"] = sqlPassword;
+                }
+            });
     }
 }
