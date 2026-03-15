@@ -5,8 +5,6 @@ using EventBusCore;
 using MeterIngestionWeb.Consumers;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using InverterPolling.Services;
-using InverterPolling.Data;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Infrastructure.Polling;
 using VNM.Infrastructure.Extensions;
@@ -18,6 +16,27 @@ using Services.DependencyInjection;
 // Build the application
 // ---------------------
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+{
+    // Enable direct local runs outside Aspire by loading development secrets before service registration.
+    builder.Configuration.AddUserSecrets<Program>(optional: true);
+}
+
+if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("VnmDb")))
+{
+    var password = builder.Configuration["SA_PASSWORD"]
+        ?? builder.Configuration["Parameters:sql-password"];
+
+    if (!string.IsNullOrWhiteSpace(password))
+    {
+        var host = builder.Configuration["SQL_HOST"] ?? "localhost";
+        var port = builder.Configuration["SQL_PORT"] ?? "1433";
+
+        builder.Configuration["ConnectionStrings:VnmDb"] =
+            $"Server=tcp:{host},{port};Database=VNM;User ID=sa;Password={password};Encrypt=True;TrustServerCertificate=True;";
+    }
+}
 
 // ---------------------
 // Event Bus
@@ -48,13 +67,9 @@ builder.Services.Configure<InverterPollingOptions>(
 builder.Services.AddHttpClient();
 
 // ---------------------
-// DbContext (Scoped)
+// DbContext
 // ---------------------
-builder.Services.AddDbContextFactory<SolarDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
-
-builder.Services.AddDbContext<VnmDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
+builder.Services.AddSqlServerDbContexts<VnmDbContext, VnmDbContext>(builder.Configuration);
 
 builder.Services.AddRepositoriesCrud();
 builder.Services.AddAppServices();
@@ -85,7 +100,6 @@ app.UseSerilogRequestLogging();
 // ---------------------
 if (app.Environment.IsDevelopment())
 {
-    builder.Configuration.AddUserSecrets<Program>();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -105,15 +119,6 @@ app.UseAuthorization();
 // ---------------------
 app.MapControllers();
 app.MapDefaultEndpoints(); // health, metrics, etc
-
-// ---------------------
-// Ensure database exists on startup
-// ---------------------
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<SolarDbContext>();
-    db.Database.Migrate(); // Applies migrations or creates DB if missing
-}
 
 // ---------------------
 // Run the app

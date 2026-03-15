@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection; // <-- this is required
 using Microsoft.Extensions.Options;
 using InverterPolling.Services;
-using InverterPolling.Data;
 
 namespace Infrastructure.Polling;
 

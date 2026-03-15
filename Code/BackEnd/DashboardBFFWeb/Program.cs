@@ -6,7 +6,6 @@ using Serilog;
 using VNM.Infrastructure.Extensions;
 using Services.Auth;
 using Services.Redirect;
-using Microsoft.EntityFrameworkCore;
 using Repositories.Data;
 using Repositories.CRUD.Extensions;
 using Services.DependencyInjection;
@@ -26,8 +25,7 @@ builder.Services.AddHealthChecks()
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddBffAuthentication(builder.Configuration);
 builder.Services.AddDownstreamServiceClients(builder.Configuration);
-builder.Services.AddDbContext<VnmDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SolarDb")));
+builder.Services.AddSqlServerDbContext<VnmDbContext>(builder.Configuration);
 builder.Services.AddRepositoriesCrud();
 builder.Services.AddAppServices();
 

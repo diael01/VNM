@@ -1,8 +1,8 @@
 using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using InverterPolling.Data;
 using System.Threading.Tasks;
+using Repositories.Data;
 
 namespace MeterIngestionWeb.IntegrationTests;
 
@@ -20,7 +20,7 @@ public class InverterPollingIntegrationTests : IntegrationTestBase
     {
         await using var scope = Factory.Services.CreateAsyncScope();
 
-        var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<SolarDbContext>>();
+        var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<VnmDbContext>>();
 
         // Wait for background polling to complete
         await Task.Delay(500);

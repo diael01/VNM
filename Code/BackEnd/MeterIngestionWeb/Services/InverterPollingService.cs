@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using InverterPolling.Data;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Repositories.Data;
+using Repositories.Models;
 
 
 namespace InverterPolling.Services
@@ -26,13 +27,13 @@ namespace InverterPolling.Services
         private readonly ILogger<InverterPollingService> _logger;
         private readonly IInverterPoller _poller;
         private readonly InverterPollingOptions _options;
-        private readonly IDbContextFactory<SolarDbContext> _dbFactory;
+        private readonly IDbContextFactory<VnmDbContext> _dbFactory;
 
         public InverterPollingService(
             ILogger<InverterPollingService> logger,
             IInverterPoller poller,
             IOptions<InverterPollingOptions> options,
-            IDbContextFactory<SolarDbContext> dbFactory) // inject factory
+            IDbContextFactory<VnmDbContext> dbFactory)
         {
             _logger = logger;
             _poller = poller;
@@ -55,9 +56,16 @@ namespace InverterPolling.Services
 
                     if (reading != null)
                     {
-                        reading.Source = _options.Source;
+                        var entity = new Repositories.Models.InverterReading
+                        {
+                            TimestampUtc = reading.TimestampUtc,
+                            PowerW = reading.PowerW,
+                            VoltageV = reading.VoltageV,
+                            CurrentA = reading.CurrentA,
+                            Source = _options.Source,
+                        };
 
-                        dbContext.InverterReadings.Add(reading);
+                        dbContext.InverterReadings.Add(entity);
                         await dbContext.SaveChangesAsync(stoppingToken);
 
                         _logger.LogInformation(
