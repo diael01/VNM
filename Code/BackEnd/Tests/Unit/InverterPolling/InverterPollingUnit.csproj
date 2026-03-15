@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../MeterIngestionWeb\MeterIngestionWeb.csproj" />
+    <ProjectReference Include="../../../Webs/MeterIngestion/MeterIngestion.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
 

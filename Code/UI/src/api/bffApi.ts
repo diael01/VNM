@@ -1,11 +1,19 @@
+import { appConfig, buildLoginUrl } from "../config/appConfig"
+
 export type UserInfo = {
   name?: string
   roles: string[]
   permissions: string[]
 }
 
+export type BackendReadiness = {
+  ready: boolean
+  meterReady: boolean
+  inverterReady: boolean
+}
+
 export async function fetchCurrentUser(): Promise<UserInfo | null> {
-  const response = await fetch("https://localhost:7144/api/auth/me", {
+  const response = await fetch(appConfig.urls.authMe, {
     credentials: "include",
   })
 
@@ -36,9 +44,39 @@ export async function fetchCurrentUser(): Promise<UserInfo | null> {
 }
 
 export function login() {
-  window.location.href = "https://localhost:7144/login?returnUrl=http://localhost:5173"
+  window.location.href = buildLoginUrl()
 }
 
 export function logout() {
-  window.location.href = "https://localhost:7144/logout"
+  window.location.href = appConfig.urls.logout
+}
+
+export async function fetchBackendReady(): Promise<BackendReadiness> {
+  try {
+    const response = await fetch(appConfig.urls.backendReady, {
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      return {
+        ready: false,
+        meterReady: false,
+        inverterReady: false,
+      }
+    }
+
+    const data = await response.json() as Partial<BackendReadiness>
+
+    return {
+      ready: data.ready === true,
+      meterReady: data.meterReady === true,
+      inverterReady: data.inverterReady === true,
+    }
+  } catch {
+    return {
+      ready: false,
+      meterReady: false,
+      inverterReady: false,
+    }
+  }
 }

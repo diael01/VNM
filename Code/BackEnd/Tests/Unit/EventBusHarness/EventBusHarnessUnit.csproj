@@ -25,9 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
-   <ProjectReference Include="../../../EventBusCore/EventBusCore.csproj" />
-<ProjectReference Include="../../../MeterIngestionWeb/MeterIngestionWeb.csproj" />
-<ProjectReference Include="../../../DashboardBFFWeb/DashboardBFFWeb.csproj" />
+   <ProjectReference Include="../../../Libs/EventBusCore/EventBusCore.csproj" />
+<ProjectReference Include="../../../Webs/MeterIngestion/MeterIngestion.csproj" />
+<ProjectReference Include="../../../Webs/DashboardBFF/DashboardBFF.csproj" />
   </ItemGroup>
 
 </Project>

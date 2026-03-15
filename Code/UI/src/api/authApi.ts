@@ -1,3 +1,5 @@
+import { appConfig } from "../config/appConfig"
+
 export type CurrentUser = {
   name?: string
   roles: string[]
@@ -5,7 +7,7 @@ export type CurrentUser = {
 }
 
 export async function fetchCurrentUser(): Promise<CurrentUser | null> {
-  const response = await fetch("https://localhost:7144/api/auth/me", {
+  const response = await fetch(appConfig.urls.authMe, {
     credentials: "include",
   })
 

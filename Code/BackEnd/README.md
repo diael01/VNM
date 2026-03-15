@@ -13,19 +13,28 @@
 ## Project Structure
 
 ```
-EnergyRev/Backend/
-├── Api/               # ASP.NET Core API project
-├── ServiceDefaults/   # Shared OpenTelemetry configuration
-├── AppHost/           # .NET Aspire orchestrator
-└── requests.http                       # Sample HTTP requests
+Code/
+├── Aspire/
+│   ├── AppHost/           # .NET Aspire local orchestrator and dashboard entry point
+│   └── ServiceDefaults/   # Shared service defaults used by backend services
+├── BackEnd/               # Deployable backend services and libraries
+├── UI/                    # Frontend application
+├── Database/              # Database scripts and assets
+└── Setup/                 # Local setup and prerequisite scripts
 ```
+
+### Deployment Boundary
+
+- Deploy staging and production from the service projects under `BackEnd/`, the frontend under `UI/`, and the required database artifacts.
+- Do not deploy `Aspire/AppHost` as a runtime service to staging or production. It is the local orchestration entry point for development.
+- `Aspire/ServiceDefaults` remains a shared library and is included indirectly through the backend service builds.
 
 ## Quick Start
 
 ### 1. Run the Application with .NET Aspire
 
 ```bash
-cd AppHost
+cd ../Aspire/AppHost
 dotnet run
 ```
 
@@ -120,7 +129,7 @@ Serilog is configured to:
 
 ### No data in Aspire Dashboard?
 
-1. Ensure the application is running through the AppHost project
+1. Ensure the application is running through the `Aspire/AppHost` project
 2. Check the console output for any errors
 3. Verify you're making requests to generate telemetry
 4. The dashboard should automatically receive all telemetry data

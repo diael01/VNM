@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Repositories\Repositories.csproj" />
-    <ProjectReference Include="..\..\..\Services\Services.csproj" />
+    <ProjectReference Include="..\..\..\Libs\Repositories\Repositories.csproj" />
+    <ProjectReference Include="..\..\..\Libs\Services\Services.csproj" />
   </ItemGroup>
 
 </Project>

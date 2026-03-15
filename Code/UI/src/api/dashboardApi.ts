@@ -1,3 +1,5 @@
+import { appConfig } from "../config/appConfig"
+
 export type DashboardResponse = {
   inverter: {
     power: number
@@ -8,7 +10,7 @@ export type DashboardResponse = {
 }
 
 export async function fetchDashboardData(): Promise<DashboardResponse> {
-  const response = await fetch("/api/dashboard", {
+  const response = await fetch(appConfig.urls.dashboard, {
     credentials: "include",
   })
 

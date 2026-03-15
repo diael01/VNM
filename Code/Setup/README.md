@@ -153,7 +153,8 @@ You can disable this in `BackEnd/Aspire/AppHost/appsettings.json`:
 
 After `res01-initial-setup` succeeds, all services waiting on setup will start.
 
-If Docker is missing or not running, `res00-prereq-check` fails with a clear error and dependent resources do not start.
+If Docker is installed but not running, `res00-prereq-check` attempts to start Docker Desktop and waits for daemon readiness.
+If Docker is missing (or cannot be started), `res00-prereq-check` fails with a clear error and dependent resources do not start.
 
 ## What res01-initial-setup does
 
