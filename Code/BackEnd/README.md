@@ -18,14 +18,14 @@ Code/
 │   ├── AppHost/           # .NET Aspire local orchestrator and dashboard entry point
 │   └── ServiceDefaults/   # Shared service defaults used by backend services
 ├── BackEnd/               # Deployable backend services and libraries
-├── UI/                    # Frontend application
+├── ReactUI/               # Frontend application
 ├── Database/              # Database scripts and assets
 └── Setup/                 # Local setup and prerequisite scripts
 ```
 
 ### Deployment Boundary
 
-- Deploy staging and production from the service projects under `BackEnd/`, the frontend under `UI/`, and the required database artifacts.
+- Deploy staging and production from the service projects under `BackEnd/`, the frontend under `ReactUI/`, and the required database artifacts.
 - Do not deploy `Aspire/AppHost` as a runtime service to staging or production. It is the local orchestration entry point for development.
 - `Aspire/ServiceDefaults` remains a shared library and is included indirectly through the backend service builds.
 

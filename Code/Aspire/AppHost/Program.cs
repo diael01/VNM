@@ -14,6 +14,7 @@ var uiUrl = uiOptions.GetUrl(environmentName);
 var autoOpenUi = builder.Configuration.GetValue("AppHost:AutoOpenUi", true);
 
 var prereq = builder.AddPrereqCheck();
+builder.AddCoverageDashboard();
 
 var db = builder.AddVnmDatabaseInfrastructure();
 db.SqlServer.WaitForCompletion(prereq);
@@ -29,8 +30,8 @@ builder.AddRabbitMQ("res08-rabbitmq")
 var initialSetup = builder.AddInitialSetup(db)
 	.WaitForCompletion(prereq);
 
-// 2) UI resource
-var ui = builder.AddNpmApp("res02-ui-frontend", "../../UI", "dev")
+// 2) React UI resource
+var ui = builder.AddNpmApp("res02-ui-frontend", "../../ReactUI", "dev")
 	.WithHttpEndpoint(targetPort: uiPort, port: uiPort, name: "http", isProxied: false)
 	.WaitForCompletion(initialSetup);
 

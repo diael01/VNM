@@ -1,0 +1,98 @@
+Summary
+  Generated on: 3/15/2026 - 9:07:22 PM
+  Coverage date: 3/15/2026 - 9:06:50 PM - 3/15/2026 - 9:07:18 PM
+  Parser: MultiReport (6x Cobertura)
+  Assemblies: 7
+  Classes: 64
+  Files: 58
+  Line coverage: 16.8%
+  Covered lines: 361
+  Uncovered lines: 1777
+  Coverable lines: 2138
+  Total lines: 3856
+  Branch coverage: 7.6% (52 of 678)
+  Covered branches: 52
+  Total branches: 678
+  Method coverage: 34.4% (84 of 244)
+  Full method coverage: 33.1% (81 of 244)
+  Covered methods: 84
+  Fully covered methods: 81
+  Total methods: 244
+
+DashboardBFF                                                           0.7%
+  Dashboard.Consumers.DashboardConsumer                                100%
+  DashboardBFF.Controllers.DashboardController                           0%
+  DashboardBFF.Controllers.PermissionsController                         0%
+  Microsoft.AspNetCore.OpenApi.Generated                                 0%
+  Program                                                                0%
+  System.Runtime.CompilerServices                                        0%
+  VNM.Infrastructure.Extensions.ApplicationServicesExtensions            0%
+
+EventBusCore                                                          12.2%
+  EventBusCore.EventBusHealthCheck                                       0%
+  EventBusCore.Events.DashboardStatusEvent                             100%
+  EventBusCore.Events.MeterDataIngestedEvent                           100%
+  EventBusCore.ServiceCollectionExtensions                               0%
+
+Infrastructure                                                           0%
+  Infrastructure.Exceptions.ExceptionMiddleWare                          0%
+  Infrastructure.Logging.SerilogMiddleware                               0%
+  Models.Auth.ClaimDto                                                   0%
+  Models.Auth.CurrentUserDto                                             0%
+  Models.Dashboard.DashboardResponseDto                                  0%
+  Models.Dashboard.GetDashboardStatsRequest                              0%
+  Models.Dashboard.GetDashboardStatsResponse                             0%
+  Models.Dashboard.InverterDataDto                                       0%
+  VNM.Infrastructure.Configuration.EndpointsOptions                      0%
+  VNM.Infrastructure.Configuration.FrontendOptions                       0%
+  VNM.Infrastructure.Extensions.ApplicationBuilderExtensions             0%
+  VNM.Infrastructure.Extensions.AuthenticationExtension                  0%
+  VNM.Infrastructure.Extensions.ClientRegistrationExtension              0%
+  VNM.Infrastructure.Extensions.CorsExtensions                           0%
+  VNM.Infrastructure.Extensions.JwtAuthenticationExtensions              0%
+  VNM.Infrastructure.Extensions.SqlServerDataAccessExtensions            0%
+
+MeterIngestion                                                        11.1%
+  Infrastructure.Polling.InverterPollingServiceCollectionExtensions      0%
+  InverterPollerFactory                                                  0%
+  InverterPolling.Services.HttpInverterPoller                          100%
+  InverterPolling.Services.InverterPollingOptions                        0%
+  InverterPolling.Services.InverterPollingService                        0%
+  InverterPolling.Services.InverterReading                             100%
+  InverterPolling.Services.TcpInverterPoller                          91.6%
+  InverterPollingOptions                                                 0%
+  MeterIngestion.Consumers.MeterEventConsumer                          100%
+  MeterIngestion.Controllers.InverterReadingsController                  0%
+  MeterIngestion.Controllers.MeterController                             0%
+  MeterIngestRequest                                                     0%
+  Microsoft.AspNetCore.OpenApi.Generated                                 0%
+  Program                                                                0%
+  System.Runtime.CompilerServices                                        0%
+
+Repositories                                                          87.1%
+  Repositories.CRUD.Extensions.ServiceCollectionExtensions               0%
+  Repositories.CRUD.Repositories.AspNetRoleClaimRepository             100%
+  Repositories.CRUD.Repositories.AspNetRoleRepository                  100%
+  Repositories.CRUD.Repositories.AspNetUserClaimRepository             100%
+  Repositories.CRUD.Repositories.AspNetUserRepository                   70%
+  Repositories.CRUD.Repositories.InverterReadingRepository             100%
+  Repositories.CRUD.Repositories.Repository<T>                          80%
+  Repositories.Data.VnmDbContext                                       100%
+  Repositories.Models.AspNetRole                                       100%
+  Repositories.Models.AspNetRoleClaim                                   80%
+  Repositories.Models.AspNetUser                                       100%
+  Repositories.Models.AspNetUserClaim                                   80%
+  Repositories.Models.InverterReading                                  100%
+
+ServiceDefaults                                                          0%
+  ServiceDefaults.CustomSampler                                          0%
+  ServiceDefaults.Extensions                                             0%
+
+Services                                                              53.2%
+  Services.Auth.AuthenticationService                                    0%
+  Services.Auth.DbUserPermissionResolver                              97.3%
+  Services.Authorization.AuthorizationService                            0%
+  Services.DependencyInjection.ServiceCollectionExtensions               0%
+  Services.Identity.AspNetIdentityService                             44.4%
+  Services.Inverter.InverterReadingService                            86.3%
+  Services.Redirect.DashboardRedirectService                             0%

@@ -195,6 +195,46 @@ In `stg/prod` mode the script uses host `sqlcmd` (no `docker exec`).
 - If image is missing, Docker pulls it automatically.
 - `res01-initial-setup` initializes databases; it does not create RabbitMQ container.
 
+## Coverage dashboard
+
+Generate combined coverage reports either from Aspire or manually:
+
+- Aspire resource: `res09-testcoverage-dashboard`
+- Script: `Setup/coverage-dashboard.ps1`
+
+What it generates:
+
+- Backend coverage report from unit test projects (HTML via ReportGenerator)
+- UI coverage report from Vitest (`--coverage`)
+- Summary page at `TestCoverage/index.html` linking both reports
+
+How to run:
+
+From Aspire:
+
+1. Start AppHost
+2. In Aspire dashboard, run `res09-testcoverage-dashboard`
+
+From terminal:
+
+```powershell
+powershell -NoProfile -NonInteractive -File .\Setup\coverage-dashboard.ps1
+```
+
+The script auto-opens the dashboard and also prints the exact `file:///...` URI.
+
+Where to open it:
+
+- Local file: `TestCoverage/index.html`
+- Absolute example (Windows): `D:\projects\VNM\Code\TestCoverage\index.html`
+- URI example: `file:///D:/projects/VNM/Code/TestCoverage/index.html`
+
+From terminal at repo root:
+
+```powershell
+start .\TestCoverage\index.html
+```
+
 ## SSMS access after setup
 
 Connect with:
