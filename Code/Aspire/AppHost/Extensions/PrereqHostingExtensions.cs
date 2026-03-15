@@ -34,10 +34,17 @@ public static class PrereqHostingExtensions
             {
                 var sqlPassword = builder.Configuration["Parameters:sql-password"]
                     ?? builder.Configuration["SA_PASSWORD"];
+                var rabbitPassword = builder.Configuration["Parameters:res08-rabbitmq-password"]
+                    ?? builder.Configuration["RABBITMQ_DEFAULT_PASS"];
 
                 if (!string.IsNullOrWhiteSpace(sqlPassword))
                 {
                     context.EnvironmentVariables["APPHOST_SQL_PASSWORD"] = sqlPassword;
+                }
+
+                if (!string.IsNullOrWhiteSpace(rabbitPassword))
+                {
+                    context.EnvironmentVariables["APPHOST_RABBITMQ_PASSWORD"] = rabbitPassword;
                 }
             });
     }

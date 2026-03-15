@@ -27,14 +27,17 @@ public static class WebHostingExtensions
     public static void WireUpDependencies(
         this VnmWebResources web,
         IResourceBuilder<SqlServerDatabaseResource> vnmDb,
+        IResourceBuilder<RabbitMQServerResource> rabbitMq,
         IResourceBuilder<ExecutableResource> initialSetup)
     {
         web.DashboardBff
             .WithReference(vnmDb)
+            .WithReference(rabbitMq)
             .WaitForCompletion(initialSetup);
 
         web.MeterIngestion
             .WithReference(vnmDb)
+            .WithReference(rabbitMq)
             .WaitForCompletion(initialSetup);
 
         web.InverterSimulator

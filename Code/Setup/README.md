@@ -1,162 +1,150 @@
 # Setup — Local, Stg, Prod
-
 Environment-aware setup and bootstrap guide for VNM infrastructure and database initialization.
 
-## What lives where
+## Local flow through AppHost =>
 
-- `Setup/setup.ps1`: orchestration script (local/stg/prod modes)
-- `Database/*.sql`: SQL artifacts applied by setup
-- `Aspire/AppHost`: one caller/orchestrator for local development
+Use this as the default local setup path.
+- Requires: .NET 10 SDK, Docker Desktop running, Node.js 22+, PowerShell.
+- Fast Docker check: `docker version`
+- If Docker is missing: https://www.docker.com/products/docker-desktop/
+- If running without Docker: install SQL + Erlang+RabbitMQ manually, then run setup in non-local mode.
 
-## Prerequisites
+Start options:
 
-- .NET 10 SDK
-- Docker Desktop running (local mode)
-- Node.js 22+ (for UI when running AppHost)
-- PowerShell available (`pwsh` preferred; Windows PowerShell `powershell` also works)
-
-## Docker Desktop is required for local mode
-
-For local mode, Docker Desktop must be installed and running.
-The setup script and AppHost cannot install Docker Desktop automatically.
-
-Quick check:
+1. EasyRun (recommended for first-time setup)
 
 ```powershell
-docker version
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup\easyrun.ps1
 ```
 
-If Docker is not installed, install Docker Desktop first, then reopen terminal/VS Code.
+EasyRun prompts for missing secrets, runs prereq-check, and starts AppHost.
 
-### Why not auto-install Docker from setup?
+2. Aspire directly from VS Code or Visual Studio (developer path)
 
-Short answer: reliability, permissions, and security.
-
-- Installing Docker requires admin privileges and often a machine restart/logoff.
-- Corporate laptops may block package managers or require IT approval.
-- Silent auto-install from app startup can be surprising and fragile.
-
-So the current approach is intentional:
-
-- Keep setup deterministic.
-- Fail fast with a clear prereq message when Docker is missing.
-
-### Explored options (not enabled yet)
-
-If you want a separate bootstrap step in the future, these are viable options:
-
-1. Windows (winget):
-
-```powershell
-winget install -e --id Docker.DockerDesktop
-```
-
-2. Windows (Chocolatey):
-
-```powershell
-choco install docker-desktop -y
-```
-
-3. macOS (Homebrew cask):
-
-```bash
-brew install --cask docker
-```
-
-4. Linux:
-
-- Install Docker Engine using distro-specific package docs.
-
-Recommendation: keep these as explicit, user-run onboarding commands (or a separate admin bootstrap script), not inside `setup.ps1`.
-
-## Alternative: run without Docker Desktop
-
-If a user does not want Docker Desktop, install services directly on the machine:
-
-- SQL Server (Developer or Express): https://www.microsoft.com/sql-server/sql-server-downloads
-- SQL Server Management Studio (SSMS): https://aka.ms/ssmsfullsetup
-- Erlang/OTP (required by RabbitMQ): https://www.erlang.org/downloads
-- RabbitMQ: https://www.rabbitmq.com/download.html
-
-Important notes for this mode:
-
-- AppHost local orchestration in this repo is currently Docker-based for SQL Server and RabbitMQ.
-- Without Docker, run setup script in non-local mode and target your installed SQL Server endpoint.
-- RabbitMQ must be started and managed manually (or via service manager) outside Aspire.
-
-## STG/PROD SQL endpoint and connection string
-
-Local and STG/PROD are different:
-
-- Local Docker: host/port is discovered from container port mapping.
-- STG/PROD: SQL endpoint is provided by infrastructure (DNS/host + usually port 1433).
-
-How to get server name in STG/PROD:
-
-1. Ask platform/infrastructure for the SQL endpoint (for example `sql-stg.company.local` or managed SQL endpoint).
-2. Use that endpoint and port in your connection string.
-3. Do not try to infer it from Docker commands unless the environment is actually Docker-based.
-
-Configuration priority (recommended):
-
-1. Environment variable or secret store (recommended):
-
-```text
-ConnectionStrings__VnmDb=Server=tcp:sql-stg.company.local,1433;Database=VNM;User ID=app_user;Password=***;Encrypt=True;TrustServerCertificate=False;
-```
-
-2. `appsettings.{Environment}.json` (acceptable):
-
-```json
-{
-	"ConnectionStrings": {
-		"VnmDb": "Server=tcp:sql-stg.company.local,1433;Database=VNM;User ID=app_user;Password=***;Encrypt=True;TrustServerCertificate=False;"
-	}
-}
-```
-
-Do you need code changes?
-
-- No code change is needed if the key stays `ConnectionStrings:VnmDb`.
-- Code change is needed only if you rename the key (`VnmDb`) to a different name.
-
-## Local flow through AppHost
+Set secrets once:
 
 1. Set SQL password for AppHost parameter:
-
 ```powershell
 dotnet user-secrets set "Parameters:sql-password" "YourPassword" --project Aspire/AppHost/AppHost.csproj
 ```
-
 This password is used by AppHost to start the SQL container, but it is not shown as a separate resource row in the Aspire dashboard.
 
-2. Start AppHost:
+2. Set RabbitMQ password for AppHost parameter:
+```powershell
+dotnet user-secrets set "Parameters:res08-rabbitmq-password" "YourPassword" --project Aspire/AppHost/AppHost.csproj
+```
+This password is used by prereq setup to create/synchronize the local `vnm-rabbitmq` container credentials (`guest/<your password>`).
+You can change it anytime by running the same command with a new value.
 
+Then start AppHost:
+
+3. Start AppHost:
 ```powershell
 dotnet run --project Aspire/AppHost/AppHost.csproj
 ```
+In Visual Studio, set `Aspire/AppHost/AppHost.csproj` as startup project and run.
 
 By default, AppHost auto-opens the UI URL in the browser after the UI is reachable.
 You can disable this in `Aspire/AppHost/appsettings.json`:
 
-```json
-{
-	"AppHost": {
-		"AutoOpenUi": false
-	}
-}
+4. Open dashboard: `http://localhost:15000`
+5. `res00-prereq-check` runs first and verifies Docker prerequisites.
+6. `res01-initial-setup` runs after prerequisite check succeeds.
+
+See [res01-initial-setup-follow](#res01-initial-setup-follow).
+
+
+Quick links (collapsed topics):
+
+- [EasyRun](#easyrun)
+- [Reset user-secrets for fresh install testing](#reset-user-secrets-for-fresh-install-testing)
+- [RabbitMQ password troubleshooting](#rabbitmq-password-troubleshooting)
+- [What res01-initial-setup does](#what-res01-initial-setup-does)
+- [res01-initial-setup-follow](#res01-initial-setup-follow)
+- [Run setup without Aspire](#run-setup-without-aspire)
+- [SQL and RabbitMQ images/containers](#sql-and-rabbitmq-imagescontainers)
+- [Coverage dashboard](#coverage-dashboard)
+- [Logging retention and Application Insights](#logging-retention-and-application-insights)
+- [SSMS access after setup](#ssms-access-after-setup)
+- [About local SQL password](#about-local-sql-password)
+- [User-secrets on Mac](#user-secrets-on-mac)
+
+## EasyRun
+
+EasyRun is the fastest local bootstrap command:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup\easyrun.ps1
 ```
 
-3. Open dashboard: `http://localhost:15000`
-4. `res00-prereq-check` runs first and verifies Docker prerequisites.
-5. `res01-initial-setup` runs after prerequisite check succeeds.
+What EasyRun does:
 
-After `res01-initial-setup` succeeds, all services waiting on setup will start.
+1. Checks local AppHost user-secrets.
+2. If an old RabbitMQ secret key exists (`Parameters:rabbitmq-password`) and the new key is missing, EasyRun auto-migrates it to `Parameters:res08-rabbitmq-password`.
+3. Prompts for missing values:
+	- `Parameters:sql-password`
+	- `Parameters:res08-rabbitmq-password`
+4. Runs `res00` equivalent prereq checks via `Setup/prereq-check.ps1`.
+5. Starts AppHost (`dotnet run --project Aspire/AppHost/AppHost.csproj`).
 
-If Docker is installed but not running, `res00-prereq-check` attempts to start Docker Desktop and waits for daemon readiness.
-If Docker is missing (or cannot be started), `res00-prereq-check` fails with a clear error and dependent resources do not start.
-If required containers are missing, `res00-prereq-check` now creates them (`vnm-sqlserver` and `vnm-rabbitmq`) before continuing.
-For SQL container creation, a password must be available from `Parameters:sql-password` (AppHost secret), or from `APPHOST_SQL_PASSWORD` / `SA_PASSWORD` when running the script directly.
+Useful option:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup\easyrun.ps1 -SkipStart
+```
+
+Use `-SkipStart` when you only want prerequisites and secrets set, without launching AppHost.
+
+## Reset user-secrets for fresh install testing
+
+To simulate a first-time local setup, clear AppHost user-secrets:
+
+```powershell
+dotnet user-secrets clear --project Aspire/AppHost/AppHost.csproj
+```
+
+You can also remove only selected keys:
+
+```powershell
+dotnet user-secrets remove "Parameters:sql-password" --project Aspire/AppHost/AppHost.csproj
+dotnet user-secrets remove "Parameters:res08-rabbitmq-password" --project Aspire/AppHost/AppHost.csproj
+```
+
+Verify current secrets:
+
+```powershell
+dotnet user-secrets list --project Aspire/AppHost/AppHost.csproj
+```
+
+After reset, run EasyRun again and it will prompt you for missing secrets.
+
+## RabbitMQ password troubleshooting
+
+Symptom:
+
+- `DashboardBFF` / `MeterIngestion` stop with:
+	`RabbitMQ password is missing. Set RabbitMQ:Password via user-secrets or environment variable RabbitMQ__Password.`
+
+Quick fix:
+
+1. Stop all running .NET processes.
+2. Ensure the canonical AppHost RabbitMQ secret exists:
+
+```powershell
+dotnet user-secrets set "Parameters:res08-rabbitmq-password" "YourPassword" --project Aspire/AppHost/AppHost.csproj
+```
+
+3. Run EasyRun again (it also migrates legacy `Parameters:rabbitmq-password` automatically):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup\easyrun.ps1
+```
+
+4. Verify current secrets if needed:
+
+```powershell
+dotnet user-secrets list --project Aspire/AppHost/AppHost.csproj
+```
 
 ## What res01-initial-setup does
 
@@ -165,6 +153,17 @@ For SQL container creation, a password must be available from `Parameters:sql-pa
 3. Otherwise drops/recreates `VNM` from `Database/VNM.sql`
 4. Drops/recreates `VNM_TEST` from `Database/VNM_TEST.sql`
 5. Seeds both `VNM` and `VNM_TEST` from `Database/Seed.sql`
+
+## res01-initial-setup-follow
+
+After `res01-initial-setup` succeeds, all services waiting on setup will start.
+
+If Docker is installed but not running, `res00-prereq-check` attempts to start Docker Desktop and waits for daemon readiness.
+If Docker is missing (or cannot be started), `res00-prereq-check` fails with a clear error and dependent resources do not start.
+If required containers are missing, `res00-prereq-check` now creates them (`vnm-sqlserver` and `vnm-rabbitmq`) before continuing.
+For SQL container creation, a password must be available from `Parameters:sql-password` (AppHost secret), or from `APPHOST_SQL_PASSWORD` / `SA_PASSWORD` when running the script directly.
+For RabbitMQ container creation/sync, a password must be available from `Parameters:res08-rabbitmq-password` (AppHost secret), or from `APPHOST_RABBITMQ_PASSWORD` / `RABBITMQ_DEFAULT_PASS` when running the script directly.
+
 
 ## Run setup without Aspire
 

@@ -4,7 +4,8 @@ param(
     [string[]] $EnsureContainer,
     [string] $SqlContainerImage = 'mcr.microsoft.com/mssql/server:2022-latest',
     [string] $RabbitMqContainerImage = 'rabbitmq:3-management',
-    [string] $SqlSaPassword
+    [string] $SqlSaPassword,
+    [string] $RabbitMqPassword
 )
 
 Set-StrictMode -Version Latest
@@ -69,8 +70,8 @@ function Start-DockerDesktop {
 
 function Wait-ForDockerDaemon {
     param(
-        [int] $TimeoutSeconds = 90,
-        [int] $PollIntervalSeconds = 3
+        [int] $TimeoutSeconds = 180,
+        [int] $PollIntervalSeconds = 4
     )
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
@@ -84,6 +85,58 @@ function Wait-ForDockerDaemon {
     while ((Get-Date) -lt $deadline)
 
     return $false
+}
+
+function Invoke-DockerWithRetry {
+    param(
+        [string[]] $Arguments,
+        [string] $Operation,
+        [int] $MaxAttempts = 3,
+        [int] $DelaySeconds = 3
+    )
+
+    if (-not $Arguments -or $Arguments.Count -eq 0) {
+        throw "Docker operation '$Operation' was called without arguments."
+    }
+
+    $previousNativeErrorPreference = $null
+    $hasNativePreference = $false
+    if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -Scope Global -ErrorAction SilentlyContinue) {
+        $hasNativePreference = $true
+        $previousNativeErrorPreference = $global:PSNativeCommandUseErrorActionPreference
+        $global:PSNativeCommandUseErrorActionPreference = $false
+    }
+
+    $previousErrorAction = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+
+    try {
+        $lastOutput = $null
+        for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+            $result = & docker @Arguments 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                return $result
+            }
+
+            $lastOutput = ($result | Out-String).Trim()
+            if ($attempt -lt $MaxAttempts) {
+                Start-Sleep -Seconds $DelaySeconds
+            }
+        }
+
+        if ([string]::IsNullOrWhiteSpace($lastOutput)) {
+            throw "Docker operation '$Operation' failed after $MaxAttempts attempts."
+        }
+
+        throw "Docker operation '$Operation' failed after $MaxAttempts attempts. Last output: $lastOutput"
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+
+        if ($hasNativePreference) {
+            $global:PSNativeCommandUseErrorActionPreference = $previousNativeErrorPreference
+        }
+    }
 }
 
 function Get-ContainerStatus {
@@ -105,6 +158,102 @@ function Get-ContainerStatus {
     finally {
         $ErrorActionPreference = $previousErrorAction
     }
+}
+
+function Get-ContainerHostPort {
+    param(
+        [string] $Name,
+        [string] $ContainerPort
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Name) -or [string]::IsNullOrWhiteSpace($ContainerPort)) {
+        return $null
+    }
+
+    $previousErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $mapping = & docker port $Name $ContainerPort 2>$null
+        if ($LASTEXITCODE -ne 0 -or -not $mapping) {
+            return $null
+        }
+
+        $firstMapping = ($mapping | Select-Object -First 1).ToString().Trim()
+        if ([string]::IsNullOrWhiteSpace($firstMapping)) {
+            return $null
+        }
+
+        if ($firstMapping.Contains(':')) {
+            return ($firstMapping.Split(':') | Select-Object -Last 1)
+        }
+
+        return $firstMapping
+    }
+    catch {
+        return $null
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+    }
+}
+
+function Write-ContainerAccessHint {
+    param([string] $Name)
+
+    switch ($Name) {
+        'vnm-rabbitmq' {
+            $mgmtHostPort = Get-ContainerHostPort -Name $Name -ContainerPort '15672/tcp'
+            if ([string]::IsNullOrWhiteSpace($mgmtHostPort)) {
+                Write-Host "RabbitMQ management UI port is not published for container '$Name'."
+                return
+            }
+
+            Write-Host "RabbitMQ management UI: http://localhost:$mgmtHostPort"
+
+            if ($mgmtHostPort -ne '15672') {
+                Write-Host "Note: '$Name' is not using fixed host port 15672. To make the URL stable, recreate it with fixed port mapping (docker rm -f vnm-rabbitmq) and rerun prereq-check."
+            }
+
+            return
+        }
+        default {
+            return
+        }
+    }
+}
+
+function Get-RabbitMqPassword {
+    $rabbitPassword = $RabbitMqPassword
+    if ([string]::IsNullOrWhiteSpace($rabbitPassword)) {
+        $rabbitPassword = $env:APPHOST_RABBITMQ_PASSWORD
+    }
+
+    if ([string]::IsNullOrWhiteSpace($rabbitPassword)) {
+        $rabbitPassword = $env:RABBITMQ_DEFAULT_PASS
+    }
+
+    return $rabbitPassword
+}
+
+function Sync-RabbitMqGuestPassword {
+    param([string] $ContainerName)
+
+    $rabbitPassword = Get-RabbitMqPassword
+    if ([string]::IsNullOrWhiteSpace($rabbitPassword)) {
+        return
+    }
+
+    $changeArgs = @(
+        'exec',
+        $ContainerName,
+        'rabbitmqctl',
+        'change_password',
+        'guest',
+        $rabbitPassword
+    )
+
+    Invoke-DockerWithRetry -Arguments $changeArgs -Operation "synchronize RabbitMQ credentials for container '$ContainerName'" -MaxAttempts 15 -DelaySeconds 2 | Out-Null
+    Write-Host "RabbitMQ credentials synchronized for container '$ContainerName'."
 }
 
 function New-ContainerIfMissing {
@@ -138,30 +287,32 @@ function New-ContainerIfMissing {
                 $SqlContainerImage
             )
 
-            & docker @sqlRunArgs 1>$null
-
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to create SQL container '$Name'."
-            }
+            Invoke-DockerWithRetry -Arguments $sqlRunArgs -Operation "create SQL container '$Name'" -MaxAttempts 4 -DelaySeconds 4 | Out-Null
 
             return $true
         }
         'vnm-rabbitmq' {
+            $rabbitPassword = Get-RabbitMqPassword
+            if ([string]::IsNullOrWhiteSpace($rabbitPassword)) {
+                throw "Container '$Name' is missing and cannot be created because no RabbitMQ password was provided. Pass -RabbitMqPassword or set APPHOST_RABBITMQ_PASSWORD/RABBITMQ_DEFAULT_PASS."
+            }
+
             Write-Host "Creating RabbitMQ container '$Name' from image '$RabbitMqContainerImage'..."
             $rabbitRunArgs = @(
                 'run',
                 '-d',
                 '--name', $Name,
                 '--restart', 'unless-stopped',
-                '-P',
+                '-p', '5672:5672',
+                '-p', '15672:15672',
+                '-e', 'RABBITMQ_DEFAULT_USER=guest',
+                '-e', "RABBITMQ_DEFAULT_PASS=$rabbitPassword",
                 $RabbitMqContainerImage
             )
 
-            & docker @rabbitRunArgs 1>$null
+            Invoke-DockerWithRetry -Arguments $rabbitRunArgs -Operation "create RabbitMQ container '$Name'" -MaxAttempts 4 -DelaySeconds 4 | Out-Null
 
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to create RabbitMQ container '$Name'."
-            }
+            Sync-RabbitMqGuestPassword -ContainerName $Name
 
             return $true
         }
@@ -197,10 +348,7 @@ function Ensure-ContainerRunning {
         }
         'paused' {
             Write-Host "Unpausing container '$Name'..."
-            & docker unpause $Name 1>$null
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to unpause container '$Name'."
-            }
+            Invoke-DockerWithRetry -Arguments @('unpause', $Name) -Operation "unpause container '$Name'" | Out-Null
 
             return
         }
@@ -210,10 +358,7 @@ function Ensure-ContainerRunning {
         }
         default {
             Write-Host "Starting container '$Name'..."
-            & docker start $Name 1>$null
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to start container '$Name'."
-            }
+            Invoke-DockerWithRetry -Arguments @('start', $Name) -Operation "start container '$Name'" | Out-Null
 
             return
         }
@@ -244,6 +389,12 @@ if ($RequireDocker) {
 
     foreach ($containerName in $containersToEnsure) {
         Ensure-ContainerRunning -Name $containerName
+
+        if ($containerName -eq 'vnm-rabbitmq') {
+            Sync-RabbitMqGuestPassword -ContainerName $containerName
+        }
+
+        Write-ContainerAccessHint -Name $containerName
     }
 }
 

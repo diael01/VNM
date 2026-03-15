@@ -28,13 +28,20 @@ namespace EventBusCore
                 // 3️⃣ Transport + policies
                 x.UsingRabbitMq((context, cfg) =>
                 {
+                    var rabbitOptions = ResolveRabbitMqOptions(configuration);
+                    if (string.IsNullOrWhiteSpace(rabbitOptions.Password))
+                    {
+                        throw new InvalidOperationException(
+                            "RabbitMQ password is missing. Set RabbitMQ:Password or provide an Aspire RabbitMQ connection string.");
+                    }
+
                     cfg.Host(
-                        configuration["RabbitMQ:Host"] ?? "rabbitmq",
-                        configuration["RabbitMQ:VirtualHost"] ?? "/",
+                        rabbitOptions.Host,
+                        rabbitOptions.VirtualHost,
                         h =>
                         {
-                            h.Username(configuration["RabbitMQ:Username"] ?? "guest");
-                            h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                            h.Username(rabbitOptions.Username);
+                            h.Password(rabbitOptions.Password);
                         });
 
                     // Read retry settings from config
@@ -60,6 +67,67 @@ namespace EventBusCore
             });
 
             return services;
+        }
+
+        private static (string Host, string VirtualHost, string Username, string Password) ResolveRabbitMqOptions(IConfiguration configuration)
+        {
+            // Prefer explicit RabbitMQ section when provided.
+            var sectionHost = configuration["RabbitMQ:Host"];
+            var sectionVirtualHost = configuration["RabbitMQ:VirtualHost"];
+            var sectionUsername = configuration["RabbitMQ:Username"];
+            var sectionPassword = configuration["RabbitMQ:Password"];
+
+            if (!string.IsNullOrWhiteSpace(sectionPassword))
+            {
+                return (
+                    Host: string.IsNullOrWhiteSpace(sectionHost) ? "rabbitmq" : sectionHost,
+                    VirtualHost: string.IsNullOrWhiteSpace(sectionVirtualHost) ? "/" : sectionVirtualHost,
+                    Username: string.IsNullOrWhiteSpace(sectionUsername) ? "guest" : sectionUsername,
+                    Password: sectionPassword);
+            }
+
+            // Fallback to Aspire-provided connection strings (resource-scoped first).
+            var connectionString = configuration["ConnectionStrings:res08-rabbitmq"]
+                ?? configuration["ConnectionStrings:rabbitmq"];
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                return (
+                    Host: string.IsNullOrWhiteSpace(sectionHost) ? "rabbitmq" : sectionHost,
+                    VirtualHost: string.IsNullOrWhiteSpace(sectionVirtualHost) ? "/" : sectionVirtualHost,
+                    Username: string.IsNullOrWhiteSpace(sectionUsername) ? "guest" : sectionUsername,
+                    Password: sectionPassword ?? string.Empty);
+            }
+
+            if (!Uri.TryCreate(connectionString, UriKind.Absolute, out var uri))
+            {
+                return (
+                    Host: string.IsNullOrWhiteSpace(sectionHost) ? "rabbitmq" : sectionHost,
+                    VirtualHost: string.IsNullOrWhiteSpace(sectionVirtualHost) ? "/" : sectionVirtualHost,
+                    Username: string.IsNullOrWhiteSpace(sectionUsername) ? "guest" : sectionUsername,
+                    Password: sectionPassword ?? string.Empty);
+            }
+
+            var userInfoParts = uri.UserInfo.Split(':', 2, StringSplitOptions.None);
+            var parsedUsername = userInfoParts.Length > 0 ? Uri.UnescapeDataString(userInfoParts[0]) : string.Empty;
+            var parsedPassword = userInfoParts.Length > 1 ? Uri.UnescapeDataString(userInfoParts[1]) : string.Empty;
+            var parsedVhost = uri.AbsolutePath;
+            if (string.IsNullOrWhiteSpace(parsedVhost) || parsedVhost == "/")
+            {
+                parsedVhost = "/";
+            }
+            else
+            {
+                parsedVhost = Uri.UnescapeDataString(parsedVhost);
+            }
+
+            return (
+                Host: string.IsNullOrWhiteSpace(uri.Host) ? "rabbitmq" : uri.Host,
+                VirtualHost: string.IsNullOrWhiteSpace(parsedVhost) ? "/" : parsedVhost,
+                Username: string.IsNullOrWhiteSpace(parsedUsername)
+                    ? (string.IsNullOrWhiteSpace(sectionUsername) ? "guest" : sectionUsername)
+                    : parsedUsername,
+                Password: string.IsNullOrWhiteSpace(parsedPassword) ? (sectionPassword ?? string.Empty) : parsedPassword);
         }
     }
 }
