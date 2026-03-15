@@ -193,6 +193,22 @@ In `stg/prod` mode the script uses host `sqlcmd` (no `docker exec`).
 - Missing containers are created automatically (`vnm-sqlserver` from `mcr.microsoft.com/mssql/server:2022-latest`, `vnm-rabbitmq` from `rabbitmq:3-management`).
 - If image is missing, Docker pulls it automatically.
 - `res01-initial-setup` initializes databases; it does not create RabbitMQ container.
+- RabbitMQ container is created with fixed host ports for local use:
+	- AMQP: `localhost:5672`
+	- Management UI: `http://localhost:15672`
+- Verify RabbitMQ port mappings:
+
+```powershell
+docker port vnm-rabbitmq 5672
+docker port vnm-rabbitmq 15672
+```
+
+If you still see random RabbitMQ ports, recreate the container once so fixed mapping is applied:
+
+```powershell
+docker rm -f vnm-rabbitmq
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup\prereq-check.ps1 -RequireDocker -EnsureContainer vnm-rabbitmq
+```
 
 ## Coverage dashboard
 
