@@ -42,7 +42,7 @@ function App() {
       ) : !user ? (
          <AnonymousHome />
       ) : (
-        <DashboardPageQuery />
+        <DashboardPageQuery permissions={user.permissions} />
       )}
     </AppLayout>
   )

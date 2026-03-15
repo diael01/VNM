@@ -52,6 +52,8 @@ public sealed class DbUserPermissionResolver : IUserPermissionResolver
             return Array.Empty<string>();
         }
 
+        await SyncRolesFromIdentityProviderAsync(user.Id, principal, cancellationToken);
+
         var effectiveClaims = await _identityService.GetEffectiveUserClaimsAsync(user.Id, cancellationToken);
         return effectiveClaims
             .Where(c => string.Equals(c.ClaimType, "permission", StringComparison.OrdinalIgnoreCase))
@@ -59,5 +61,50 @@ public sealed class DbUserPermissionResolver : IUserPermissionResolver
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private async Task SyncRolesFromIdentityProviderAsync(
+        string userId,
+        ClaimsPrincipal principal,
+        CancellationToken cancellationToken)
+    {
+        var idpRoles = principal.Claims
+            .Where(c =>
+                c.Type == ClaimTypes.Role ||
+                c.Type == "role" ||
+                c.Type == "roles" ||
+                c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+            .Select(c => c.Value?.Trim())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var localRoles = (await _identityService.GetUserRolesAsync(userId, cancellationToken)).ToArray();
+
+        // Remove local roles no longer present in IDP claims.
+        foreach (var localRole in localRoles)
+        {
+            if (!idpRoles.Contains(localRole.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                await _identityService.RemoveRoleFromUserAsync(userId, localRole.Id, cancellationToken);
+            }
+        }
+
+        // Ensure each IDP role exists locally and is assigned to the user.
+        foreach (var roleName in idpRoles)
+        {
+            var role = await _identityService.GetRoleByNameAsync(roleName, cancellationToken)
+                ?? await _identityService.CreateRoleAsync(new Repositories.Models.AspNetRole
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = roleName
+                }, cancellationToken);
+
+            if (!localRoles.Any(r => string.Equals(r.Id, role.Id, StringComparison.OrdinalIgnoreCase)))
+            {
+                await _identityService.AssignRoleToUserAsync(userId, role.Id, cancellationToken);
+            }
+        }
     }
 }

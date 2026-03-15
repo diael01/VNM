@@ -1,7 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { fetchDashboardData } from "../api/dashboardApi"
 
-export default function DashboardPageQuery() {
+type Props = {
+  permissions: string[]
+}
+
+export default function DashboardPageQuery({ permissions }: Props) {
+  const canRetry = permissions.some(p => p.toLowerCase() === "dashboard:retry")
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["dashboard-data"],
     queryFn: fetchDashboardData,
@@ -15,7 +20,11 @@ export default function DashboardPageQuery() {
     return (
       <div>
         <p>{error instanceof Error ? error.message : "Failed to load dashboard data"}</p>
-        <button onClick={() => refetch()}>Retry</button>
+        {canRetry ? (
+          <button onClick={() => refetch()}>Retry</button>
+        ) : (
+          <p>You do not have permission to retry. Contact an administrator.</p>
+        )}
       </div>
     )
   }
@@ -50,9 +59,11 @@ export default function DashboardPageQuery() {
         </div>
       </div>
 
-      <div style={{ marginTop: "16px" }}>
-        <button onClick={() => refetch()}>Refresh</button>
-      </div>
+      {canRetry && (
+        <div style={{ marginTop: "16px" }}>
+          <button onClick={() => refetch()}>Retry</button>
+        </div>
+      )}
     </div>
   )
 }

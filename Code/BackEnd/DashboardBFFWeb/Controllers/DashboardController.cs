@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Services.Auth;
 using VNM.Infrastructure.Configuration;
+using VNM.Infrastructure.Auth;
 using IAuthenticationService = Services.Auth.IAuthenticationService;
 
 namespace DashboardBFFWeb.Controllers
@@ -18,17 +19,20 @@ namespace DashboardBFFWeb.Controllers
     {
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IAuthenticationService _authenticationService;
+        private readonly IUserPermissionResolver _permissionResolver;
         private readonly IDashboardRedirectService _dashboardService;
         private readonly string _frontendBaseUrl;
 
         public DashboardController(
             IPublishEndpoint publishEndpoint,
             IAuthenticationService authService,
+            IUserPermissionResolver permissionResolver,
             IDashboardRedirectService dashboardService,
             IOptions<FrontendOptions> frontendOptions)
         {
             _publishEndpoint = publishEndpoint;
             _authenticationService = authService;
+            _permissionResolver = permissionResolver;
             _dashboardService = dashboardService;
             _frontendBaseUrl = frontendOptions.Value.BaseUrl;
         }
@@ -71,7 +75,7 @@ namespace DashboardBFFWeb.Controllers
         }
 
         [HttpGet("/api/auth/me")]
-        public IActionResult GetCurrentUser()
+        public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
         {
             if (!(User.Identity?.IsAuthenticated ?? false))
             {
@@ -79,6 +83,27 @@ namespace DashboardBFFWeb.Controllers
             }
 
             var currentUser = _authenticationService.GetCurrentUser(User);
+
+            // Ensure local role sync runs and permission claims are reflected in the response.
+            var permissions = await _permissionResolver.GetPermissionsAsync(User, cancellationToken);
+            var existingPermissionValues = new HashSet<string>(
+                currentUser.Claims
+                    .Where(c => string.Equals(c.Type, "permission", StringComparison.OrdinalIgnoreCase))
+                    .Select(c => c.Value),
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var permission in permissions.Where(p => !string.IsNullOrWhiteSpace(p)))
+            {
+                if (existingPermissionValues.Add(permission))
+                {
+                    currentUser.Claims =
+                    [
+                        .. currentUser.Claims,
+                        new Models.Auth.ClaimDto { Type = "permission", Value = permission }
+                    ];
+                }
+            }
+
             return Ok(currentUser);
         }
 

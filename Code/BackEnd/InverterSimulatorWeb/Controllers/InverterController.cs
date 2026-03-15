@@ -8,8 +8,8 @@ namespace InverterSimulatorWeb.Controllers;
 
 [ApiController]
 [Route("api/inverter")]
-//[Authorize]
-[Authorize(Roles = "admin")]
+[Authorize]
+//[Authorize(Roles = "admin")] //in this case bob cant query coz he is a contributor
 public class InverterController : ControllerBase
 {
     private readonly InverterSimulatorWebOptions _options;
