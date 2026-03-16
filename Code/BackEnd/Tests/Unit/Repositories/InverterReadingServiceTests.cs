@@ -26,10 +26,10 @@ public class InverterReadingServiceTests
 
         var reading = new InverterReading
         {
-            TimestampUtc = DateTime.UtcNow,
-            PowerW = 123,
-            VoltageV = 345,
-            CurrentA = 4,
+            Timestamp = DateTime.UtcNow,
+            Power = 123,
+            Voltage = 345,
+            Current = 4,
             Source = "service-test"
         };
 
@@ -41,9 +41,9 @@ public class InverterReadingServiceTests
         Assert.NotNull(fetched);
         Assert.Equal("service-test", fetched!.Source);
 
-        created.PowerW = 999;
+        created.Power = 999;
         var updated = await service.UpdateAsync(created);
-        Assert.Equal(999, updated.PowerW);
+        Assert.Equal(999, updated.Power);
 
         var all = (await service.GetAllAsync()).ToList();
         Assert.Single(all);

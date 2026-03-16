@@ -24,10 +24,10 @@ public class InverterReadingRepositoryTests
 
         var reading = new InverterReading
         {
-            TimestampUtc = DateTime.UtcNow,
-            PowerW = 100,
-            VoltageV = 230,
-            CurrentA = 1,
+            Timestamp = DateTime.UtcNow,
+            Power = 100,
+            Voltage = 230,
+            Current = 1,
             Source = "unit-test"
         };
 
@@ -47,9 +47,9 @@ public class InverterReadingRepositoryTests
         using var context = CreateContext("InverterReading_GetLatestReadings");
         var repository = new InverterReadingRepository(context);
 
-        var r1 = new InverterReading { TimestampUtc = DateTime.UtcNow.AddMinutes(-10), PowerW = 10, VoltageV = 200, CurrentA = 1, Source = "t1" };
-        var r2 = new InverterReading { TimestampUtc = DateTime.UtcNow.AddMinutes(-5), PowerW = 20, VoltageV = 210, CurrentA = 1, Source = "t2" };
-        var r3 = new InverterReading { TimestampUtc = DateTime.UtcNow, PowerW = 30, VoltageV = 220, CurrentA = 2, Source = "t3" };
+        var r1 = new InverterReading { Timestamp = DateTime.UtcNow.AddMinutes(-10), Power = 10, Voltage = 200, Current = 1, Source = "t1" };
+        var r2 = new InverterReading { Timestamp = DateTime.UtcNow.AddMinutes(-5), Power = 20, Voltage = 210, Current = 1, Source = "t2" };
+        var r3 = new InverterReading { Timestamp = DateTime.UtcNow, Power = 30, Voltage = 220, Current = 2, Source = "t3" };
 
         await repository.AddAsync(r1);
         await repository.AddAsync(r2);

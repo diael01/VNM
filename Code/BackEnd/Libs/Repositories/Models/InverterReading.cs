@@ -7,13 +7,13 @@ public partial class InverterReading
 {
     public int Id { get; set; }
 
-    public DateTime TimestampUtc { get; set; }
+    public DateTime Timestamp { get; set; }
 
-    public int PowerW { get; set; }
+    public int Power { get; set; }
 
-    public int VoltageV { get; set; }
+    public int Voltage { get; set; }
 
-    public int CurrentA { get; set; }
+    public int Current { get; set; }
 
     public string Source { get; set; } = null!;
 }

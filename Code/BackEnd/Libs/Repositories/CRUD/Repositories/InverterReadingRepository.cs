@@ -24,7 +24,7 @@ public class InverterReadingRepository : Repository<InverterReading>, IInverterR
     {
         return await _context.InverterReadings
             .AsNoTracking()
-            .OrderByDescending(r => r.TimestampUtc)
+            .OrderByDescending(r => r.Timestamp)
             .Take(count)
             .ToListAsync(cancellationToken);
     }

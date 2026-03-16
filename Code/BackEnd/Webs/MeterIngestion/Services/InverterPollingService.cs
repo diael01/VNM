@@ -58,10 +58,10 @@ namespace InverterPolling.Services
 
                         var entity = new Repositories.Models.InverterReading
                         {
-                            TimestampUtc = reading.TimestampUtc,
-                            PowerW = reading.PowerW,
-                            VoltageV = reading.VoltageV,
-                            CurrentA = reading.CurrentA,
+                            Timestamp = reading.TimestampUtc,
+                            Power = reading.PowerW,
+                            Voltage = reading.VoltageV,
+                            Current = reading.CurrentA,
                             Source = _options.Source,
                         };
 
