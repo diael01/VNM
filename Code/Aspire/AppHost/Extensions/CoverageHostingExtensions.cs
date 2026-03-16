@@ -20,13 +20,14 @@ public static class CoverageHostingExtensions
         }
 
         // Utility resource: start manually from Aspire to generate/open TestCoverage reports.
-        return builder.AddExecutable(
-            "res09-testcoverage-dashboard",
-            shell,
-            "../../Setup",
-            "-NoProfile",
-            "-NonInteractive",
-            "-File",
-            "coverage-dashboard.ps1");
+            var script = OperatingSystem.IsWindows() ? "coverage-dashboard.ps1" : "coverage-dashboardMac.sh";
+            var args = OperatingSystem.IsWindows()
+                ? new[] { "-NoProfile", "-NonInteractive", "-File", script }
+                : new[] { script };
+            return builder.AddExecutable(
+                "res09-testcoverage-dashboard",
+                shell,
+                "../../Setup",
+                args);
     }
 }
