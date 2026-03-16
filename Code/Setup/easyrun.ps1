@@ -80,11 +80,22 @@ function Migrate-LegacyRabbitMqSecret {
     Write-Host "Legacy RabbitMQ secret migrated."
 }
 
+function Test-SqlPasswordValid {
+    param([string]$Password)
+    if ($Password.Length -lt 8) { return $false }
+    if ($Password -notmatch '[A-Z]') { return $false }
+    if ($Password -notmatch '[a-z]') { return $false }
+    if ($Password -notmatch '[0-9]') { return $false }
+    if ($Password -notmatch '[^A-Za-z0-9]') { return $false }
+    return $true
+}
+
 function Ensure-Secret {
     param(
         [string] $Key,
         [string] $Prompt,
-        [switch] $MaskInput
+        [switch] $MaskInput,
+        [switch] $ValidateSqlPassword
     )
 
     $existing = Get-ExistingSecretValue -SecretKey $Key
@@ -95,20 +106,37 @@ function Ensure-Secret {
 
     Write-Host "Secret '$Key' is missing."
 
-    if ($MaskInput) {
-        $secureValue = Read-Host -Prompt $Prompt -AsSecureString
-        $value = Get-PlainTextFromSecureString -Secure $secureValue
-    }
-    else {
-        $value = Read-Host -Prompt $Prompt
-    }
+    while ($true) {
+        if ($MaskInput) {
+            $secureValue = Read-Host -Prompt $Prompt -AsSecureString
+            $value = Get-PlainTextFromSecureString -Secure $secureValue
+        } else {
+            $value = Read-Host -Prompt $Prompt
+        }
 
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        throw "Secret '$Key' cannot be empty."
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            Write-Host "Secret '$Key' cannot be empty."
+            continue
+        }
+
+        if ($ValidateSqlPassword) {
+            if (-not (Test-SqlPasswordValid $value)) {
+                Write-Host ""
+                Write-Host "ERROR: Password does not meet SQL Server requirements."
+                Write-Host "Rules:"
+                Write-Host "  - At least 8 characters"
+                Write-Host "  - At least one uppercase letter (A-Z)"
+                Write-Host "  - At least one lowercase letter (a-z)"
+                Write-Host "  - At least one number (0-9)"
+                Write-Host "  - At least one special character (!@# etc)"
+                Write-Host ""
+                continue
+            }
+        }
+        break
     }
 
     Set-SecretValue -Key $Key -Value $value
-
     Write-Host "Secret '$Key' saved."
 }
 
@@ -117,7 +145,7 @@ Write-Host "Checking required local secrets..."
 
 Migrate-LegacyRabbitMqSecret
 
-Ensure-Secret -Key "Parameters:sql-password" -Prompt "Enter SQL password" -MaskInput
+Ensure-Secret -Key "Parameters:sql-password" -Prompt "Enter SQL password" -MaskInput -ValidateSqlPassword
 Ensure-Secret -Key "Parameters:res08-rabbitmq-password" -Prompt "Enter RabbitMQ password" -MaskInput
 
 Write-Host "Running prerequisite checks..."
