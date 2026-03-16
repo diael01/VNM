@@ -12,13 +12,6 @@ using Repositories.Models;
 
 namespace InverterPolling.Services
 {
-    // Configurable options for polling
-    public class InverterPollingOptions
-    {
-        public int PollIntervalMinutes { get; set; } = 1440; // default 24 hours
-        public string Source { get; set; } = "Simulator";
-    }
-
     /// <summary>
     /// Protocol-agnostic inverter polling service.
     /// </summary>
@@ -56,6 +49,13 @@ namespace InverterPolling.Services
 
                     if (reading != null)
                     {
+                        var totalReadings = await dbContext.InverterReadings.CountAsync(stoppingToken);
+                        if (totalReadings >= 100) //todo: read from appsettings, add a guard, this is only for test
+                        {
+                            await dbContext.InverterReadings.ExecuteDeleteAsync(stoppingToken);
+                            _logger.LogWarning("InverterReadings reached retention cap (100). Cleared table.");
+                        }
+
                         var entity = new Repositories.Models.InverterReading
                         {
                             TimestampUtc = reading.TimestampUtc,

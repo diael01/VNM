@@ -29,6 +29,7 @@ namespace EventBusCore
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     var rabbitOptions = ResolveRabbitMqOptions(configuration);
+                    var queueName = configuration["EventBus:QueueName"];
                     if (string.IsNullOrWhiteSpace(rabbitOptions.Password))
                     {
                         throw new InvalidOperationException(
@@ -61,8 +62,20 @@ namespace EventBusCore
 
                     cfg.UseDelayedRedelivery(r => r.Intervals(intervals));
 
-                    // 6️⃣ Auto endpoints with DLQ
-                    cfg.ConfigureEndpoints(context);
+                    // 6️⃣ Endpoint topology
+                    // If a queue name is explicitly configured, bind all service consumers to that queue.
+                    // Otherwise fall back to MassTransit auto-derived endpoint names.
+                    if (!string.IsNullOrWhiteSpace(queueName))
+                    {
+                        cfg.ReceiveEndpoint(queueName, endpoint =>
+                        {
+                            endpoint.ConfigureConsumers(context);
+                        });
+                    }
+                    else
+                    {
+                        cfg.ConfigureEndpoints(context);
+                    }
                 });
             });
 

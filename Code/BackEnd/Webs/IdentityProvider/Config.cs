@@ -78,6 +78,24 @@ public static class Config
                 },
 
                 AllowOfflineAccess = true
+            },
+            new Client
+            {
+                ClientId = "vnm-meter-ingestion",
+                ClientName = "VNM MeterIngestion Service",
+
+                AllowedGrantTypes = GrantTypes.ClientCredentials,
+                RequireClientSecret = true,
+
+                ClientSecrets =
+                {
+                    new Secret("meter-ingestion-secret".Sha256())
+                },
+
+                AllowedScopes =
+                {
+                    "inverter.read"
+                }
             }
         };
 }

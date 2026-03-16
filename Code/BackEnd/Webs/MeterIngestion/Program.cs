@@ -5,6 +5,7 @@ using EventBusCore;
 using MeterIngestion.Consumers;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using InverterPolling.Services;
+using InverterPolling.Services.Auth;
 using Microsoft.Extensions.Options;
 using Infrastructure.Polling;
 using VNM.Infrastructure.Extensions;
@@ -52,6 +53,7 @@ builder.Services.Configure<InverterPollingOptions>(
 // HTTP client for polling
 // ---------------------
 builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IAccessTokenProvider, ClientCredentialsAccessTokenProvider>();
 
 // ---------------------
 // DbContext

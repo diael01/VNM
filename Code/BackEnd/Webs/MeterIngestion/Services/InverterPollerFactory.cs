@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using InverterPolling.Services;
+using InverterPolling.Services.Auth;
 
 public class InverterPollerFactory : IInverterPollerFactory
 {
@@ -20,6 +21,7 @@ public class InverterPollerFactory : IInverterPollerFactory
                 new HttpInverterPoller(
                     _sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
                     options.HttpEndpoint,
+                    _sp.GetRequiredService<IAccessTokenProvider>(),
                     options.Source),
             _ => throw new InvalidOperationException($"Unsupported protocol: {options.Protocol}")
         };
