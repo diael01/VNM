@@ -153,6 +153,22 @@ namespace DashboardBFF.Controllers
                 return false;
             }
         }
+
+
+
+        [HttpGet("inverterreadings")]
+        [Authorize]
+        public async Task<IActionResult> GetInverterReadings(CancellationToken cancellationToken)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                throw new UnauthorizedAccessException("Access token is missing.");
+            }
+
+            var readings = await _dashboardService.GetInverterReadingsAsync(accessToken, cancellationToken);
+            return Ok(readings);
+        }
     }
 }
 

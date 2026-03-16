@@ -25,6 +25,7 @@ const loginPath = import.meta.env.VITE_LOGIN_PATH || "/login"
 const logoutPath = import.meta.env.VITE_LOGOUT_PATH || "/logout"
 const backendReadyPath = import.meta.env.VITE_BACKEND_READY_PATH || "/api/v1/system/ready"
 const dashboardPath = import.meta.env.VITE_DASHBOARD_PATH || "/api/v1/dashboard"
+const dashboardBFFRedirectMeterInverter = import.meta.env.VITE_DASHBOARD_PATH_TO_METER || "/api/v1/dashboard/inverterreadings"
 const inverterDataPath = import.meta.env.VITE_INVERTER_DATA_PATH || "/api/v1/inverter/data"
 
 function combine(baseUrl: string, path: string): string {
@@ -53,6 +54,7 @@ export const appConfig = {
     backendReady: combine(apiBaseUrl, backendReadyPath),
     dashboard: combine(apiBaseUrl, dashboardPath),
     inverterData: combine(apiBaseUrl, inverterDataPath),
+    inverterReadings: combine(apiBaseUrl, dashboardBFFRedirectMeterInverter),
   },
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import AppLayout from "./components/AppLayout"
 import AnonymousHome from "./components/AnonymousHome"
 import DashboardPageQuery from "./pages/DashboardPageQuery"
+import InverterReadingsPage from "./pages/InverterReadingsPage"
 import { fetchBackendReady, fetchCurrentUser, login, logout, type BackendReadiness, type UserInfo } from "./api/bffApi"
 
 const readyBackendState: BackendReadiness = {
@@ -86,7 +87,7 @@ function App() {
       ) : !user ? (
         <AnonymousHome backendStatus={backendStatus} />
       ) : (
-        <DashboardPageQuery permissions={user.permissions} />
+        <InverterReadingsPage permissions={user.permissions} />
       )}
     </AppLayout>
   )
