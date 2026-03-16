@@ -46,9 +46,9 @@ namespace InverterSimulator.Protocols.Http
             {
                 var data = new
                 {
-                    PowerW = _rand.Next(_config.MinPower, _config.MaxPower + 1),
-                    VoltageV = _rand.Next(_config.MinVoltage, _config.MaxVoltage + 1),
-                    CurrentA = _rand.Next(_config.MinCurrent, _config.MaxCurrent + 1),
+                    Power = _rand.Next(_config.MinPower, _config.MaxPower + 1),
+                    Voltage = _rand.Next(_config.MinVoltage, _config.MaxVoltage + 1),
+                    Current = _rand.Next(_config.MinCurrent, _config.MaxCurrent + 1),
                     Timestamp = DateTime.UtcNow
                 };
 

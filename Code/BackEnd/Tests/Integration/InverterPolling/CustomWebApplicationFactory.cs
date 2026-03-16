@@ -12,6 +12,7 @@ using System.IO;
 using Microsoft.AspNetCore.TestHost;
 using Repositories.Data;
 using System.Diagnostics;
+using Repositories.Models;
 
 namespace MeterIngestionWeb.IntegrationTests;
 
@@ -63,10 +64,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             pollerMock.Setup(p => p.PollAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new InverterReading
                 {
-                    PowerW = 100,
-                    VoltageV = 230,
-                    CurrentA = 5,
-                    TimestampUtc = DateTime.UtcNow,
+                    Power = 100,
+                    Voltage = 230,
+                    Current = 5,
+                    Timestamp = DateTime.UtcNow,
                     Source = "Test"
                 });
 

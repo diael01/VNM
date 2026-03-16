@@ -29,7 +29,7 @@ public class InverterPollingIntegrationTests : IntegrationTestBase
         var readings = await db.InverterReadings.ToListAsync();
 
         Assert.Single(readings);
-        Assert.Equal(100, readings[0].PowerW);
+        Assert.Equal(100, readings[0].Power);
         Assert.Equal("Simulator", readings[0].Source);//todo: check why not "Test"
     }
 

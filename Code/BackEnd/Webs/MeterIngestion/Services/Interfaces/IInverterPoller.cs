@@ -1,3 +1,5 @@
+using Repositories.Models;
+
 namespace InverterPolling.Services
 {
     /// <summary>

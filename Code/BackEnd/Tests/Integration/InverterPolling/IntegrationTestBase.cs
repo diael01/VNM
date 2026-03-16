@@ -107,9 +107,10 @@ public abstract class IntegrationTestBase : IAsyncLifetime
                 "VnmDb connection is missing. Provide ConnectionStrings:VnmDb or set SA_PASSWORD (or Parameters:sql-password) in environment/user-secrets.");
         }
 
+        var port = config["SqlServer:Port"] ?? "1433";
         return new SqlConnectionStringBuilder
         {
-            DataSource = "localhost,1433",
+            DataSource = $"localhost,{port}",
             InitialCatalog = "VNM",
             UserID = "sa",
             Password = password,

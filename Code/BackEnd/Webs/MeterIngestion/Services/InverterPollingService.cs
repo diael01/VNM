@@ -58,10 +58,10 @@ namespace InverterPolling.Services
 
                         var entity = new Repositories.Models.InverterReading
                         {
-                            Timestamp = reading.TimestampUtc,
-                            Power = reading.PowerW,
-                            Voltage = reading.VoltageV,
-                            Current = reading.CurrentA,
+                            Timestamp = reading.Timestamp,
+                            Power = reading.Power,
+                            Voltage = reading.Voltage,
+                            Current = reading.Current,
                             Source = _options.Source,
                         };
 
@@ -69,8 +69,8 @@ namespace InverterPolling.Services
                         await dbContext.SaveChangesAsync(stoppingToken);
 
                         _logger.LogInformation(
-                            "Saved inverter reading: {PowerW} W, {VoltageV} V, {CurrentA} A at {Timestamp}",
-                            reading.PowerW, reading.VoltageV, reading.CurrentA, reading.TimestampUtc);
+                            "Saved inverter reading: {Power} W, {Voltage} V, {Current} A at {Timestamp}",
+                            reading.Power, reading.Voltage, reading.Current, reading.Timestamp);
                     }
                 }
                 catch (Exception ex)

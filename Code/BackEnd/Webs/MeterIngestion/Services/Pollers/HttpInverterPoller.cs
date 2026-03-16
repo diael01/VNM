@@ -2,6 +2,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using InverterPolling.Services.Auth;
+using Repositories.Models;
+
 
 namespace InverterPolling.Services
 {
@@ -46,10 +48,10 @@ namespace InverterPolling.Services
 
             return new InverterReading
             {
-                TimestampUtc = data.TimestampUtc,
-                PowerW = data.PowerW,
-                VoltageV = data.VoltageV,
-                CurrentA = data.CurrentA,
+                Timestamp = data.Timestamp,
+                Power = data.Power,
+                Voltage = data.Voltage,
+                Current = data.Current,
                 Source = _source
             };
         }

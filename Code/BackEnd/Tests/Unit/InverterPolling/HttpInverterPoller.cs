@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http.Json;
+using Repositories.Models;
 
 namespace InverterPolling.Tests.Polling
 {
@@ -16,10 +17,10 @@ namespace InverterPolling.Tests.Polling
         {
             var expected = new InverterReading
             {
-                PowerW = 100,
-                VoltageV = 230,
-                CurrentA = 5,
-                TimestampUtc = System.DateTime.UtcNow
+                Power = 100,
+                Voltage = 230,
+                Current = 5,
+                Timestamp = System.DateTime.UtcNow
             };
 
             var handler = new MockHttpMessageHandler(expected);
@@ -30,8 +31,8 @@ namespace InverterPolling.Tests.Polling
             var reading = await poller.PollAsync(CancellationToken.None);
 
             Assert.NotNull(reading);
-            Assert.Equal(expected.PowerW, reading.PowerW);
-            Assert.Equal(expected.VoltageV, reading.VoltageV);
+            Assert.Equal(expected.Power, reading.Power);
+            Assert.Equal(expected.Voltage, reading.Voltage);
         }
     }
 
