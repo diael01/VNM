@@ -232,6 +232,33 @@ function Get-RabbitMqPassword {
         $rabbitPassword = $env:RABBITMQ_DEFAULT_PASS
     }
 
+    if ([string]::IsNullOrWhiteSpace($rabbitPassword)) {
+        Write-Host "[vnm-rabbitmq] RabbitMqPassword and env variables are empty. Attempting to read from .NET user-secrets..."
+        $appHostPath = Join-Path -Path $PSScriptRoot -ChildPath '../Aspire/AppHost'
+        if (Test-Path "$appHostPath/AppHost.csproj") {
+            $secretsOutput = dotnet user-secrets list --project "$appHostPath/AppHost.csproj" 2>$null
+            if ($secretsOutput) {
+                $rabbitSecret = $secretsOutput | Select-String -Pattern 'Parameters:res08-rabbitmq-password' | ForEach-Object {
+                    $line = $_.ToString()
+                    Write-Host "[vnm-rabbitmq] Checking secret line: $line"
+                    if ($line -match 'Parameters:res08-rabbitmq-password\s*=\s*(.+)') { Write-Host "[vnm-rabbitmq] Found Parameters:res08-rabbitmq-password secret."; $matches[1] }
+                } | Select-Object -First 1
+                if ($rabbitSecret) {
+                    Write-Host "[vnm-rabbitmq] Using secret value for RabbitMQ password."
+                    $rabbitPassword = $rabbitSecret
+                    $env:APPHOST_RABBITMQ_PASSWORD = $rabbitPassword
+                    $env:RABBITMQ_DEFAULT_PASS = $rabbitPassword
+                } else {
+                    Write-Host "[vnm-rabbitmq] No RabbitMQ password found in user-secrets."
+                }
+            } else {
+                Write-Host "[vnm-rabbitmq] No output from user-secrets list."
+            }
+        } else {
+            Write-Host "[vnm-rabbitmq] AppHost.csproj not found at $appHostPath."
+        }
+    }
+
     return $rabbitPassword
 }
 
@@ -261,18 +288,52 @@ function New-ContainerIfMissing {
 
     switch ($Name) {
         'vnm-sqlserver' {
-            $sqlPassword = $SqlSaPassword
-            if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
-                $sqlPassword = $env:APPHOST_SQL_PASSWORD
-            }
+                Write-Host "[vnm-sqlserver] Checking for SQL password..."
+                $sqlPassword = $SqlSaPassword
+                if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
+                    Write-Host "[vnm-sqlserver] SqlSaPassword parameter is empty. Checking APPHOST_SQL_PASSWORD env..."
+                    $sqlPassword = $env:APPHOST_SQL_PASSWORD
+                }
 
-            if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
-                $sqlPassword = $env:SA_PASSWORD
-            }
+                if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
+                    Write-Host "[vnm-sqlserver] APPHOST_SQL_PASSWORD env is empty. Checking SA_PASSWORD env..."
+                    $sqlPassword = $env:SA_PASSWORD
+                }
 
-            if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
-                throw "Container '$Name' is missing and cannot be created because no SQL SA password was provided. Pass -SqlSaPassword or set APPHOST_SQL_PASSWORD/SA_PASSWORD."
-            }
+                if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
+                    Write-Host "[vnm-sqlserver] SA_PASSWORD env is empty. Attempting to read from .NET user-secrets..."
+                    $appHostPath = Join-Path -Path $PSScriptRoot -ChildPath '../Aspire/AppHost'
+                    if (Test-Path "$appHostPath/AppHost.csproj") {
+                        Write-Host "[vnm-sqlserver] AppHost.csproj found at $appHostPath. Running 'dotnet user-secrets list'..."
+                        $secretsOutput = dotnet user-secrets list --project "$appHostPath/AppHost.csproj" 2>$null
+                        if ($secretsOutput) {
+                            Write-Host "[vnm-sqlserver] user-secrets output:\n$secretsOutput"
+                            $sqlSecret = $secretsOutput | Select-String -Pattern 'APPHOST_SQL_PASSWORD|SA_PASSWORD|Parameters:sql-password' | ForEach-Object {
+                                $line = $_.ToString()
+                                Write-Host "[vnm-sqlserver] Checking secret line: $line"
+                                if ($line -match 'APPHOST_SQL_PASSWORD\s*:\s*(.+)') { Write-Host "[vnm-sqlserver] Found APPHOST_SQL_PASSWORD secret."; $matches[1] }
+                                elseif ($line -match 'SA_PASSWORD\s*:\s*(.+)') { Write-Host "[vnm-sqlserver] Found SA_PASSWORD secret."; $matches[1] }
+                                elseif ($line -match 'Parameters:sql-password\s*=\s*(.+)') { Write-Host "[vnm-sqlserver] Found Parameters:sql-password secret."; $matches[1] }
+                            } | Select-Object -First 1
+                            if ($sqlSecret) {
+                                Write-Host "[vnm-sqlserver] Using secret value for SQL password."
+                                $sqlPassword = $sqlSecret
+                                $env:APPHOST_SQL_PASSWORD = $sqlPassword
+                                $env:SA_PASSWORD = $sqlPassword
+                            } else {
+                                Write-Host "[vnm-sqlserver] No SQL password found in user-secrets."
+                            }
+                        } else {
+                            Write-Host "[vnm-sqlserver] No output from user-secrets list."
+                        }
+                    } else {
+                        Write-Host "[vnm-sqlserver] AppHost.csproj not found at $appHostPath."
+                    }
+                    if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
+                        Write-Host "[vnm-sqlserver] SQL password still empty after all checks. Throwing error."
+                        throw "Container '$Name' is missing and cannot be created because no SQL SA password was provided. Pass -SqlSaPassword or set APPHOST_SQL_PASSWORD/SA_PASSWORD."
+                    }
+                }
 
             Write-Host "Creating SQL container '$Name' from image '$SqlContainerImage'..."
             $sqlRunArgs = @(
