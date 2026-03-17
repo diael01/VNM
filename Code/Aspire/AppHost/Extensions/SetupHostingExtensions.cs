@@ -22,17 +22,15 @@ public static class SetupHostingExtensions
         }
 
         // Click Start in Aspire dashboard. This script initializes VNM and VNM_TEST.
+        var script = OperatingSystem.IsWindows() ? "setup.ps1" : "setupMac.sh";
+        var args = OperatingSystem.IsWindows()
+            ? new[] { "-NoProfile", "-NonInteractive", "-File", script, "-Mode", "local", "-SkipIfInitialized" }
+            : new[] { script, "-Mode", "local" };
         return builder.AddExecutable(
             "res01-initial-setup",
                 setupShell,
                 "../../Setup",
-                "-NoProfile",
-                "-NonInteractive",
-                "-File",
-                "setup.ps1",
-                "-Mode",
-            "local",
-            "-SkipIfInitialized")
+                args)
             .WithReference(db.VnmDb)
             .WithEnvironment("CONTAINER_NAME", "vnm-sqlserver")
             .WaitFor(db.SqlServer);

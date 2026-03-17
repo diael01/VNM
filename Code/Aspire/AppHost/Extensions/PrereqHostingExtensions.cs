@@ -19,17 +19,15 @@ public static class PrereqHostingExtensions
             shell = File.Exists(pwshPath) ? pwshPath : "powershell";
         }
 
+        var script = OperatingSystem.IsWindows() ? "prereq-check.ps1" : "prereqCheckMac.sh";
+        var args = OperatingSystem.IsWindows()
+            ? new[] { "-NoProfile", "-NonInteractive", "-File", script, "-RequireDocker", "-EnsureContainer", "vnm-sqlserver,vnm-rabbitmq" }
+            : new[] { script };
         return builder.AddExecutable(
             "res00-prereq-check",
             shell,
             "../../Setup",
-            "-NoProfile",
-            "-NonInteractive",
-            "-File",
-            "prereq-check.ps1",
-            "-RequireDocker",
-            "-EnsureContainer",
-            "vnm-sqlserver,vnm-rabbitmq")
+            args)
             .WithEnvironment(context =>
             {
                 var sqlPassword = builder.Configuration["Parameters:sql-password"]
