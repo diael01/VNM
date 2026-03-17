@@ -64,21 +64,13 @@ var initialSetup = builder.AddInitialSetup(db)
 // 2) React UI resource
 var startupDelaySeconds = builder.Configuration.GetValue<int>("StartupDelaySeconds", 120);
 
-// Add delay resource
-var delayResource = builder.AddExecutable(
-    "res99-startup-delay",
-    OperatingSystem.IsWindows() ? "powershell" : "bash",
-    "../../Setup",
-    OperatingSystem.IsWindows()
-        ? new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "delay.ps1", startupDelaySeconds.ToString() }
-        : new[] { "delayMac.sh", startupDelaySeconds.ToString() });
+// Add del
 var ui = builder.AddNpmApp("res02-ui-frontend", "../../ReactUI", "dev")
-    .WithHttpEndpoint(targetPort: uiPort, port: uiPort, name: "http", isProxied: false)
-    .WaitForCompletion(delayResource);
+    .WithHttpEndpoint(targetPort: uiPort, port: uiPort, name: "http", isProxied: false);
 
 // 3..6) Backend service resources (Dashboard, MeterIngestion, InverterSimulator, IdentityProvider)
 var web = builder.AddVnmWebApps();
-web.WireUpDependencies(db.VnmDb, rabbitMq, delayResource);
+web.WireUpDependencies(db.VnmDb, rabbitMq,initialSetup);
 
 var app = builder.Build();
 

@@ -28,22 +28,22 @@ public static class WebHostingExtensions
         this VnmWebResources web,
         IResourceBuilder<SqlServerDatabaseResource> vnmDb,
         IResourceBuilder<RabbitMQServerResource> rabbitMq,
-        IResourceBuilder<ExecutableResource> delayResource)
+        IResourceBuilder<ExecutableResource> initialSetup)
     {
         web.DashboardBff
             .WithReference(vnmDb)
             .WithReference(rabbitMq)
-            .WaitForCompletion(delayResource);
+            .WaitForCompletion(initialSetup);
 
         web.MeterIngestion
             .WithReference(vnmDb)
             .WithReference(rabbitMq)
-            .WaitForCompletion(delayResource);
+            .WaitForCompletion(initialSetup);
 
         web.InverterSimulator
-            .WaitForCompletion(delayResource);
+            .WaitForCompletion(initialSetup);
 
         web.IdentityProvider
-            .WaitForCompletion(delayResource);
+            .WaitForCompletion(initialSetup);
     }
 }
