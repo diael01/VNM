@@ -26,7 +26,9 @@ namespace InverterPolling.Tests.Polling
             var handler = new MockHttpMessageHandler(expected);
             var client = new HttpClient(handler);
 
-            var poller = new HttpInverterPoller(client, "http://localhost/fake");
+            var accessTokenProvider = new Moq.Mock<InverterPolling.Services.Auth.IAccessTokenProvider>();
+            accessTokenProvider.Setup(x => x.GetAccessTokenAsync(It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
+            var poller = new HttpInverterPoller(client, "http://localhost/fake", accessTokenProvider.Object);
 
             var reading = await poller.PollAsync(CancellationToken.None);
 
