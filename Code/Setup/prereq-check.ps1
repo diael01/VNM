@@ -240,7 +240,7 @@ function Get-RabbitMqPassword {
             if ($secretsOutput) {
                 $rabbitSecret = $secretsOutput | Select-String -Pattern 'Parameters:res08-rabbitmq-password' | ForEach-Object {
                     $line = $_.ToString()
-                    Write-Host "[vnm-rabbitmq] Checking secret line: $line"
+                    # Do not log secret values
                     if ($line -match 'Parameters:res08-rabbitmq-password\s*=\s*(.+)') { Write-Host "[vnm-rabbitmq] Found Parameters:res08-rabbitmq-password secret."; $matches[1] }
                 } | Select-Object -First 1
                 if ($rabbitSecret) {
@@ -284,10 +284,13 @@ function Sync-RabbitMqGuestPassword {
 }
 
 function New-ContainerIfMissing {
+          
     param([string] $Name)
 
     switch ($Name) {
         'vnm-sqlserver' {
+            # Always initialize sqlPort to default at the start
+            $sqlPort = 14333
                 Write-Host "[vnm-sqlserver] Checking for SQL password..."
                 $sqlPassword = $SqlSaPassword
                 if ([string]::IsNullOrWhiteSpace($sqlPassword)) {
@@ -307,10 +310,10 @@ function New-ContainerIfMissing {
                         Write-Host "[vnm-sqlserver] AppHost.csproj found at $appHostPath. Running 'dotnet user-secrets list'..."
                         $secretsOutput = dotnet user-secrets list --project "$appHostPath/AppHost.csproj" 2>$null
                         if ($secretsOutput) {
-                            Write-Host "[vnm-sqlserver] user-secrets output:\n$secretsOutput"
+                            Write-Host "[vnm-sqlserver] Checked user-secrets for SQL password."
                             $sqlSecret = $secretsOutput | Select-String -Pattern 'APPHOST_SQL_PASSWORD|SA_PASSWORD|Parameters:sql-password' | ForEach-Object {
                                 $line = $_.ToString()
-                                Write-Host "[vnm-sqlserver] Checking secret line: $line"
+                                # Do not log secret values
                                 if ($line -match 'APPHOST_SQL_PASSWORD\s*:\s*(.+)') { Write-Host "[vnm-sqlserver] Found APPHOST_SQL_PASSWORD secret."; $matches[1] }
                                 elseif ($line -match 'SA_PASSWORD\s*:\s*(.+)') { Write-Host "[vnm-sqlserver] Found SA_PASSWORD secret."; $matches[1] }
                                 elseif ($line -match 'Parameters:sql-password\s*=\s*(.+)') { Write-Host "[vnm-sqlserver] Found Parameters:sql-password secret."; $matches[1] }
@@ -336,12 +339,44 @@ function New-ContainerIfMissing {
                 }
 
             Write-Host "Creating SQL container '$Name' from image '$SqlContainerImage'..."
+            # Always initialize sqlPort to default
+            $sqlPort = 14333
+            # Read fixed port from Aspire/AppHost/appsettings.json
+            $appSettingsPath = Join-Path $PSScriptRoot '../Aspire/AppHost/appsettings.json'
+            Write-Host "[vnm-sqlserver] Resolved appsettings.json path: $appSettingsPath"
+            if (Test-Path $appSettingsPath) {
+                try {
+                    $appSettings = Get-Content $appSettingsPath | ConvertFrom-Json
+                    if ($appSettings.SqlPort -and $appSettings.SqlPort -ne 0 -and $appSettings.SqlPort -ne "") {
+                        $sqlPort = $appSettings.SqlPort
+                        Write-Host "[vnm-sqlserver] Using SQL port from appsettings.json: $sqlPort"
+                    } else {
+                        Write-Host "[vnm-sqlserver] SqlPort not found or invalid in appsettings.json, using default: $sqlPort"
+                    }
+                } catch {
+                    Write-Host "[vnm-sqlserver] Failed to read appsettings.json, using default port: $sqlPort"
+                }
+            } else {
+                Write-Host "[vnm-sqlserver] appsettings.json not found, using default port: $sqlPort"
+            }
+            # Ensure SQL port is set and valid BEFORE constructing docker command
+            if (-not $sqlPort -or $sqlPort -eq 0 -or $sqlPort -eq "") {
+                Write-Host "[vnm-sqlserver] WARNING: SQL port is missing or invalid. Defaulting to 14333."
+                $sqlPort = 14333
+            }
+            Write-Host "[vnm-sqlserver] Final SQL port value: $sqlPort"
+            Write-Host "[vnm-sqlserver] Value of $sqlPort before port mapping: $sqlPort"
+            $maskedPwd = '****'
+            $portMapping = "${sqlPort}:1433"
+            Write-Host "[vnm-sqlserver] Port mapping: $portMapping"
+            $dockerCmd = "docker run -d --name $Name --restart unless-stopped -p $portMapping -e ACCEPT_EULA=Y -e MSSQL_PID=Developer -e MSSQL_SA_PASSWORD=$maskedPwd $SqlContainerImage"
+            Write-Host "[vnm-sqlserver] Docker command: $dockerCmd"
             $sqlRunArgs = @(
                 'run',
                 '-d',
                 '--name', $Name,
                 '--restart', 'unless-stopped',
-                '-P',
+                '-p', $portMapping,
                 '-e', 'ACCEPT_EULA=Y',
                 '-e', 'MSSQL_PID=Developer',
                 '-e', "MSSQL_SA_PASSWORD=$sqlPassword",
