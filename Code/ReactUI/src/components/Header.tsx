@@ -1,10 +1,14 @@
+
 type HeaderProps = {
   userName?: string
   roles: string[]
   isAuthenticated: boolean
   onLogin: () => void
   onLogout: () => void
+  menuHorizontal?: boolean
+  onToggleMenuLayout?: () => void
 }
+
 
 export default function Header({
   userName,
@@ -12,6 +16,8 @@ export default function Header({
   isAuthenticated,
   onLogin,
   onLogout,
+  menuHorizontal,
+  onToggleMenuLayout,
 }: HeaderProps) {
   return (
     <header
@@ -26,6 +32,34 @@ export default function Header({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {/* Menu layout toggle button */}
+        {typeof menuHorizontal === "boolean" && onToggleMenuLayout && (
+          <button
+            onClick={onToggleMenuLayout}
+            title={menuHorizontal ? "Horizontal menu" : "Vertical menu"}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              border: "1px solid #d1d5db",
+              background: menuHorizontal ? "#2563eb" : "#fff",
+              color: menuHorizontal ? "#fff" : "#2563eb",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 18,
+              marginRight: 8,
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            {menuHorizontal ? (
+              <span style={{ display: "inline-block", transform: "rotate(90deg)" }}>↔</span>
+            ) : (
+              <span>↕</span>
+            )}
+          </button>
+        )}
         <div
           style={{
             width: "40px",

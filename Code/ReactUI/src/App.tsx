@@ -3,6 +3,7 @@ import AppLayout from "./components/AppLayout"
 import AnonymousHome from "./components/AnonymousHome"
 import DashboardPageQuery from "./pages/DashboardPageQuery"
 import InverterReadingsPage from "./pages/InverterReadingsPage"
+import MainMenuRouter from "./pages/MainMenuRouter"
 import { fetchBackendReady, fetchCurrentUser, login, logout, type BackendReadiness, type UserInfo } from "./api/bffApi"
 
 const readyBackendState: BackendReadiness = {
@@ -22,6 +23,7 @@ function App() {
   const [backendStatus, setBackendStatus] = useState<BackendReadiness>(initialBackendState)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [menuHorizontal, setMenuHorizontal] = useState(false)
 
   useEffect(() => {
     async function loadUser() {
@@ -79,6 +81,8 @@ function App() {
       isAuthenticated={!!user}
       onLogin={login}
       onLogout={logout}
+      menuHorizontal={menuHorizontal}
+      onToggleMenuLayout={() => setMenuHorizontal(h => !h)}
     >
       {loading ? (
         <p>Loading...</p>
@@ -87,10 +91,13 @@ function App() {
       ) : !user ? (
         <AnonymousHome backendStatus={backendStatus} />
       ) : (
-        <InverterReadingsPage permissions={user.permissions} />
+        <MainMenuRouter menuHorizontal={menuHorizontal} />
       )}
     </AppLayout>
   )
 }
 
 export default App
+
+// Import MainMenuRouter at the top
+// import MainMenuRouter from "./pages/MainMenuRouter"

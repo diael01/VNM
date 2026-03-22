@@ -9,6 +9,8 @@ type AppLayoutProps = {
   isAuthenticated: boolean
   onLogin: () => void
   onLogout: () => void
+  menuHorizontal?: boolean
+  onToggleMenuLayout?: () => void
 }
 
 export default function AppLayout({
@@ -18,6 +20,8 @@ export default function AppLayout({
   isAuthenticated,
   onLogin,
   onLogout,
+  menuHorizontal,
+  onToggleMenuLayout,
 }: AppLayoutProps) {
   return (
     <div
@@ -34,6 +38,8 @@ export default function AppLayout({
         isAuthenticated={isAuthenticated}
         onLogin={onLogin}
         onLogout={onLogout}
+        menuHorizontal={menuHorizontal}
+        onToggleMenuLayout={onToggleMenuLayout}
       />
 
       <main style={{ padding: "24px" }}>{children}</main>
