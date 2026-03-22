@@ -33,7 +33,11 @@ function ensure_secret() {
     local prompt="$2"
     local validate_func="$3"
     if secret_exists "$key"; then
-        echo "Secret '$key' is already configured."
+        if [[ "$key" == "Parameters:sql-password" || "$key" == "Parameters:res08-rabbitmq-password" ]]; then
+            echo "Secret '$key' is already configured as ********."
+        else
+            echo "Secret '$key' is already configured."
+        fi
     else
         while true; do
             set +e
@@ -79,12 +83,25 @@ fi
 ensure_secret "Parameters:sql-password" "Enter SQL password" validate_sql_password
 ensure_secret "Parameters:res08-rabbitmq-password" "Enter RabbitMQ password"
 
-# Run prerequisite check (if available)
-if [ -f "./prereq-check.sh" ]; then
+
+
+echo "Extracting SQL password from user-secrets..."
+echo "Project path: $APPHOST_PROJ"
+ dotnet user-secrets list --project "$APPHOST_PROJ" | sed -E 's/(Parameters:sql-password[[:space:]]*=[[:space:]]*).*/\1********/; s/(Parameters:res08-rabbitmq-password[[:space:]]*=[[:space:]]*).*/\1********/'
+SQL_SA_PASSWORD=$(dotnet user-secrets list --project "$APPHOST_PROJ" | grep "Parameters:sql-password" | awk -F'=' '{print $2}' | xargs)
+RABBITMQ_PASSWORD=$(dotnet user-secrets list --project "$APPHOST_PROJ" | grep "Parameters:res08-rabbitmq-password" | awk -F'=' '{print $2}' | xargs)
+MASKED_SQL_SA_PASSWORD="********"
+MASKED_RABBITMQ_PASSWORD="********"
+echo "Extracted SQL password in easyRunMac.sh: '$MASKED_SQL_SA_PASSWORD'"
+echo "Extracted RabbitMQ password in easyRunMac.sh: '$MASKED_RABBITMQ_PASSWORD'"
+echo "Calling prereq-checkMac.sh with --sql-sa-password argument: '$MASKED_SQL_SA_PASSWORD'"
+echo "Calling prereq-checkMac.sh with --rabbitmq-password argument: '$MASKED_RABBITMQ_PASSWORD'"
+
+if [ -f "./prereq-checkMac.sh" ]; then
     echo "Running prerequisite checks..."
-    bash ./prereq-check.sh
+    bash ./prereq-checkMac.sh --sql-sa-password "$SQL_SA_PASSWORD" --rabbitmq-password "$RABBITMQ_PASSWORD"
 else
-    echo "(Skipping prereq-check: ./prereq-check.sh not found)"
+    echo "(Skipping prereq-check: ./prereq-checkMac.sh not found)"
 fi
 
 echo "Starting AppHost..."
