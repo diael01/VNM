@@ -5,6 +5,7 @@ using Repositories.Models;
 
 namespace Repositories.Data;
 
+
 public partial class VnmDbContext : DbContext
 {
     public VnmDbContext(DbContextOptions<VnmDbContext> options)
@@ -22,8 +23,24 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<InverterReading> InverterReadings { get; set; }
 
+    public virtual DbSet<Address> Addresses { get; set; }
+    public virtual DbSet<InverterInfo> InverterInfos { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+                modelBuilder.Entity<Address>(entity =>
+                {
+                    entity.HasKey(e => e.Id);
+                    entity.HasOne(e => e.InverterInfo)
+                          .WithMany()
+                          .HasForeignKey(e => e.InverterInfoId)
+                          .OnDelete(DeleteBehavior.Cascade);
+                });
+
+                modelBuilder.Entity<InverterInfo>(entity =>
+                {
+                    entity.HasKey(e => e.Id);
+                });
         modelBuilder.Entity<AspNetRole>(entity =>
         {
             entity.Property(e => e.Id).HasMaxLength(225);

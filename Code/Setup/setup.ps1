@@ -321,9 +321,14 @@ if (-not $ForceRecreate -and $skipIfInitializedEffective -and (Test-AlreadyIniti
     exit 0
 }
 
-Write-Host "`n[2/4] Dropping and recreating VNM database..."
-Drop-IfExists 'VNM'
-Invoke-SqlFile -LocalPath $vnmScript
+
+Write-Host "`n[2/4] Applying EF Core migrations to VNM database..."
+Push-Location "$PSScriptRoot/../BackEnd/Libs/Repositories"
+dotnet ef database update --project Repositories.csproj --startup-project ../../Webs/MeterIngestion/MeterIngestion.csproj
+if ($LASTEXITCODE -ne 0) {
+    throw "EF Core migration failed. See output above."
+}
+Pop-Location
 Write-Host '      done.'
 
 Write-Host "`n[3/4] Dropping and recreating VNM_TEST database..."
