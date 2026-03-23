@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
-import Header from "./Header"
 import Footer from "./Footer"
+import Header from "./Header"
 
 type AppLayoutProps = {
   children: ReactNode
@@ -24,14 +24,7 @@ export default function AppLayout({
   onToggleMenuLayout,
 }: AppLayoutProps) {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        gridTemplateRows: "72px 1fr auto",
-        backgroundColor: "#f9fafb",
-      }}
-    >
+    <>
       <Header
         userName={userName}
         roles={roles}
@@ -41,10 +34,8 @@ export default function AppLayout({
         menuHorizontal={menuHorizontal}
         onToggleMenuLayout={onToggleMenuLayout}
       />
-
-      <main style={{ padding: "24px" }}>{children}</main>
-
+      <main style={{ flex: 1, width: '100%' }}>{children}</main>
       <Footer />
-    </div>
+    </>
   )
 }

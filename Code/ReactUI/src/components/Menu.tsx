@@ -1,4 +1,10 @@
 import { useState } from "react";
+import Box from "@mui/material/Box";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import MuiMenu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { Link, useLocation } from "react-router-dom";
 
 export type MenuItem = {
   key: string;
@@ -8,89 +14,118 @@ export type MenuItem = {
 
 const menuItems: MenuItem[] = [
   {
-    key: "location",
-    label: "My Locations",
+    key: "locations",
+    label: "Locations",
     children: [
-      { key: "location-add", label: "Add" },
-      { key: "location-edit", label: "Edit" },
-      { key: "location-delete", label: "Delete" },
+      { key: "locations-add", label: "Add" },
+      { key: "locations-edit", label: "Edit" },
+      { key: "locations-delete", label: "Delete" },
     ],
   },
-  { key: "analytics", label: "Analytics" },
+  {
+    key: "analytics",
+    label: "Analytics",
+    children: [
+      { key: "analytics-overview", label: "Overview (Today)" },
+      { key: "analytics-trends", label: "Trends" },
+      { key: "analytics-financial", label: "Financial" },
+    ],
+  },
+  {
+    key: "transfers",
+    label: "Transfers",
+    children: [
+      { key: "transfers-available", label: "Available Energy" },
+      { key: "transfers-new", label: "New Transfer" },
+      { key: "transfers-history", label: "History" },
+    ],
+  },
   {
     key: "company",
-    label: "Energy Providers",
+    label: "Ext. Providers",
     children: [
       { key: "company-add", label: "Add" },
       { key: "company-edit", label: "Edit" },
       { key: "company-delete", label: "Delete" },
+      { key: "company-simulator", label: "Provider Simulator" },
+      { key: "company-prosumer", label: "Prosumer Account" },
+      { key: "company-settlements", label: "Settlements" },
+      { key: "company-external-data", label: "External Data" },
     ],
   },
   { key: "admin", label: "Admin" },
 ];
 
-export default function Menu({ onSelect, horizontal = false }: { onSelect: (key: string) => void, horizontal?: boolean }) {
-  const [open, setOpen] = useState<string | null>(null);
+export default function AppMenu({ horizontal = false }: { horizontal?: boolean }) {
+  const location = useLocation();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [openMenuIdx, setOpenMenuIdx] = useState<number | null>(null);
 
-  const handleClick = (key: string, hasChildren: boolean) => {
-    if (hasChildren) {
-      setOpen(open === key ? null : key);
-    } else {
-      onSelect(key);
-    }
+
+
+
+  // Open submenu on tab click only
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setOpenMenuIdx(null);
   };
 
-  const navStyle = horizontal
-    ? { width: "100%", background: "#fff", borderBottom: "1px solid #e5e7eb", padding: 8 }
-    : { width: 260, background: "#fff", borderRight: "1px solid #e5e7eb", padding: 16 };
 
-  const ulStyle = horizontal
-    ? { listStyle: "none", padding: 0, margin: 0, display: "flex", gap: 24 }
-    : { listStyle: "none", padding: 0, margin: 0 };
 
   return (
-    <nav style={navStyle}>
-      <ul style={ulStyle}>
-        {menuItems.map(item => (
-          <li key={item.key} style={horizontal ? { position: "relative" } : { marginBottom: 8 }}>
-            <div
-              style={{ fontWeight: 600, cursor: "pointer", padding: horizontal ? "8px 16px" : "8px 0", display: "inline-block" }}
-              onClick={() => handleClick(item.key, !!item.children)}
-            >
-              {item.label}
-            </div>
-            {item.children && open === item.key && (
-              <ul
-                style={horizontal
-                  ? {
-                      listStyle: "none",
-                      padding: 0,
-                      margin: 0,
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      background: "#fff",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                      border: "1px solid #e5e7eb",
-                      zIndex: 10,
-                    }
-                  : { listStyle: "none", paddingLeft: 16, margin: 0 }}
-              >
-                {item.children.map(child => (
-                  <li key={child.key} style={horizontal ? { minWidth: 120 } : { marginBottom: 4 }}>
-                    <div
-                      style={{ cursor: "pointer", padding: "6px 12px", color: "#2563eb" }}
-                      onClick={() => handleClick(child.key, false)}
-                    >
-                      {child.label}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
+    <>
+      <Tabs
+        value={(() => {
+          // Find the tab index based on the current path
+          const path = location.pathname;
+          const idx = menuItems.findIndex(item => {
+            if (!item.children) return path.startsWith(`/${item.key}`);
+            // If any child matches
+            return item.children.some(child => path.includes(child.key.replace('-', '/')));
+          });
+          return idx === -1 ? 0 : idx;
+        })()}
+        orientation={horizontal ? 'horizontal' : 'vertical'}
+        variant={horizontal ? 'scrollable' : 'standard'}
+        scrollButtons={horizontal ? 'auto' : false}
+        aria-label="main menu tabs"
+      >
+        {menuItems.map((item, idx) => (
+          <Tab
+            key={item.key}
+            label={item.label}
+            aria-controls={item.children ? `${item.key}-menu` : undefined}
+            aria-haspopup={!!item.children}
+            component={item.children ? 'button' : Link}
+            to={item.children ? undefined : `/${item.key.replace(/-/g, '/')}`}
+            onClick={item.children ? (e: React.MouseEvent<HTMLElement>) => {
+              setAnchorEl(e.currentTarget);
+              setOpenMenuIdx(idx);
+            } : undefined}
+          />
         ))}
-      </ul>
-    </nav>
+      </Tabs>
+      {openMenuIdx !== null && menuItems[openMenuIdx].children && (
+        <MuiMenu
+          key={menuItems[openMenuIdx].key}
+          id={`${menuItems[openMenuIdx].key}-menu`}
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          MenuListProps={{ onMouseLeave: handleMenuClose, 'aria-labelledby': `${menuItems[openMenuIdx].key}-tab` }}
+        >
+          {menuItems[openMenuIdx].children!.map(child => (
+            <MenuItem
+              key={child.key}
+              component={Link}
+              to={`/${child.key.replace(/-/g, '/')}`}
+              onClick={handleMenuClose}
+            >
+              {child.label}
+            </MenuItem>
+          ))}
+        </MuiMenu>
+      )}
+    </>
   );
 }

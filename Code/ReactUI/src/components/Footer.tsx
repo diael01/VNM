@@ -1,15 +1,9 @@
+import Paper from "@mui/material/Paper";
+
 export default function Footer() {
   return (
-    <footer
-      style={{
-        borderTop: "1px solid #e5e7eb",
-        padding: "16px 24px",
-        fontSize: "12px",
-        color: "#6b7280",
-        backgroundColor: "#ffffff",
-      }}
-    >
+    <Paper component="footer" square elevation={2} sx={{ textAlign: 'center', py: 2, fontSize: 12 }}>
       © 2026 VNM Energy Platform
-    </footer>
-  )
+    </Paper>
+  );
 }

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchInverterReadingsList } from "../api/inverterReadingsApi";
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import 'primereact/resources/themes/lara-light-blue/theme.css';
-import 'primereact/resources/primereact.min.css';
-import 'primeicons/primeicons.css';
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import { DataGrid } from '@mui/x-data-grid';
+import type { GridColDef } from '@mui/x-data-grid';
 
 export type InverterReading = {
   id: number
@@ -59,19 +58,33 @@ export default function InverterReadingsPage({ permissions }: InverterReadingsPa
   if (error) return <p>{error}</p>;
   if (!readings.length) return <p>No inverter readings available.</p>;
 
+  const columns: GridColDef[] = [
+    { field: 'power', headerName: 'Power (W)', flex: 1, sortable: true, filterable: true },
+    { field: 'voltage', headerName: 'Voltage (V)', flex: 1, sortable: true, filterable: true },
+    { field: 'current', headerName: 'Current (A)', flex: 1, sortable: true, filterable: true },
+    { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true, valueFormatter: (params) => new Date(params.value as string).toLocaleString() },
+    { field: 'source', headerName: 'Source', flex: 1, sortable: true, filterable: true },
+  ];
+
   return (
-    <div style={{ padding: "24px" }}>
-      <h2>Inverter Readings
-      {(canRetry) && (
-        <button onClick={load} style={{ marginBottom: 16 }}>Retry</button>
-      )}</h2>
-      <DataTable value={readings} paginator rows={10} filterDisplay="row" sortMode="multiple" responsiveLayout="scroll">
-        <Column field="power" header="Power (W)" sortable filter filterPlaceholder="Filter by Power" />
-        <Column field="voltage" header="Voltage (V)" sortable filter filterPlaceholder="Filter by Voltage" />
-        <Column field="current" header="Current (A)" sortable filter filterPlaceholder="Filter by Current" />
-        <Column field="timestamp" header="Timestamp" sortable filter filterPlaceholder="Filter by Timestamp" body={rowData => new Date(rowData.timestamp).toLocaleString()} />
-        <Column field="source" header="Source" sortable filter filterPlaceholder="Filter by Source" />
-      </DataTable>
-    </div>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box component="h2" sx={{ m: 0, mr: 'auto' }}>
+          Inverter Readings
+        </Box>
+        {canRetry && (
+          <Button variant="outlined" onClick={load} sx={{ mb: 0.5 }}>Retry</Button>
+        )}
+      </Box>
+      <DataGrid
+        autoHeight
+        rows={readings}
+        columns={columns}
+        pageSize={10}
+        rowsPerPageOptions={[10, 20, 50]}
+        disableSelectionOnClick
+        getRowId={(row) => row.id}
+      />
+    </Box>
   );
 }

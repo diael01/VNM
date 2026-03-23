@@ -1,9 +1,7 @@
+import { Outlet } from "react-router-dom"
 import { useEffect, useState } from "react"
 import AppLayout from "./components/AppLayout"
 import AnonymousHome from "./components/AnonymousHome"
-import DashboardPageQuery from "./pages/DashboardPageQuery"
-import InverterReadingsPage from "./pages/InverterReadingsPage"
-import MainMenuRouter from "./pages/MainMenuRouter"
 import { fetchBackendReady, fetchCurrentUser, login, logout, type BackendReadiness, type UserInfo } from "./api/bffApi"
 
 const readyBackendState: BackendReadiness = {
@@ -18,7 +16,7 @@ const initialBackendState: BackendReadiness = {
   inverterReady: false,
 }
 
-function App() {
+export default function AppLayoutRoute() {
   const [user, setUser] = useState<UserInfo | null>(null)
   const [backendStatus, setBackendStatus] = useState<BackendReadiness>(initialBackendState)
   const [loading, setLoading] = useState(true)
@@ -30,7 +28,6 @@ function App() {
       try {
         setLoading(true)
         setError(null)
-
         const currentUser = await fetchCurrentUser()
         setUser(currentUser)
         if (!currentUser) {
@@ -45,39 +42,46 @@ function App() {
         setLoading(false)
       }
     }
-
     loadUser()
   }, [])
 
   useEffect(() => {
-    if (user || backendStatus.ready) {
-      return
-    }
-
+    if (user || backendStatus.ready) return
     const intervalId = window.setInterval(async () => {
       const nextStatus = await fetchBackendReady()
       setBackendStatus(currentStatus => {
         if (
-          currentStatus.ready === nextStatus.ready
-          && currentStatus.meterReady === nextStatus.meterReady
-          && currentStatus.inverterReady === nextStatus.inverterReady
+          currentStatus.ready === nextStatus.ready &&
+          currentStatus.meterReady === nextStatus.meterReady &&
+          currentStatus.inverterReady === nextStatus.inverterReady
         ) {
           return currentStatus
         }
-
         return nextStatus
       })
     }, 3000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
+    return () => window.clearInterval(intervalId)
   }, [user, backendStatus.ready])
 
-  return null;
+  return (
+    <AppLayout
+      userName={user?.name}
+      roles={user?.roles ?? []}
+      isAuthenticated={!!user}
+      onLogin={login}
+      onLogout={logout}
+      menuHorizontal={menuHorizontal}
+      onToggleMenuLayout={() => setMenuHorizontal(h => !h)}
+    >
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        !user ? <AnonymousHome backendStatus={backendStatus} /> : <p>{error}</p>
+      ) : !user ? (
+        <AnonymousHome backendStatus={backendStatus} />
+      ) : (
+        <Outlet context={{ menuHorizontal }} />
+      )}
+    </AppLayout>
+  )
 }
-
-export default App
-
-// Import MainMenuRouter at the top
-// import MainMenuRouter from "./pages/MainMenuRouter"
