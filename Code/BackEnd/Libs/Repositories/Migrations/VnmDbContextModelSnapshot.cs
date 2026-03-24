@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Repositories.Data;
+using Repositories.Models;
 
 #nullable disable
 
@@ -48,35 +48,33 @@ namespace Repositories.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Country")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("County")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("InverterInfoId")
+                    b.Property<int?>("InverterId")
                         .HasColumnType("int");
 
                     b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Street")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("StreetNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("InverterInfoId");
 
                     b.ToTable("Addresses");
                 });
@@ -176,6 +174,75 @@ namespace Repositories.Migrations
                     b.ToTable("AspNetUserClaims");
                 });
 
+            modelBuilder.Entity("Repositories.Models.ConsumptionReading", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Power")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("ConsumptionReadings");
+                });
+
+            modelBuilder.Entity("Repositories.Models.DailyEnergyBalance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CalculatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("ConsumedKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.Property<DateTime?>("Day")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("DeficitKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("ProducedKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("SurplusKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("DailyEnergyBalances");
+                });
+
             modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
                 {
                     b.Property<int>("Id")
@@ -184,20 +251,17 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BatteryType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Manufacturer")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("InverterType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Model")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("NumberOfSolarPanels")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SolarPanelType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 
@@ -212,25 +276,78 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Current")
+                    b.Property<int?>("Current")
                         .HasColumnType("int");
 
-                    b.Property<int>("Power")
+                    b.Property<int?>("InverterId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Power")
                         .HasColumnType("int");
 
                     b.Property<string>("Source")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("Timestamp")
+                    b.Property<DateTime?>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Voltage")
+                    b.Property<int?>("Voltage")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("InverterId");
+
+                    b.HasIndex("LocationId");
+
                     b.ToTable("InverterReadings");
+                });
+
+            modelBuilder.Entity("Repositories.Models.ProviderSettlement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("AcceptedKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.Property<DateTime?>("Day")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("EnergyCreditKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.Property<decimal?>("InjectedKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Mode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("MonetaryCredit")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.Property<DateTime?>("ProcessedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("RatePerKwh")
+                        .HasColumnType("decimal(18, 0)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("ProviderSettlements");
                 });
 
             modelBuilder.Entity("AspNetUserRole", b =>
@@ -246,17 +363,6 @@ namespace Repositories.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Repositories.Models.Address", b =>
-                {
-                    b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
-                        .WithMany()
-                        .HasForeignKey("InverterInfoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("InverterInfo");
                 });
 
             modelBuilder.Entity("Repositories.Models.AspNetRoleClaim", b =>
@@ -281,6 +387,64 @@ namespace Repositories.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Repositories.Models.ConsumptionReading", b =>
+                {
+                    b.HasOne("Repositories.Models.Address", "Location")
+                        .WithMany("ConsumptionReadings")
+                        .HasForeignKey("LocationId")
+                        .HasConstraintName("FK_ConsumptionReadings_Addresses");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("Repositories.Models.DailyEnergyBalance", b =>
+                {
+                    b.HasOne("Repositories.Models.Address", "Location")
+                        .WithMany("DailyEnergyBalances")
+                        .HasForeignKey("LocationId")
+                        .HasConstraintName("FK_DailyEnergyBalances_Addresses");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("Repositories.Models.InverterReading", b =>
+                {
+                    b.HasOne("Repositories.Models.InverterInfo", "Inverter")
+                        .WithMany("InverterReadings")
+                        .HasForeignKey("InverterId")
+                        .HasConstraintName("FK_InverterReadings_InverterInfos");
+
+                    b.HasOne("Repositories.Models.Address", "Location")
+                        .WithMany("InverterReadings")
+                        .HasForeignKey("LocationId")
+                        .HasConstraintName("FK_InverterReadings_Addresses");
+
+                    b.Navigation("Inverter");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("Repositories.Models.ProviderSettlement", b =>
+                {
+                    b.HasOne("Repositories.Models.Address", "Location")
+                        .WithMany("ProviderSettlements")
+                        .HasForeignKey("LocationId")
+                        .HasConstraintName("FK_ProviderSettlements_Addresses");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("Repositories.Models.Address", b =>
+                {
+                    b.Navigation("ConsumptionReadings");
+
+                    b.Navigation("DailyEnergyBalances");
+
+                    b.Navigation("InverterReadings");
+
+                    b.Navigation("ProviderSettlements");
+                });
+
             modelBuilder.Entity("Repositories.Models.AspNetRole", b =>
                 {
                     b.Navigation("AspNetRoleClaims");
@@ -289,6 +453,11 @@ namespace Repositories.Migrations
             modelBuilder.Entity("Repositories.Models.AspNetUser", b =>
                 {
                     b.Navigation("AspNetUserClaims");
+                });
+
+            modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
+                {
+                    b.Navigation("InverterReadings");
                 });
 #pragma warning restore 612, 618
         }

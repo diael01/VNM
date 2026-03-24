@@ -1,10 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+
 namespace Repositories.Models;
 
-public class InverterInfo
+public partial class InverterInfo
 {
     public int Id { get; set; }
-    public string InverterType { get; set; }
-    public string BatteryType { get; set; }
-    public int NumberOfSolarPanels { get; set; }
-    public string SolarPanelType { get; set; }
+
+    public string? Model { get; set; }
+
+    public string? Manufacturer { get; set; }
+
+    public string? SerialNumber { get; set; }
+
+    public virtual ICollection<InverterReading> InverterReadings { get; set; } = new List<InverterReading>();
 }

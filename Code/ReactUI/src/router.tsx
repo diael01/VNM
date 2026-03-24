@@ -1,6 +1,8 @@
 
 import { createBrowserRouter } from "react-router-dom";
 import InverterReadingsPage from "./pages/InverterReadingsPage";
+import Inverters from "./pages/Inverters";
+import AdrMgmt from "./pages/AdrMgmt";
 import { MainMenuRouter } from "./pages/MainMenuRouter";
 import AppLayoutRoute from "./AppLayoutRoute";
 
@@ -13,9 +15,9 @@ export const router = createBrowserRouter([
         element: <MainMenuRouterWrapper />, // see below
         children: [
           { index: true, element: <div>Home (placeholder)</div> },
-          { path: "locations/add", element: <div>Add Location (form placeholder)</div> },
-          { path: "locations/edit", element: <InverterReadingsPage permissions={[]} /> },
-          { path: "locations/delete", element: <div>Delete Location (form placeholder)</div> },
+          { path: "locations/manage", element: <AdrMgmt /> },
+          { path: "locations/inverters", element: <Inverters /> },
+          { path: "locations/readings", element: <InverterReadingsPage permissions={[]}/> },
           { path: "analytics", element: <div>Analytics (placeholder)</div> },
           { path: "admin", element: <div>Admin (placeholder)</div> },
         ],

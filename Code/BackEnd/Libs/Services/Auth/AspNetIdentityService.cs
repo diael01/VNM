@@ -40,14 +40,14 @@ public class AspNetIdentityService : IAspNetIdentityService
     private readonly IAspNetRoleClaimRepository _roleClaimRepository;
     private readonly IAspNetUserRepository _userRepository;
     private readonly IAspNetUserClaimRepository _userClaimRepository;
-    private readonly Repositories.Data.VnmDbContext _context;
+    private readonly VnmDbContext _context;
 
     public AspNetIdentityService(
         IAspNetRoleRepository roleRepository,
         IAspNetRoleClaimRepository roleClaimRepository,
         IAspNetUserRepository userRepository,
         IAspNetUserClaimRepository userClaimRepository,
-        Repositories.Data.VnmDbContext context)
+        VnmDbContext context)
     {
         _roleRepository = roleRepository;
         _roleClaimRepository = roleClaimRepository;

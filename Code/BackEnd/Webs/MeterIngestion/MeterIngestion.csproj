@@ -23,11 +23,11 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.6.7" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
-<PackageReference Include="MassTransit" Version="8.0.9" />
-<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
-<ProjectReference Include="..\..\Libs\EventBusCore\EventBusCore.csproj" IsAspireProjectResource="false" />
-<ProjectReference Include="..\..\Libs\Infrastructure\Infrastructure.csproj" IsAspireProjectResource="false" />
- <ProjectReference Include="..\..\..\Aspire\ServiceDefaults\ServiceDefaults.csproj" />
+    <PackageReference Include="MassTransit" Version="8.0.9" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
+    <ProjectReference Include="..\..\Libs\EventBusCore\EventBusCore.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\Libs\Infrastructure\Infrastructure.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\..\Aspire\ServiceDefaults\ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

@@ -5,10 +5,9 @@ using Repositories.Models;
 
 namespace MeterIngestionWeb.IntegrationTests;
 
-[Collection("IntegrationTests")]
 public class InverterInfoIntegrationTests : IntegrationTestBase
 {
-    public InverterInfoIntegrationTests(CustomWebApplicationFactory factory) : base(factory) { }
+    public InverterInfoIntegrationTests() : base(new CustomWebApplicationFactory()) { }
 
     [Fact]
     public async Task InverterInfo_CRUD_Works()

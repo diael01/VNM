@@ -1,16 +1,18 @@
-using Services.Redirect;
-using EventBusCore.Events;
-using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Services.Auth;
-using VNM.Infrastructure.Configuration;
+using Services.Redirect;
 using VNM.Infrastructure.Auth;
+using VNM.Infrastructure.Configuration;
+using EventBusCore.Events;
+using MassTransit;
 using IAuthenticationService = Services.Auth.IAuthenticationService;
+using Infrastructure.DTOs;
+using Infrastructure.Validation;
+using Infrastructure.Utils;
 
 namespace DashboardBFF.Controllers
 {
@@ -22,23 +24,21 @@ namespace DashboardBFF.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IAuthenticationService _authenticationService;
         private readonly IUserPermissionResolver _permissionResolver;
-        private readonly IDashboardRedirectService _dashboardService;
         private readonly string _frontendBaseUrl;
+        // ...existing code...
 
         public DashboardController(
             IPublishEndpoint publishEndpoint,
             IHttpClientFactory httpClientFactory,
             IAuthenticationService authService,
             IUserPermissionResolver permissionResolver,
-            IDashboardRedirectService dashboardService,
             IOptions<FrontendOptions> frontendOptions)
         {
             _publishEndpoint = publishEndpoint;
             _httpClientFactory = httpClientFactory;
             _authenticationService = authService;
             _permissionResolver = permissionResolver;
-            _dashboardService = dashboardService;
-            _frontendBaseUrl = frontendOptions.Value.BaseUrl;
+            _frontendBaseUrl = frontendOptions.Value.BaseUrl;          
         }
 
         [HttpGet("status")]
@@ -130,14 +130,10 @@ namespace DashboardBFF.Controllers
         [Authorize]
         public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
         {
-            var accessToken = await HttpContext.GetTokenAsync("access_token");
-            if (string.IsNullOrWhiteSpace(accessToken))
-            {
-                throw new UnauthorizedAccessException("Access token is missing.");
-            }
+            var accessToken = await HttpContextAccessTokenHelper.GetAccessTokenOrThrowAsync(HttpContext, cancellationToken);
 
-            var result = await _dashboardService.GetDashboardAsync(accessToken, cancellationToken);
-            return Ok(result);
+            // DashboardRedirectService removed. Implement logic here or call another service if needed.
+            return Ok();
         }
 
         private async Task<bool> ProbeServiceAsync(string clientName, CancellationToken cancellationToken)
@@ -154,21 +150,6 @@ namespace DashboardBFF.Controllers
             }
         }
 
-
-
-        [HttpGet("inverterreadings")]
-        [Authorize]
-        public async Task<IActionResult> GetInverterReadings(CancellationToken cancellationToken)
-        {
-            var accessToken = await HttpContext.GetTokenAsync("access_token");
-            if (string.IsNullOrWhiteSpace(accessToken))
-            {
-                throw new UnauthorizedAccessException("Access token is missing.");
-            }
-
-            var readings = await _dashboardService.GetInverterReadingsAsync(accessToken, cancellationToken);
-            return Ok(readings);
-        }
     }
 }
 

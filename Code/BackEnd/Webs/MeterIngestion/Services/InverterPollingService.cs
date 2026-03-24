@@ -1,3 +1,4 @@
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -6,9 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Repositories.Data;
 using Repositories.Models;
-
 
 namespace InverterPolling.Services
 {
@@ -17,46 +16,45 @@ namespace InverterPolling.Services
     /// </summary>
     public class InverterPollingService : BackgroundService
     {
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<InverterPollingService> _logger;
-        private readonly IInverterPoller _poller;
         private readonly InverterPollingOptions _options;
-        private readonly IDbContextFactory<VnmDbContext> _dbFactory;
 
         public InverterPollingService(
+            IServiceProvider serviceProvider,
             ILogger<InverterPollingService> logger,
-            IInverterPoller poller,
-            IOptions<InverterPollingOptions> options,
-            IDbContextFactory<VnmDbContext> dbFactory)
+            IOptions<InverterPollingOptions> options)
         {
+            _serviceProvider = serviceProvider;
             _logger = logger;
-            _poller = poller;
             _options = options.Value;
-            _dbFactory = dbFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Inverter polling service started using {PollerType}", _poller.GetType().Name);
+            _logger.LogInformation("Inverter polling service started");
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                using var scope = _serviceProvider.CreateScope();
+                var poller = scope.ServiceProvider.GetRequiredService<IInverterPoller>();
+                var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<VnmDbContext>>();
+
                 try
                 {
-                    // ✅ Create a new DbContext per polling cycle
-                    await using var dbContext = await _dbFactory.CreateDbContextAsync(stoppingToken);
-
-                    var reading = await _poller.PollAsync(stoppingToken);
+                    await using var dbContext = await dbFactory.CreateDbContextAsync(stoppingToken);
+                    var reading = await poller.PollAsync(stoppingToken);
 
                     if (reading != null)
                     {
                         var totalReadings = await dbContext.InverterReadings.CountAsync(stoppingToken);
-                        if (totalReadings >= 100) //todo: read from appsettings, add a guard, this is only for test
+                        if (totalReadings >= 100) //todo: remove this when is stable
                         {
                             await dbContext.InverterReadings.ExecuteDeleteAsync(stoppingToken);
                             _logger.LogWarning("InverterReadings reached retention cap (100). Cleared table.");
                         }
 
-                        var entity = new Repositories.Models.InverterReading
+                        var entity = new InverterReading
                         {
                             Timestamp = reading.Timestamp,
                             Power = reading.Power,
@@ -77,7 +75,6 @@ namespace InverterPolling.Services
                 {
                     _logger.LogError(ex, "Error polling inverter");
                 }
-
                 await Task.Delay(TimeSpan.FromMinutes(_options.PollIntervalMinutes), stoppingToken);
             }
         }

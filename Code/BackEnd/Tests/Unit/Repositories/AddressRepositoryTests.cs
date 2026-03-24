@@ -30,7 +30,7 @@ public class AddressRepositoryTests
             Street = "Main St",
             StreetNumber = "123",
             PostalCode = "00000",
-            InverterInfoId = 1
+            InverterId = 1
         };
 
         var created = await repository.AddAsync(address);

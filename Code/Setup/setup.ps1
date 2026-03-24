@@ -322,14 +322,74 @@ if (-not $ForceRecreate -and $skipIfInitializedEffective -and (Test-AlreadyIniti
 }
 
 
-Write-Host "`n[2/4] Applying EF Core migrations to VNM database..."
-Push-Location "$PSScriptRoot/../BackEnd/Libs/Repositories"
-dotnet ef database update --project Repositories.csproj --startup-project ../../Webs/MeterIngestion/MeterIngestion.csproj
-if ($LASTEXITCODE -ne 0) {
-    throw "EF Core migration failed. See output above."
+
+# [2/4] Drop and recreate VNM using VNM.sql, then mark migration as applied
+Write-Host "`n[2/4] Checking if VNM database exists..."
+
+# Improved DB existence check: robustly parse output for '1' or '0' only
+$vnmExists = $false
+$dbExistsQuery = "IF DB_ID(N'VNM') IS NULL SELECT 0 ELSE SELECT 1;"
+function Parse-DbExistsResult {
+    param([string[]]$lines)
+    foreach ($line in $lines) {
+        $trimmed = $line.Trim()
+        if ($trimmed -eq '1') { return $true }
+        if ($trimmed -eq '0') { return $false }
+    }
+    return $false
 }
-Pop-Location
-Write-Host '      done.'
+try {
+    if ($Mode -eq 'local') {
+        $dockerSqlCmd = Resolve-DockerSqlCmdPath
+        $result = docker exec $ContainerName $dockerSqlCmd -S localhost -U sa -P $SaPassword -d master -h -1 -W -C -Q $dbExistsQuery 2>$null
+        $vnmExists = Parse-DbExistsResult $result
+    } else {
+        $hostSqlCmd = Resolve-HostSqlCmdPath
+        $result = & $hostSqlCmd -S "$SqlHost,$SqlPort" -U $SqlUser -P $SaPassword -d master -h -1 -W -C -Q $dbExistsQuery 2>$null
+        $vnmExists = Parse-DbExistsResult $result
+    }
+} catch { $vnmExists = $false }
+
+if (-not $vnmExists) {
+    Write-Host "VNM database does not exist. Creating using VNM.sql..."
+    Invoke-SqlFile -LocalPath $vnmScript
+    Write-Host '      done.'
+
+    # Scaffold models and context from the new DB
+    Push-Location "$PSScriptRoot/../BackEnd/Libs/Repositories"
+    $connStr = "Server=$SqlHost,$SqlPort;Database=VNM;User Id=$SqlUser;Password=$SaPassword;TrustServerCertificate=True;"
+    Write-Host "Scaffolding models and context from VNM database..."
+    dotnet ef dbcontext scaffold "$connStr" Microsoft.EntityFrameworkCore.SqlServer --output-dir Models --context VnmDbContext --force --no-onconfiguring
+    if ($LASTEXITCODE -ne 0) {
+        throw "EF Core scaffold failed. See output above."
+    }
+
+    # Remove existing migrations if any
+    if (Test-Path ./Migrations) {
+        Remove-Item ./Migrations/* -Force -Recurse
+    }
+
+    # Create initial migration
+    $migrationName = "InitialCreate"
+    Write-Host "Creating InitialCreate migration from scaffolded code..."
+    dotnet ef migrations add $migrationName --project Repositories.csproj --startup-project ../../Webs/MeterIngestion/MeterIngestion.csproj
+    if ($LASTEXITCODE -ne 0) {
+        throw "EF Core migration creation failed. See output above."
+    }
+    $migrationFile = Get-ChildItem ./Migrations/*.cs | Select-Object -First 1
+    $migrationId = if ($migrationFile) { [System.IO.Path]::GetFileNameWithoutExtension($migrationFile.Name) } else { "" }
+    if ($migrationId) {
+        Write-Host "Marking migration '$migrationId' as applied in __EFMigrationsHistory..."
+        $insertHistory = "INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ('$migrationId', '$(dotnet --version)');"
+        Invoke-Sql -Query $insertHistory -Db 'VNM'
+        Write-Host '      done.'
+    } else {
+        Write-Host "Could not determine migration ID to mark as applied."
+    }
+    Pop-Location
+} else {
+    Write-Host "VNM database already exists. Skipping creation and migration marking."
+}
 
 Write-Host "`n[3/4] Dropping and recreating VNM_TEST database..."
 Drop-IfExists 'VNM_TEST'

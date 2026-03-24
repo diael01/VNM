@@ -1,8 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
 using Repositories.CRUD.Interfaces;
 using Repositories.CRUD.Repositories;
-using Repositories.Data;
 
 namespace Repositories.CRUD.Extensions;
 
@@ -12,6 +10,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IInverterReadingRepository, InverterReadingRepository>();
+        services.AddScoped<IAddressRepository, AddressRepository>();
+        services.AddScoped<IInverterInfoRepository, InverterInfoRepository>();
 
         services.AddScoped<IAspNetRoleRepository, AspNetRoleRepository>();
         services.AddScoped<IAspNetRoleClaimRepository, AspNetRoleClaimRepository>();

@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
 using Services.Inverter;
+using Services.DTOs;
 using Repositories.Data;
 using Repositories.Models;
 using Xunit;
+using Infrastructure.DTOs;
 
 namespace BackEnd.Tests.Unit.Repositories;
 
@@ -22,9 +24,9 @@ public class AddressServiceTests
     {
         using var context = CreateContext("Address_Service_CRUD");
         var repository = new AddressRepository(context);
-        var service = new AddressService(repository);
+        var service = new AddressService(repository, null); // Pass null for IMapper if not used in test
 
-        var address = new Address
+        var dto = new AddressDto
         {
             Country = "CountryX",
             County = "CountyY",
@@ -32,10 +34,22 @@ public class AddressServiceTests
             Street = "Main St",
             StreetNumber = "123",
             PostalCode = "00000",
-            InverterInfoId = 1
+            InverterId = 1
         };
 
-        var created = await service.CreateAsync(address);
+        // Simulate mapping manually for test
+        var address = new Address
+        {
+            Country = dto.Country,
+            County = dto.County,
+            City = dto.City,
+            Street = dto.Street,
+            StreetNumber = dto.StreetNumber,
+            PostalCode = dto.PostalCode,
+            InverterId = dto.InverterId
+        };
+
+        var created = await service.CreateAsync(dto);
         Assert.NotNull(created);
         Assert.True(created.Id > 0);
 
@@ -43,8 +57,17 @@ public class AddressServiceTests
         Assert.NotNull(fetched);
         Assert.Equal("CityZ", fetched!.City);
 
-        created.City = "NewCity";
-        var updated = await service.UpdateAsync(created);
+        var updateDto = new AddressDto
+        {
+            Country = dto.Country,
+            County = dto.County,
+            City = "NewCity",
+            Street = dto.Street,
+            StreetNumber = dto.StreetNumber,
+            PostalCode = dto.PostalCode,
+            InverterId = dto.InverterId
+        };
+        var updated = await service.UpdateAsync(created.Id, updateDto);
         Assert.Equal("NewCity", updated.City);
 
         var all = (await service.GetAllAsync()).ToList();

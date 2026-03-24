@@ -17,16 +17,11 @@ function resolveFrontendBaseUrl(): string {
   return "http://localhost:5173"
 }
 
-const apiBaseUrl = trimTrailingSlash(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL)
-const frontendBaseUrl = resolveFrontendBaseUrl()
-
-const authMePath = import.meta.env.VITE_AUTH_ME_PATH || "/api/v1/auth/me"
-const loginPath = import.meta.env.VITE_LOGIN_PATH || "/login"
-const logoutPath = import.meta.env.VITE_LOGOUT_PATH || "/logout"
-const backendReadyPath = import.meta.env.VITE_BACKEND_READY_PATH || "/api/v1/system/ready"
-const dashboardPath = import.meta.env.VITE_DASHBOARD_PATH || "/api/v1/dashboard"
-const dashboardBFFRedirectMeterInverter = import.meta.env.VITE_DASHBOARD_PATH_TO_METER || "/api/v1/dashboard/inverterreadings"
-const inverterDataPath = import.meta.env.VITE_INVERTER_DATA_PATH || "/api/v1/inverter/data"
+export function buildLoginUrl(): string {
+  const loginUrl = new URL(appConfig.urls.login)
+  loginUrl.searchParams.set("returnUrl", appConfig.frontendBaseUrl)
+  return loginUrl.toString()
+}
 
 function combine(baseUrl: string, path: string): string {
   if (path.startsWith("http://") || path.startsWith("https://")) {
@@ -35,6 +30,19 @@ function combine(baseUrl: string, path: string): string {
 
   return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`
 }
+
+const apiBaseUrl = trimTrailingSlash(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL)
+const frontendBaseUrl = resolveFrontendBaseUrl()
+
+const authMePath = import.meta.env.VITE_AUTH_ME_PATH || "/api/v1/auth/me"
+const loginPath = import.meta.env.VITE_LOGIN_PATH || "/login"
+const logoutPath = import.meta.env.VITE_LOGOUT_PATH || "/logout"
+const backendReadyPath = import.meta.env.VITE_BACKEND_READY_PATH || "/api/v1/system/ready"
+
+const dashboardPath = import.meta.env.VITE_DASHBOARD_PATH || "/api/v1/dashboard"
+const inverterReadingsPath = (import.meta.env.VITE_INVERTERS_PATH || "/api/v1/dashboard/inverterInfo") + "/inverterreadings"
+const addressesPath = import.meta.env.VITE_ADDRESSES_PATH || "/api/v1/dashboard/addressInfo"
+const invertersPath = import.meta.env.VITE_INVERTERS_PATH || "/api/v1/dashboard/inverterInfo"
 
 export const appConfig = {
   apiBaseUrl,
@@ -45,7 +53,8 @@ export const appConfig = {
     logout: logoutPath,
     backendReady: backendReadyPath,
     dashboard: dashboardPath,
-    inverterData: inverterDataPath,
+    addresses: addressesPath,
+    inverters: invertersPath,
   },
   urls: {
     authMe: combine(apiBaseUrl, authMePath),
@@ -53,13 +62,10 @@ export const appConfig = {
     logout: combine(apiBaseUrl, logoutPath),
     backendReady: combine(apiBaseUrl, backendReadyPath),
     dashboard: combine(apiBaseUrl, dashboardPath),
-    inverterData: combine(apiBaseUrl, inverterDataPath),
-    inverterReadings: combine(apiBaseUrl, dashboardBFFRedirectMeterInverter),
+    inverterReadings: combine(apiBaseUrl, inverterReadingsPath),
+    addresses: combine(apiBaseUrl, addressesPath),
+    inverters: combine(apiBaseUrl, invertersPath),
   },
 }
 
-export function buildLoginUrl(): string {
-  const loginUrl = new URL(appConfig.urls.login)
-  loginUrl.searchParams.set("returnUrl", appConfig.frontendBaseUrl)
-  return loginUrl.toString()
-}
+

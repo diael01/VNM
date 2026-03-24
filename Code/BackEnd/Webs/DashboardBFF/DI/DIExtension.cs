@@ -17,7 +17,6 @@ public static class ApplicationServicesExtensions
         this IServiceCollection services)
     {
         services.AddScoped<IAuthenticationService, AuthenticationService>();
-        services.AddScoped<IDashboardRedirectService, DashboardRedirectService>();
         services.AddScoped<IUserPermissionResolver, DbUserPermissionResolver>();
 
         return services;

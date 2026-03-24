@@ -7,5 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Repositories\Repositories.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
   </ItemGroup>
 </Project>

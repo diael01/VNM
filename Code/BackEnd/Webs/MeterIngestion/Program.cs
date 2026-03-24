@@ -1,3 +1,4 @@
+using Infrastructure.Validation;
 using ServiceDefaults;
 using Scalar.AspNetCore;
 using Serilog;
@@ -9,9 +10,10 @@ using InverterPolling.Services.Auth;
 using Microsoft.Extensions.Options;
 using Infrastructure.Polling;
 using VNM.Infrastructure.Extensions;
-using Repositories.Data;
 using Repositories.CRUD.Extensions;
 using Services.DependencyInjection;
+using Services.Profiles;
+using Repositories.Models;
 
 // ---------------------
 // Build the application
@@ -32,10 +34,11 @@ builder.TryConfigureLocalVnmDbConnection();
 builder.Services.AddEventBus(builder.Configuration, typeof(MeterEventConsumer).Assembly);
 
 // ---------------------
-// Controllers & Swagger
+// Controllers, Swagger, and Validation
 // ---------------------
 builder.Services.AddControllers();
 builder.Services.AddSwager();
+builder.Services.AddAppValidators();
 
 // ---------------------
 // Health Checks
@@ -55,6 +58,10 @@ builder.Services.Configure<InverterPollingOptions>(
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IAccessTokenProvider, ClientCredentialsAccessTokenProvider>();
 
+// ---------------------
+// AutoMapper
+// ---------------------
+builder.Services.AddAutoMapper(typeof(AddressProfile).Assembly);
 // ---------------------
 // DbContext
 // ---------------------

@@ -6,14 +6,12 @@ using Repositories.Data;
 
 namespace MeterIngestionWeb.IntegrationTests;
 
-[CollectionDefinition("IntegrationTests")]
-public class IntegrationTestCollection : ICollectionFixture<CustomWebApplicationFactory> { }
 
 [Collection("IntegrationTests")]
+
 public class InverterPollingIntegrationTests : IntegrationTestBase
 {
-    public InverterPollingIntegrationTests(CustomWebApplicationFactory factory)
-        : base(factory) { }
+    public InverterPollingIntegrationTests() : base(new CustomWebApplicationFactory()) {}
 
     [Fact]
     public async Task PollingService_Should_SaveReadingToDatabase()

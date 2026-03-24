@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchInverterReadingsList } from "../api/inverterReadingsApi";
+import { fetchInverterReadingsList } from "../api/inverterApi";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { DataGrid } from '@mui/x-data-grid';

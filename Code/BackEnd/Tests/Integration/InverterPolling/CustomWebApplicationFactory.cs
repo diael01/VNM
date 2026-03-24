@@ -18,6 +18,15 @@ namespace MeterIngestionWeb.IntegrationTests;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private readonly string _testDbName;
+
+    public CustomWebApplicationFactory(string? testDbName = null)
+    {
+        _testDbName = testDbName ?? $"VNM_TEST_{Guid.NewGuid():N}";
+    }
+
+    public string TestDbName => _testDbName;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((context, config) =>
@@ -28,7 +37,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             config.AddEnvironmentVariables();
         });
 
-        builder.ConfigureTestServices(services =>
+        builder.ConfigureServices((context, services) =>
         {
             services.RemoveAll<DbContextOptions<VnmDbContext>>();
             services.RemoveAll<IDbContextFactory<VnmDbContext>>();
@@ -36,28 +45,19 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IHostedService>();
             services.RemoveAll<IInverterPoller>();
 
-            // Build config temporar
-            var sp = services.BuildServiceProvider();
-            var configuration = sp.GetRequiredService<IConfiguration>();
-
+            // Use configuration from builder context (safe, avoids root provider issues)
+            var configuration = context.Configuration;
             var baseConn = ResolveVnmDbConnectionString(configuration);
-
-            //this is for Mac,on Win we use integrated security and skip the password
-            //todo: abstract it
-            //var password = configuration["Sql:Password"];
-            //if (string.IsNullOrWhiteSpace(password))
-            //    throw new InvalidOperationException("Sql:Password not found (user-secrets)");
 
             var csb = new SqlConnectionStringBuilder(baseConn)
             {
-                InitialCatalog = IntegrationTestBase.TestDb,
-                //Password = password,
+                InitialCatalog = _testDbName,
             };
 
             services.AddDbContextFactory<VnmDbContext>(options =>
-                options.UseSqlServer(csb.ConnectionString));
+                options.UseSqlServer(csb.ConnectionString, x => x.MigrationsAssembly("Repositories")));
             services.AddDbContext<VnmDbContext>(options =>
-                options.UseSqlServer(csb.ConnectionString));
+                options.UseSqlServer(csb.ConnectionString, x => x.MigrationsAssembly("Repositories")));
 
             // Mock poller
             var pollerMock = new Mock<IInverterPoller>();

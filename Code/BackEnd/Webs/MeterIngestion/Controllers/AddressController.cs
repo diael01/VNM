@@ -1,48 +1,60 @@
+
 using Microsoft.AspNetCore.Mvc;
-using Repositories.Models;
+using Infrastructure.DTOs;
 using Services.Inverter;
+using AutoMapper;
 
 namespace MeterIngestion.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
+
 public class AddressController : ControllerBase
 {
     private readonly IAddressService _addressService;
+    private readonly IMapper _mapper;
 
-    public AddressController(IAddressService addressService)
+    public AddressController(IAddressService addressService, IMapper mapper)
     {
         _addressService = addressService;
+        _mapper = mapper;
     }
+
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var addresses = await _addressService.GetAllAsync();
-        return Ok(addresses);
+        var dtos = _mapper.Map<List<AddressDto>>(addresses);
+        return Ok(dtos);
     }
+
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
         var address = await _addressService.GetByIdAsync(id);
         if (address == null) return NotFound();
-        return Ok(address);
+        var dto = _mapper.Map<AddressDto>(address);
+        return Ok(dto);
     }
+
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Address address)
+    public async Task<IActionResult> Create([FromBody] AddressDto addressDto)
     {
-        var created = await _addressService.CreateAsync(address);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        var created = await _addressService.CreateAsync(addressDto);
+        var dto = _mapper.Map<AddressDto>(created);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, dto);
     }
 
+
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] Address address)
+    public async Task<IActionResult> Update(int id, [FromBody] AddressDto addressDto)
     {
-        if (id != address.Id) return BadRequest();
-        var updated = await _addressService.UpdateAsync(address);
-        return Ok(updated);
+        var updated = await _addressService.UpdateAsync(id, addressDto);
+        var dto = _mapper.Map<AddressDto>(updated);
+        return Ok(dto);
     }
 
     [HttpDelete("{id}")]

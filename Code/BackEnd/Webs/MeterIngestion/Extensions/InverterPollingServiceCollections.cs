@@ -8,8 +8,9 @@ public static class InverterPollingServiceCollectionExtensions
 {
     public static IServiceCollection AddInverterPolling(this IServiceCollection services)
     {
-        services.AddSingleton<IInverterPollerFactory, InverterPollerFactory>();
-        services.AddSingleton<IInverterPoller>(sp =>
+
+        services.AddScoped<IInverterPollerFactory, InverterPollerFactory>();
+        services.AddScoped<IInverterPoller>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<InverterPollingOptions>>().Value;
             var factory = sp.GetRequiredService<IInverterPollerFactory>();

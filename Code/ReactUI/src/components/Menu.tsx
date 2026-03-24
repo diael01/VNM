@@ -17,9 +17,9 @@ const menuItems: MenuItem[] = [
     key: "locations",
     label: "Locations",
     children: [
-      { key: "locations-add", label: "Add" },
-      { key: "locations-edit", label: "Edit" },
-      { key: "locations-delete", label: "Delete" },
+      { key: "locations-inverters", label: "Inverters" },
+      { key: "locations-manage", label: "ManageAdr" },
+      { key: "locations-readings", label: "Readings" },   
     ],
   },
   {
@@ -61,16 +61,11 @@ export default function AppMenu({ horizontal = false }: { horizontal?: boolean }
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openMenuIdx, setOpenMenuIdx] = useState<number | null>(null);
 
-
-
-
   // Open submenu on tab click only
   const handleMenuClose = () => {
     setAnchorEl(null);
     setOpenMenuIdx(null);
   };
-
-
 
   return (
     <>

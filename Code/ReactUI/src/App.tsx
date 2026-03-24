@@ -1,10 +1,9 @@
+
 import { useEffect, useState } from "react"
 import AppLayout from "./components/AppLayout"
-import AnonymousHome from "./components/AnonymousHome"
-import DashboardPageQuery from "./pages/DashboardPageQuery"
-import InverterReadingsPage from "./pages/InverterReadingsPage"
 import MainMenuRouter from "./pages/MainMenuRouter"
-import { fetchBackendReady, fetchCurrentUser, login, logout, type BackendReadiness, type UserInfo } from "./api/bffApi"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { fetchBackendReady, fetchCurrentUser, type BackendReadiness, type UserInfo } from "./api/bffApi"
 
 const readyBackendState: BackendReadiness = {
   ready: true,
@@ -74,7 +73,13 @@ function App() {
     }
   }, [user, backendStatus.ready])
 
-  return null;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppLayout>
+        <MainMenuRouter />
+      </AppLayout>
+    </QueryClientProvider>
+  );
 }
 
 export default App

@@ -1,3 +1,4 @@
+using Infrastructure.Validation;
 using ServiceDefaults;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using EventBusCore;
@@ -6,9 +7,10 @@ using Serilog;
 using VNM.Infrastructure.Extensions;
 using Services.Auth;
 using Services.Redirect;
-using Repositories.Data;
 using Repositories.CRUD.Extensions;
 using Services.DependencyInjection;
+using AutoMapper;
+using Repositories.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,7 @@ builder.Services.AddEventBus(builder.Configuration, typeof(DashboardConsumer).As
 
 // MVC / API
 builder.Services.AddControllers();
+builder.Services.AddAppValidators();
 builder.Services.AddSwager();
 builder.Services.AddHealthChecks()
     .AddCheck("basic", () => HealthCheckResult.Healthy("Service is running"));
@@ -39,6 +42,9 @@ builder.Services.AddAppServices();
 
 //Application Services
 builder.Services.AddBffApplicationServices();
+
+// Register AutoMapper
+builder.Services.AddAutoMapper(typeof(Services.Profiles.AddressProfile).Assembly);
 
 var app = builder.Build();
 app.UseGlobalExceptionHandling();

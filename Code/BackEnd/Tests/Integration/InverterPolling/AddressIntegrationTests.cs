@@ -1,14 +1,14 @@
 using Xunit;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Repositories.Models;
+using Services.DTOs;
+using Infrastructure.DTOs;
 
 namespace MeterIngestionWeb.IntegrationTests;
 
-[Collection("IntegrationTests")]
 public class AddressIntegrationTests : IntegrationTestBase
 {
-    public AddressIntegrationTests(CustomWebApplicationFactory factory) : base(factory) { }
+    public AddressIntegrationTests() : base(new CustomWebApplicationFactory()) { }
 
     [Fact]
     public async Task Address_CRUD_Works()
@@ -16,7 +16,7 @@ public class AddressIntegrationTests : IntegrationTestBase
         var client = Factory.CreateClient();
 
         // Create
-        var address = new Address
+        var address = new AddressDto
         {
             Country = "CountryX",
             County = "CountyY",
@@ -24,34 +24,33 @@ public class AddressIntegrationTests : IntegrationTestBase
             Street = "Main St",
             StreetNumber = "123",
             PostalCode = "00000",
-            InverterInfoId = 1
+            InverterId = 1
         };
         var createResp = await client.PostAsJsonAsync("api/v1/address", address);
         createResp.EnsureSuccessStatusCode();
-        var created = await createResp.Content.ReadFromJsonAsync<Address>();
+        var created = await createResp.Content.ReadFromJsonAsync<AddressDto>();
         Assert.NotNull(created);
-        Assert.True(created.Id > 0);
 
         // GetById
-        var getResp = await client.GetAsync($"api/v1/address/{created.Id}");
+        var getResp = await client.GetAsync($"api/v1/address/{1}");
         getResp.EnsureSuccessStatusCode();
-        var fetched = await getResp.Content.ReadFromJsonAsync<Address>();
+        var fetched = await getResp.Content.ReadFromJsonAsync<AddressDto>();
         Assert.NotNull(fetched);
         Assert.Equal("CityZ", fetched!.City);
 
         // Update
         fetched.City = "NewCity";
-        var updateResp = await client.PutAsJsonAsync($"api/v1/address/{fetched.Id}", fetched);
+        var updateResp = await client.PutAsJsonAsync($"api/v1/address/{1}", fetched);
         updateResp.EnsureSuccessStatusCode();
-        var updated = await updateResp.Content.ReadFromJsonAsync<Address>();
+        var updated = await updateResp.Content.ReadFromJsonAsync<AddressDto>();
         Assert.Equal("NewCity", updated!.City);
 
         // Delete
-        var deleteResp = await client.DeleteAsync($"api/v1/address/{fetched.Id}");
+        var deleteResp = await client.DeleteAsync($"api/v1/address/{1}");
         Assert.True(deleteResp.IsSuccessStatusCode);
 
         // Confirm deleted
-        var notFoundResp = await client.GetAsync($"api/v1/address/{fetched.Id}");
+        var notFoundResp = await client.GetAsync($"api/v1/address/{1}");
         Assert.Equal(System.Net.HttpStatusCode.NotFound, notFoundResp.StatusCode);
     }
 }

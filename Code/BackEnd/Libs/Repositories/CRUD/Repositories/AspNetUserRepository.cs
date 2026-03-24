@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Interfaces;
-using Repositories.Data;
 using Repositories.Models;
 
 namespace Repositories.CRUD.Repositories;

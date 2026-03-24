@@ -12,11 +12,17 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+    <ItemGroup>
+      <Compile Include="..\..\Infrastructure\Validation\*.cs" />
+    </ItemGroup>
+
   <PropertyGroup>
   <NoWarn>1591</NoWarn>
 </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.8.3" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.8.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.0-preview.3.25172.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.3.25172.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
@@ -24,6 +30,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.5" />
     <PackageReference Include="Serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0" />  
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
   </ItemGroup>
 
 </Project>
