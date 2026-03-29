@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IInverterReadingRepository, InverterReadingRepository>();
+        services.AddScoped<IConsumptionReadingRepository, ConsumptionReadingRepository>();
         services.AddScoped<IAddressRepository, AddressRepository>();
         services.AddScoped<IInverterInfoRepository, InverterInfoRepository>();
 

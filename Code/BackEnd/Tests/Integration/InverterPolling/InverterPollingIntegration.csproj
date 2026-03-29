@@ -20,12 +20,12 @@
   </ItemGroup>
 
    <ItemGroup>
-    <ProjectReference Include="../../../Webs/MeterIngestion/MeterIngestion.csproj" />
+    <ProjectReference Include="../../../Webs/EnergyManagement/EnergyManagement.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
 
 <ItemGroup>
-  <Content Include="..\..\..\Webs\MeterIngestion\appsettings.json">
+  <Content Include="..\..\..\Webs\EnergyManagement\appsettings.json">
     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     <Link>appsettings.json</Link>
   </Content>

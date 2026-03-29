@@ -62,7 +62,7 @@ public static class AuthenticationExtension
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("roles");
-                options.Scope.Add("meteringestion.read");
+                options.Scope.Add("energymanagement.read");
                 options.Scope.Add("inverter.read");
 
                 options.ClaimActions.MapUniqueJsonKey("role", "role");

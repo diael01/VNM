@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http.Json;
 using Repositories.Models;
+using Polling.Services.Auth;
 
 namespace InverterPolling.Tests.Polling
 {
@@ -26,7 +27,7 @@ namespace InverterPolling.Tests.Polling
             var handler = new MockHttpMessageHandler(expected);
             var client = new HttpClient(handler);
 
-            var accessTokenProvider = new Moq.Mock<InverterPolling.Services.Auth.IAccessTokenProvider>();
+            var accessTokenProvider = new Moq.Mock<IAccessTokenProvider>();
             accessTokenProvider.Setup(x => x.GetAccessTokenAsync(It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
             var poller = new HttpInverterPoller(client, "http://localhost/fake", accessTokenProvider.Object);
 

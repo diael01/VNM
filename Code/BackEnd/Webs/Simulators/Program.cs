@@ -12,7 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configuration
 builder.Services.Configure<InverterSimulatorOptions>(
-    builder.Configuration.GetSection("Simulators"));
+    builder.Configuration.GetSection("InverterSimulator"));
+builder.Services.Configure<ConsumptionSimulatorOptions>(
+    builder.Configuration.GetSection("ConsumptionSimulator"));
 
 // MVC
 builder.Services.AddControllers();

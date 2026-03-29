@@ -27,7 +27,7 @@
 
   <ItemGroup>
    <ProjectReference Include="../../../Libs/EventBusCore/EventBusCore.csproj" />
-<ProjectReference Include="../../../Webs/MeterIngestion/MeterIngestion.csproj" />
+<ProjectReference Include="../../../Webs/EnergyManagement/EnergyManagement.csproj" />
 <ProjectReference Include="../../../Webs/DashboardBFF/DashboardBFF.csproj" />
   </ItemGroup>
 

@@ -22,7 +22,7 @@ public sealed class DashboardAddressRedirectService : IDashboardAddressRedirectS
         var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.GetAsync("api/v1/address", cancellationToken);
         if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"MeterIngestion API returned status code {(int)response.StatusCode}.");
+            throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
         var addresses = await response.Content.ReadFromJsonAsync<List<Address>>(cancellationToken: cancellationToken);
         return addresses ?? new List<Address>();
     }

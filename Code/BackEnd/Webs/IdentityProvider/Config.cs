@@ -22,16 +22,16 @@ public static class Config
     public static IEnumerable<ApiScope> ApiScopes =>
         new[]
         {
-            new ApiScope("meteringestion.read", "Read access to MeterIngestionService"),
-            new ApiScope("inverter.read", "Read access to InverterSimulator")
+            new ApiScope("energymanagement.read", "Read access to EnergyManagementService"),
+            new ApiScope("inverter.read", "Read access to Simulators")
         };
 
     public static IEnumerable<ApiResource> ApiResources =>
         new[]
         {
-            new ApiResource("meteringestion-api", "Meter Ingestion API")
+            new ApiResource("energymanagement-api", "Energy Management API")
             {
-                Scopes = { "meteringestion.read" },
+                Scopes = { "energymanagement.read" },
                 UserClaims = { JwtClaimTypes.Name, JwtClaimTypes.Role }
             },
             new ApiResource("inverter-api", "Inverter API")
@@ -73,7 +73,7 @@ public static class Config
                     "openid",
                     "profile",
                     "roles",
-                    "meteringestion.read",
+                    "energymanagement.read",
                     "inverter.read"
                 },
 
@@ -82,7 +82,7 @@ public static class Config
             new Client
             {
                 ClientId = "vnm-meter-ingestion",
-                ClientName = "VNM MeterIngestion Service",
+                ClientName = "VNM EnergyManagement Service",
 
                 AllowedGrantTypes = GrantTypes.ClientCredentials,
                 RequireClientSecret = true,

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
 using Services.Inverter;
-using Services.DTOs;
-using Repositories.Data;
+using Infrastructure.DTOs;
+using Repositories.Models;
 using Repositories.Models;
 using Xunit;
 using Infrastructure.DTOs;
@@ -34,7 +34,7 @@ public class AddressServiceTests
             Street = "Main St",
             StreetNumber = "123",
             PostalCode = "00000",
-            InverterId = 1
+                // InverterId = 1
         };
 
         // Simulate mapping manually for test
@@ -46,7 +46,7 @@ public class AddressServiceTests
             Street = dto.Street,
             StreetNumber = dto.StreetNumber,
             PostalCode = dto.PostalCode,
-            InverterId = dto.InverterId
+                // InverterId = dto.InverterId
         };
 
         var created = await service.CreateAsync(dto);
@@ -65,7 +65,7 @@ public class AddressServiceTests
             Street = dto.Street,
             StreetNumber = dto.StreetNumber,
             PostalCode = dto.PostalCode,
-            InverterId = dto.InverterId
+                // InverterId = dto.InverterId
         };
         var updated = await service.UpdateAsync(created.Id, updateDto);
         Assert.Equal("NewCity", updated.City);

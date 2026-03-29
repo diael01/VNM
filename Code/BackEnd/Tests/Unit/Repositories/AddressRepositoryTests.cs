@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
-using Repositories.Data;
+using Repositories.Models;
 using Repositories.Models;
 using Xunit;
 
@@ -30,7 +30,6 @@ public class AddressRepositoryTests
             Street = "Main St",
             StreetNumber = "123",
             PostalCode = "00000",
-            InverterId = 1
         };
 
         var created = await repository.AddAsync(address);

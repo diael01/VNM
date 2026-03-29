@@ -4,15 +4,16 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using InverterPolling.Services.InverterPoller.Services;
 
 namespace InverterPolling.Tests.Polling
 {
     public class TcpInverterPollerTests
     {
         [Fact]
-        public async Task PollAsync_Should_ReadFromTcpSimulator()
+        public async Task PollAsync_Should_ReadFromTcpSimulators()
         {
-            // Arrange: start a TCP simulator
+            // Arrange: start a TCP Simulators
             var listener = new TcpListener(IPAddress.Loopback, 6000);
             listener.Start();
 

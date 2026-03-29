@@ -1,4 +1,4 @@
-namespace InverterPolling.Services.Auth;
+namespace Polling.Services.Auth;
 
 public interface IAccessTokenProvider
 {

@@ -24,10 +24,10 @@ const menuItems: MenuItem[] = [
   },
   {
     key: "data",
-    label: "Data",
+    label: "Data Readings",
     children: [
-      { key: "data-inverterreadings", label: "Inverter Readings" },   
-      { key: "data-consumptionreadings", label: "Consumption Readings" },   
+      { key: "data-inverterreadings", label: "Inverter" },   
+      { key: "data-consumptionreadings", label: "Consumption" },   
     ],
   },
   {

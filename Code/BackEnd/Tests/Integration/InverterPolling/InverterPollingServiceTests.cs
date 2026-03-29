@@ -2,9 +2,9 @@ using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using Repositories.Data;
+using Repositories.Models;
 
-namespace MeterIngestionWeb.IntegrationTests;
+namespace EnergyManagementWeb.IntegrationTests;
 
 
 [Collection("IntegrationTests")]
@@ -28,7 +28,7 @@ public class InverterPollingIntegrationTests : IntegrationTestBase
 
         Assert.Single(readings);
         Assert.Equal(100, readings[0].Power);
-        Assert.Equal("Simulator", readings[0].Source);//todo: check why not "Test"
+        Assert.Equal("Simulators", readings[0].Source);//todo: check why not "Test"
     }
 
 }

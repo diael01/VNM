@@ -2,29 +2,36 @@ using Xunit;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using Services.Inverter;
-using Services.DTOs;
-using MeterIngestion.Controllers;
+// using Services.DTOs; (removed, not needed)
+using EnergyManagement.Controllers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Infrastructure.DTOs;
 
-namespace MeterIngestion.UnitTests.Controllers;
+namespace EnergyManagement.UnitTests.Controllers;
+
+using AutoMapper;
 
 public class AddressControllerTests
 {
     private readonly Mock<IAddressService> _mockService;
+    private readonly Mock<IMapper> _mockMapper;
     private readonly AddressController _controller;
 
     public AddressControllerTests()
     {
         _mockService = new Mock<IAddressService>();
-        _controller = new AddressController(_mockService.Object);
+        _mockMapper = new Mock<IMapper>();
+        _controller = new AddressController(_mockService.Object, _mockMapper.Object);
     }
 
     [Fact]
     public async Task GetAll_ReturnsOk_WithAddresses()
     {
-        _mockService.Setup(s => s.GetAllAsync(default)).ReturnsAsync(new List<Repositories.Models.Address> { new Repositories.Models.Address { Id = 1 } });
+        var addressesList = new List<Repositories.Models.Address> { new Repositories.Models.Address { Id = 1, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" } };
+        _mockService.Setup(s => s.GetAllAsync(default)).ReturnsAsync(addressesList);
+        var dtosList = new List<AddressDto> { new AddressDto { Id = 1, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" } };
+        _mockMapper.Setup(m => m.Map<List<AddressDto>>(addressesList)).Returns(dtosList);
         var result = await _controller.GetAll();
         var ok = Assert.IsType<OkObjectResult>(result);
         var addresses = Assert.IsAssignableFrom<IEnumerable<AddressDto>>(ok.Value);
@@ -34,7 +41,10 @@ public class AddressControllerTests
     [Fact]
     public async Task GetById_ReturnsOk_WhenFound()
     {
-        _mockService.Setup(s => s.GetByIdAsync(1, default)).ReturnsAsync(new Repositories.Models.Address { Id = 1, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000", InverterId = 1 });
+        var entity = new Repositories.Models.Address { Id = 1, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        var dto = new AddressDto { Id = 1, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        _mockService.Setup(s => s.GetByIdAsync(1, default)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<AddressDto>(entity)).Returns(dto);
         var result = await _controller.GetById(1);
         var ok = Assert.IsType<OkObjectResult>(result);
         var address = Assert.IsType<AddressDto>(ok.Value);
@@ -52,9 +62,11 @@ public class AddressControllerTests
     [Fact]
     public async Task Create_ReturnsCreatedAt_WithAddress()
     {
-        var dto = new AddressDto { Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000", InverterId = 1 };
-        var entity = new Repositories.Models.Address { Id = 3, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000", InverterId = 1 };
+        var dto = new AddressDto { Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        var entity = new Repositories.Models.Address { Id = 3, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        var createdDto = new AddressDto { Id = 3, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
         _mockService.Setup(s => s.CreateAsync(dto, default)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<AddressDto>(entity)).Returns(createdDto);
         var result = await _controller.Create(dto);
         var created = Assert.IsType<CreatedAtActionResult>(result);
         var value = Assert.IsType<AddressDto>(created.Value);
@@ -64,9 +76,11 @@ public class AddressControllerTests
     [Fact]
     public async Task Update_ReturnsOk_WhenIdMatches()
     {
-        var dto = new AddressDto { Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000", InverterId = 1 };
-        var entity = new Repositories.Models.Address { Id = 4, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000", InverterId = 1 };
+        var dto = new AddressDto { Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        var entity = new Repositories.Models.Address { Id = 4, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        var updatedDto = new AddressDto { Id = 4, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
         _mockService.Setup(s => s.UpdateAsync(4, dto, default)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<AddressDto>(entity)).Returns(updatedDto);
         var result = await _controller.Update(4, dto);
         var ok = Assert.IsType<OkObjectResult>(result);
         var value = Assert.IsType<AddressDto>(ok.Value);
@@ -76,7 +90,7 @@ public class AddressControllerTests
     [Fact]
     public async Task Update_ReturnsBadRequest_WhenIdMismatch()
     {
-        var dto = new AddressDto { Country = "A" };
+        var dto = new AddressDto { Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
         var result = await _controller.Update(6, dto);
         Assert.IsType<BadRequestResult>(result);
     }

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
-using Repositories.Data;
+using Repositories.Models;
 using Repositories.Models;
 using Xunit;
 
@@ -24,10 +24,10 @@ public class InverterInfoRepositoryTests
 
         var info = new InverterInfo
         {
-            InverterType = "TypeA",
-            BatteryType = "BatteryB",
-            NumberOfSolarPanels = 10,
-            SolarPanelType = "PanelC"
+            Model = "ModelX",
+            Manufacturer = "BrandY",
+            SerialNumber = "SN123",
+            AddressId = 1
         };
 
         var created = await repository.AddAsync(info);
@@ -37,6 +37,6 @@ public class InverterInfoRepositoryTests
         var fetched = await repository.GetByIdAsync(created.Id);
         Assert.NotNull(fetched);
         Assert.Equal(created.Id, fetched!.Id);
-        Assert.Equal("TypeA", fetched.InverterType);
+        Assert.Equal("ModelX", fetched.Model);
     }
 }

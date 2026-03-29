@@ -1,7 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
-using System;
 using InverterPolling.Services;
-using InverterPolling.Services.Auth;
+using Polling.Services.Auth;
+using InverterPolling.Services.InverterPoller.Services;
 
 public class InverterPollerFactory : IInverterPollerFactory
 {

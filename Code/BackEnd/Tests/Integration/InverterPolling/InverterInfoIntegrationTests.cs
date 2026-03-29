@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Repositories.Models;
 
-namespace MeterIngestionWeb.IntegrationTests;
+namespace EnergyManagementWeb.IntegrationTests;
 
 public class InverterInfoIntegrationTests : IntegrationTestBase
 {
@@ -17,10 +17,10 @@ public class InverterInfoIntegrationTests : IntegrationTestBase
         // Create
         var info = new InverterInfo
         {
-            InverterType = "TypeA",
-            BatteryType = "BatteryB",
-            NumberOfSolarPanels = 10,
-            SolarPanelType = "PanelC"
+            Model = "ModelA",
+            Manufacturer = "ManuB",
+            SerialNumber = "SN123",
+            AddressId = 1
         };
         var createResp = await client.PostAsJsonAsync("api/v1/inverterinfo", info);
         createResp.EnsureSuccessStatusCode();
@@ -33,14 +33,17 @@ public class InverterInfoIntegrationTests : IntegrationTestBase
         getResp.EnsureSuccessStatusCode();
         var fetched = await getResp.Content.ReadFromJsonAsync<InverterInfo>();
         Assert.NotNull(fetched);
-        Assert.Equal("TypeA", fetched!.InverterType);
+        Assert.Equal("ModelA", fetched!.Model);
+        Assert.Equal("ManuB", fetched!.Manufacturer);
+        Assert.Equal("SN123", fetched!.SerialNumber);
+        Assert.Equal(1, fetched!.AddressId);
 
         // Update
-        fetched.BatteryType = "BatteryX";
+        fetched.Model = "ModelX";
         var updateResp = await client.PutAsJsonAsync($"api/v1/inverterinfo/{fetched.Id}", fetched);
         updateResp.EnsureSuccessStatusCode();
         var updated = await updateResp.Content.ReadFromJsonAsync<InverterInfo>();
-        Assert.Equal("BatteryX", updated!.BatteryType);
+        Assert.Equal("ModelX", updated!.Model);
 
         // Delete
         var deleteResp = await client.DeleteAsync($"api/v1/inverterinfo/{fetched.Id}");

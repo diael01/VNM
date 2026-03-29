@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 
-namespace InverterPolling.Services.Auth;
+namespace Polling.Services.Auth;
 
 public sealed class ClientCredentialsAccessTokenProvider : IAccessTokenProvider
 {

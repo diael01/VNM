@@ -1,19 +1,15 @@
 using Infrastructure.Validation;
 using ServiceDefaults;
-using Scalar.AspNetCore;
-using Serilog;
 using EventBusCore;
 using EnergyManagement.Consumers;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using InverterPolling.Services;
-using InverterPolling.Services.Auth;
-using Microsoft.Extensions.Options;
 using Infrastructure.Polling;
 using VNM.Infrastructure.Extensions;
 using Repositories.CRUD.Extensions;
 using Services.DependencyInjection;
 using Services.Profiles;
 using Repositories.Models;
+using Polling.Services.Auth;
 
 // ---------------------
 // Build the application
@@ -52,6 +48,10 @@ builder.Services.AddHealthChecks()
 builder.Services.Configure<InverterPollingOptions>(
     builder.Configuration.GetSection("InverterPolling"));
 
+// Consumption Polling Options
+builder.Services.Configure<ConsumptionPolling.Services.ConsumptionPollingOptions>(
+    builder.Configuration.GetSection("ConsumptionPolling"));
+
 // ---------------------
 // HTTP client for polling
 // ---------------------
@@ -74,6 +74,7 @@ builder.Services.AddAppServices();
 // Inverter Poller Factory & Poller (singleton)
 // ---------------------
 builder.Services.AddInverterPolling();
+builder.Services.AddConsumptionPolling();
 
 // ---------------------
 // Aspire / Service defaults

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
 using Services.Inverter;
-using Repositories.Data;
+using Repositories.Models;
 using Repositories.Models;
 using Xunit;
 
@@ -26,10 +26,10 @@ public class InverterInfoServiceTests
 
         var info = new InverterInfo
         {
-            InverterType = "TypeA",
-            BatteryType = "BatteryB",
-            NumberOfSolarPanels = 10,
-            SolarPanelType = "PanelC"
+            Model = "ModelX",
+            Manufacturer = "BrandY",
+            SerialNumber = "SN123",
+            AddressId = 1
         };
 
         var created = await service.CreateAsync(info);
@@ -38,11 +38,11 @@ public class InverterInfoServiceTests
 
         var fetched = await service.GetByIdAsync(created.Id);
         Assert.NotNull(fetched);
-        Assert.Equal("TypeA", fetched!.InverterType);
+        Assert.Equal("ModelX", fetched!.Model);
 
-        created.BatteryType = "BatteryX";
+        created.Manufacturer = "BrandZ";
         var updated = await service.UpdateAsync(created);
-        Assert.Equal("BatteryX", updated.BatteryType);
+        Assert.Equal("BrandZ", updated.Manufacturer);
 
         var all = (await service.GetAllAsync()).ToList();
         Assert.Single(all);

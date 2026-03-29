@@ -10,11 +10,11 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.IO;
 using Microsoft.AspNetCore.TestHost;
-using Repositories.Data;
+using Repositories.Models;
 using System.Diagnostics;
 using Repositories.Models;
 
-namespace MeterIngestionWeb.IntegrationTests;
+namespace EnergyManagementWeb.IntegrationTests;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {

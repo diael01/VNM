@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
-using Repositories.Data;
+using Repositories.Models;
 using Repositories.Models;
 using Xunit;
 

@@ -1,9 +1,9 @@
 using Xunit;
 using System.Net.Http.Json;
-using Services.DTOs;
+using Infrastructure.DTOs;
 using Infrastructure.DTOs;
 
-namespace MeterIngestionWeb.IntegrationTests;
+namespace EnergyManagementWeb.IntegrationTests;
 
 
 public class AddressControllerIntegrationTests : IntegrationTestBase

@@ -18,6 +18,7 @@ export const router = createBrowserRouter([
           { path: "assets/addresses", element: <AdrMgmt /> },
           { path: "assets/inverters", element: <Inverters /> },       
           { path: "data/inverterreadings", element: <InverterReadingsPage permissions={[]}/> },
+           { path: "data/consumptionreadings", element: <ConsumptionPage permissions={[]}/> },
           { path: "analytics", element: <div>Analytics (placeholder)</div> },
           { path: "admin", element: <div>Admin (placeholder)</div> },
         ],
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
 
 // Wrapper to get menuHorizontal from Outlet context
 import { useOutletContext } from "react-router-dom";
+import ConsumptionPage from "./pages/ConsumptionPage";
 function MainMenuRouterWrapper() {
   const { menuHorizontal } = useOutletContext<{ menuHorizontal: boolean }>();
   return <MainMenuRouter menuHorizontal={menuHorizontal} />;

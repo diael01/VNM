@@ -9,7 +9,7 @@ using MassTransit;
 
 namespace EventBusTestHarness.Tests;
 
-public class MeterIngestionTests
+public class EnergyManagementTests
 {
     [Fact]
     public async Task Should_Send_MeterDataIngestedEvent()

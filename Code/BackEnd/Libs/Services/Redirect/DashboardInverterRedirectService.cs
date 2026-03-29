@@ -25,7 +25,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
         if (!response.IsSuccessStatusCode)
         {
             throw new InvalidOperationException(
-                $"MeterIngestion API returned status code {(int)response.StatusCode}.");
+                $"EnergyManagement API returned status code {(int)response.StatusCode}.");
         }
 
         var readings = await response.Content.ReadFromJsonAsync<List<InverterReading>>(cancellationToken: cancellationToken);
@@ -36,7 +36,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
         var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.GetAsync("api/v1/InverterInfo", cancellationToken);
         if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"MeterIngestion API returned status code {(int)response.StatusCode}.");
+            throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
         var infos = await response.Content.ReadFromJsonAsync<List<InverterInfo>>(cancellationToken: cancellationToken);
         return infos ?? new List<InverterInfo>();
     }

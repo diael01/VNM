@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Repositories.Data;
+using Repositories.Models;
 using Repositories.CRUD.Repositories;
 using Services.Identity;
 using Repositories.Models;

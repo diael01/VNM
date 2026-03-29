@@ -1,3 +1,5 @@
+import type { fetchConsumptionReadingsList } from "../api/consumptionApi"
+
 const DEFAULT_API_BASE_URL = "https://localhost:7144"
 
 function trimTrailingSlash(value: string): string {
@@ -43,6 +45,7 @@ const dashboardPath = import.meta.env.VITE_DASHBOARD_PATH || "/api/v1/dashboard"
 const inverterReadingsPath = (import.meta.env.VITE_INVERTERS_PATH || "/api/v1/dashboard/inverterInfo") + "/inverterreadings"
 const addressesPath = import.meta.env.VITE_ADDRESSES_PATH || "/api/v1/dashboard/addressInfo"
 const invertersPath = import.meta.env.VITE_INVERTERS_PATH || "/api/v1/dashboard/inverterInfo"
+const consumptionPath = import.meta.env.VITE_CONSUMPTION_PATH || "/api/v1/dashboard/consumptionReadings"
 
 export const appConfig = {
   apiBaseUrl,
@@ -55,6 +58,7 @@ export const appConfig = {
     dashboard: dashboardPath,
     addresses: addressesPath,
     inverters: invertersPath,
+    consumption: consumptionPath,
   },
   urls: {
     authMe: combine(apiBaseUrl, authMePath),
@@ -65,6 +69,7 @@ export const appConfig = {
     inverterReadings: combine(apiBaseUrl, inverterReadingsPath),
     addresses: combine(apiBaseUrl, addressesPath),
     inverters: combine(apiBaseUrl, invertersPath),
+    consumptionReadings: combine(apiBaseUrl, consumptionPath),
   },
 }
 

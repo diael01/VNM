@@ -182,9 +182,9 @@ namespace Repositories.Migrations
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Power")
+                    b.Property<int?>("Power")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("int");
 
                     b.Property<string>("Source")
                         .HasMaxLength(50)

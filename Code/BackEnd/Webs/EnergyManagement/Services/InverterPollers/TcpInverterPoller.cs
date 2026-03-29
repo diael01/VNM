@@ -3,22 +3,13 @@ using System.Net.Sockets;
 using System.Text.Json;
 using Repositories.Models;
 
-namespace InverterPolling.Services
+namespace InverterPolling.Services.InverterPoller.Services
 {
-    /// <summary>
-    /// TCP-based inverter poller.
-    /// Can be used with simulator or real inverter exposing TCP protocol.
-    /// </summary>
     public class TcpInverterPoller : IInverterPoller
     {
         private readonly string _host;
         private readonly int _port;
 
-        /// <summary>
-        /// Creates a TCP poller
-        /// </summary>
-        /// <param name="host">IP or hostname of the inverter</param>
-        /// <param name="port">TCP port</param>
         public TcpInverterPoller(string host = "localhost", int port = 15000)
         {
             _host = host;
@@ -33,12 +24,9 @@ namespace InverterPolling.Services
                 await client.ConnectAsync(_host, _port, ct);
                 using var stream = client.GetStream();
 
-                // Example: read 256 bytes (adjust to your protocol)
                 var buffer = new byte[256];
                 await ReadExactlyAsync(stream, buffer, ct);
 
-                // TODO: parse your protocol. 
-                // Here we assume the TCP simulator sends JSON for simplicity
                 var jsonLength = Array.IndexOf(buffer, (byte)0);
                 var jsonBytes = jsonLength > 0 ? buffer[..jsonLength] : buffer;
                 var json = System.Text.Encoding.UTF8.GetString(jsonBytes);
@@ -66,7 +54,7 @@ namespace InverterPolling.Services
             while (totalRead < buffer.Length)
             {
                 int read = await stream.ReadAsync(buffer.AsMemory(totalRead), ct);
-                if (read == 0) break; // client closed connection
+                if (read == 0) break;
                 totalRead += read;
             }
         }

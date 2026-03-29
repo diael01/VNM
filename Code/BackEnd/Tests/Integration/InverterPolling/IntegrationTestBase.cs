@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
-namespace MeterIngestionWeb.IntegrationTests;
+namespace EnergyManagementWeb.IntegrationTests;
 
 public abstract class IntegrationTestBase : IAsyncLifetime
 {
@@ -48,11 +48,11 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     await EnsureTestDatabaseCreated(testDbConnString, Factory.TestDbName);
 
     // Apply EF Core migrations to ensure all tables exist
-    using (var scope = Factory.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<Repositories.Data.VnmDbContext>();
-        db.Database.Migrate();
-    }
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<Repositories.Models.VnmDbContext>();
+            db.Database.Migrate();
+        }
 
     // Now that schema exists, reset test data
     await ResetTestDatabase(testDbConnString);
