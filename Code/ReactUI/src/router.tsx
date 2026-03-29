@@ -15,9 +15,9 @@ export const router = createBrowserRouter([
         element: <MainMenuRouterWrapper />, // see below
         children: [
           { index: true, element: <div>Home (placeholder)</div> },
-          { path: "locations/manage", element: <AdrMgmt /> },
-          { path: "locations/inverters", element: <Inverters /> },
-          { path: "locations/readings", element: <InverterReadingsPage permissions={[]}/> },
+          { path: "assets/addresses", element: <AdrMgmt /> },
+          { path: "assets/inverters", element: <Inverters /> },       
+          { path: "data/inverterreadings", element: <InverterReadingsPage permissions={[]}/> },
           { path: "analytics", element: <div>Analytics (placeholder)</div> },
           { path: "admin", element: <div>Admin (placeholder)</div> },
         ],

@@ -14,12 +14,20 @@ export type MenuItem = {
 
 const menuItems: MenuItem[] = [
   {
-    key: "locations",
-    label: "Locations",
+    key: "assets",
+    label: "Assets",
     children: [
-      { key: "locations-inverters", label: "Inverters" },
-      { key: "locations-manage", label: "Addresses" },
-      { key: "locations-readings", label: "Readings" },   
+      { key: "assets-addresses", label: "Addresses" }, 
+      { key: "assets-inverters", label: "Inverters" },
+    
+    ],
+  },
+  {
+    key: "data",
+    label: "Data",
+    children: [
+      { key: "data-inverterreadings", label: "Inverter Readings" },   
+      { key: "data-consumptionreadings", label: "Consumption Readings" },   
     ],
   },
   {
