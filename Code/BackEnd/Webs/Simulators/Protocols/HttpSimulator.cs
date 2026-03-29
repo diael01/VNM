@@ -7,7 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace InverterSimulator.Protocols.Http
+namespace Simulators.Protocols.Http
 {
     // Configuration POCO, still can be bound from appsettings.json
     public class HttpSimulatorConfig

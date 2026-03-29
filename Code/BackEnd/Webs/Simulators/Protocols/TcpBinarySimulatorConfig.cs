@@ -1,4 +1,4 @@
-namespace InverterSimulator.Protocols.Tcp;
+namespace Simulators.Protocols.Tcp;
 
 public class TcpBinarySimulatorConfig
 {

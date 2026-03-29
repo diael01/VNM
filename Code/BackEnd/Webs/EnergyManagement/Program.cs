@@ -3,7 +3,7 @@ using ServiceDefaults;
 using Scalar.AspNetCore;
 using Serilog;
 using EventBusCore;
-using MeterIngestion.Consumers;
+using EnergyManagement.Consumers;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using InverterPolling.Services;
 using InverterPolling.Services.Auth;

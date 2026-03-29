@@ -1,4 +1,4 @@
-using InverterSimulator.Configuration;
+using Simulators.Configuration;
 using ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configuration
 builder.Services.Configure<InverterSimulatorOptions>(
-    builder.Configuration.GetSection("InverterSimulator"));
+    builder.Configuration.GetSection("Simulators"));
 
 // MVC
 builder.Services.AddControllers();

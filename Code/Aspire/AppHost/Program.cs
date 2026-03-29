@@ -50,7 +50,7 @@ builder.AddCoverageDashboard();
 var db = builder.AddVnmDatabaseInfrastructure();
 db.SqlServer.WaitForCompletion(prereq);
 
-// RabbitMQ setup for MeterIngestion and other services. High prefix keeps it after primary app resources.
+// RabbitMQ setup for EnergyManagement and other services. High prefix keeps it after primary app resources.
 var rabbitMq = builder.AddRabbitMQ("res08-rabbitmq")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithContainerName("vnm-rabbitmq")
@@ -68,7 +68,7 @@ var startupDelaySeconds = builder.Configuration.GetValue<int>("StartupDelaySecon
 var ui = builder.AddNpmApp("res02-ui-frontend", "../../ReactUI", "dev")
     .WithHttpEndpoint(targetPort: uiPort, port: uiPort, name: "http", isProxied: false);
 
-// 3..6) Backend service resources (Dashboard, MeterIngestion, InverterSimulator, IdentityProvider)
+// 3..6) Backend service resources (Dashboard, EnergyManagement, Simulators, IdentityProvider)
 var web = builder.AddVnmWebApps();
 web.WireUpDependencies(db.VnmDb, rabbitMq,initialSetup);
 

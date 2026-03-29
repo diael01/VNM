@@ -3,7 +3,7 @@ using MassTransit;
 using EventBusCore.Events;
 using Microsoft.AspNetCore.Authorization;
 
-namespace MeterIngestion.Controllers;
+namespace EnergyManagement.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]

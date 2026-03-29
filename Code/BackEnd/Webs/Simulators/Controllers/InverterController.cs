@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using InverterSimulator.Configuration;
-using InverterSimulator.Models;
+using Simulators.Configuration;
+using Simulators.Models;
 using Microsoft.AspNetCore.Authorization;
 
-namespace InverterSimulator.Controllers;
+namespace Simulators.Controllers;
 
 [ApiController]
 [Route("api/v1/inverter")]

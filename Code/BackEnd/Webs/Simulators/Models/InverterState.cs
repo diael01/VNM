@@ -1,4 +1,4 @@
-namespace InverterSimulator.Models;
+namespace Simulators.Models;
 
 public class InverterState
 {

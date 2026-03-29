@@ -1,4 +1,4 @@
-namespace InverterSimulator.Configuration;
+namespace Simulators.Configuration;
 
 public class InverterSimulatorOptions
 {

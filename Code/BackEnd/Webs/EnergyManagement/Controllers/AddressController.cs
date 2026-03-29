@@ -4,7 +4,7 @@ using Infrastructure.DTOs;
 using Services.Inverter;
 using AutoMapper;
 
-namespace MeterIngestion.Controllers;
+namespace EnergyManagement.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]

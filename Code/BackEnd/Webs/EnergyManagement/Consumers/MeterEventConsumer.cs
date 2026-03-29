@@ -1,7 +1,7 @@
 using MassTransit;
 using EventBusCore.Events;
 
-namespace MeterIngestion.Consumers;
+namespace EnergyManagement.Consumers;
 
 public class MeterEventConsumer
     : IConsumer<MeterDataIngestedEvent>

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace InverterSimulator.Protocols.Tcp;
+namespace Simulators.Protocols.Tcp;
 
 public class TcpBinarySimulator
 {

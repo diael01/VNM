@@ -8,10 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-  <ProjectReference Include="..\..\BackEnd\Webs\MeterIngestion\MeterIngestion.csproj" />
+  <ProjectReference Include="..\..\BackEnd\Webs\EnergyManagement\EnergyManagement.csproj" />
    <ProjectReference Include="..\..\BackEnd\Webs\DashboardBFF\DashboardBFF.csproj" />
    <ProjectReference Include="..\..\BackEnd\Webs\IdentityProvider\IdentityProvider.csproj" />
-   <ProjectReference Include="..\..\BackEnd\Webs\InverterSimulator\InverterSimulator.csproj" />
+  <ProjectReference Include="..\..\BackEnd\Webs\Simulators\Simulators.csproj" />
     <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 

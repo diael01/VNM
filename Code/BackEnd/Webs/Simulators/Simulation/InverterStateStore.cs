@@ -1,6 +1,6 @@
-using InverterSimulator.Models;
+using Simulators.Models;
 
-namespace InverterSimulator.Simulation;
+namespace Simulators.Simulation;
 
 public class InverterStateStore
 {

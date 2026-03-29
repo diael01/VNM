@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Repositories.Models;
 using Services.Inverter;
 
-namespace MeterIngestion.Controllers;
+namespace EnergyManagement.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]

@@ -5,8 +5,8 @@ namespace AppHost.Extensions;
 
 public sealed record VnmWebResources(
     IResourceBuilder<ProjectResource> DashboardBff,
-    IResourceBuilder<ProjectResource> MeterIngestion,
-    IResourceBuilder<ProjectResource> InverterSimulator,
+    IResourceBuilder<ProjectResource> EnergyManagement,
+    IResourceBuilder<ProjectResource> Simulators,
     IResourceBuilder<ProjectResource> IdentityProvider);
 
 public static class WebHostingExtensions
@@ -15,13 +15,14 @@ public static class WebHostingExtensions
     {
         var dashboard = builder.AddProject<Projects.DashboardBFF>("res03-DashboardBFF");
 
-        var meterIngestion = builder.AddProject<Projects.MeterIngestion>("res04-MeterIngestion");
 
-        var inverterSimulator = builder.AddProject<Projects.InverterSimulator>("res05-InverterSimulator");
+        var energyManagement = builder.AddProject<Projects.EnergyManagement>("res04-EnergyManagement");
+
+        var simulators = builder.AddProject<Projects.Simulators>("res05-Simulators");
 
         var identityProvider = builder.AddProject<Projects.IdentityProvider>("res06-IdentityProvider");
 
-        return new VnmWebResources(dashboard, meterIngestion, inverterSimulator, identityProvider);
+        return new VnmWebResources(dashboard, energyManagement, simulators, identityProvider);
     }
 
     public static void WireUpDependencies(
@@ -35,12 +36,12 @@ public static class WebHostingExtensions
             .WithReference(rabbitMq)
             .WaitForCompletion(initialSetup);
 
-        web.MeterIngestion
+        web.EnergyManagement
             .WithReference(vnmDb)
             .WithReference(rabbitMq)
             .WaitForCompletion(initialSetup);
 
-        web.InverterSimulator
+        web.Simulators
             .WaitForCompletion(initialSetup);
 
         web.IdentityProvider

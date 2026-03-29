@@ -1,5 +1,5 @@
 
-namespace InverterSimulator.Models;
+namespace Simulators.Models;
 
 public enum InverterStatus
 {

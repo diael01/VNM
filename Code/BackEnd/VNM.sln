@@ -39,13 +39,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepositoriesUnit", "Tests\U
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "Libs\Services\Services.csproj", "{BB922BE8-6BDD-44F2-90F0-FD4A2F9EDDF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InverterSimulator", "Webs\InverterSimulator\InverterSimulator.csproj", "{2BB9CECD-E807-49E9-B0B7-B3D0A46BDCA4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simulators", "Webs\Simulators\Simulators.csproj", "{2BB9CECD-E807-49E9-B0B7-B3D0A46BDCA4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Libs\Infrastructure\Infrastructure.csproj", "{89C983D7-7784-48B1-A289-85D05228F6BE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{64880D93-BAB4-FF83-898C-B934B68C31A9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeterIngestion", "Webs\MeterIngestion\MeterIngestion.csproj", "{5531B252-16AF-4E39-86FD-27A5917C95E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnergyManagement", "Webs\EnergyManagement\EnergyManagement.csproj", "{5531B252-16AF-4E39-86FD-27A5917C95E9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DashboardBFF", "Webs\DashboardBFF\DashboardBFF.csproj", "{218A867F-7CA0-476B-9195-07E2AEC018AC}"
 EndProject
