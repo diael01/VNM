@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery as useAddressesQuery } from "@tanstack/react-query";
+import { getAllAddresses } from "../api/addressApi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllInverters, createInverter, updateInverter, deleteInverter } from "../api/inverterApi";
 import type { InverterInfo } from "../types/inverter";
@@ -9,27 +11,19 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 
-const columns: GridColDef[] = [
-  { field: "id", headerName: "ID", width: 70 },
-  { field: "name", headerName: "Name", width: 150, editable: true },
-  { field: "serialNumber", headerName: "Serial Number", width: 180, editable: true },
-  { field: "model", headerName: "Model", width: 150, editable: true },
-  { field: "manufacturer", headerName: "Manufacturer", width: 150, editable: true },
-  {
-    field: "actions",
-    type: "actions",
-    width: 100,
-    getActions: (params) => [
-      <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => params.api.setRowMode(params.id, GridRowModes.Edit)} />,
-      <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => params.api.updateRows([{ id: params.id, _action: 'delete' }])} />,
-    ],
-  },
-];
+
+
 
 export default function Inverters() {
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newInverter, setNewInverter] = useState<Partial<Inverter>>({});
+  const [newInverter, setNewInverter] = useState<Partial<InverterInfo>>({});
+
+  // Fetch addresses for dropdown
+  const { data: addresses = [] } = useAddressesQuery({
+    queryKey: ["addresses"],
+    queryFn: getAllAddresses,
+  });
   const queryClient = useQueryClient();
 
   // Query: get all inverters
@@ -68,6 +62,23 @@ export default function Inverters() {
     await addMutation.mutateAsync(newInverter);
   };
 
+  const columns: GridColDef[] = [
+    { field: "id", headerName: "ID", width: 70 },
+    { field: "addressId", headerName: "AddressId", width: 150, editable: true },
+    { field: "serialNumber", headerName: "Serial Number", width: 180, editable: true },
+    { field: "model", headerName: "Model", width: 150, editable: true },
+    { field: "manufacturer", headerName: "Manufacturer", width: 150, editable: true },
+    {
+      field: "actions",
+      type: "actions",
+      width: 100,
+      getActions: (params) => [
+        <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => params.api.setRowMode(params.id, GridRowModes.Edit)} />,
+        <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => params.api.updateRows([{ id: params.id, _action: 'delete' }])} />,
+      ],
+    },
+  ];
+
   return (
     <Box sx={{ height: 500, width: "100%" }}>
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
@@ -97,14 +108,28 @@ export default function Inverters() {
           },
         }}
       />
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
+      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Inverter</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <TextField label="Name" value={newInverter.name || ""} onChange={e => setNewInverter(a => ({ ...a, name: e.target.value }))} />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1, minWidth: 400 }}>
+            <TextField label="AddressId" type="number" value={newInverter.addressId || ""} onChange={e => setNewInverter(a => ({ ...a, addressId: Number(e.target.value) }))} />
             <TextField label="Serial Number" value={newInverter.serialNumber || ""} onChange={e => setNewInverter(a => ({ ...a, serialNumber: e.target.value }))} />
             <TextField label="Model" value={newInverter.model || ""} onChange={e => setNewInverter(a => ({ ...a, model: e.target.value }))} />
             <TextField label="Manufacturer" value={newInverter.manufacturer || ""} onChange={e => setNewInverter(a => ({ ...a, manufacturer: e.target.value }))} />
+            <TextField
+              select
+              label="Address"
+              value={newInverter.addressId || ""}
+              onChange={e => setNewInverter(a => ({ ...a, addressId: Number(e.target.value) }))}
+              SelectProps={{ native: true }}
+            >
+              <option value="" disabled>Select Address</option>
+              {addresses.map(addr => (
+                <option key={addr.id} value={addr.id}>
+                  {addr.city}, {addr.street} {addr.streetNumber}
+                </option>
+              ))}
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -116,3 +141,4 @@ export default function Inverters() {
     </Box>
   );
 }
+

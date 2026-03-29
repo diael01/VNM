@@ -6,5 +6,4 @@ export type Address = {
   street: string;
   streetNumber: string;
   postalCode: string;
-  inverterId: number;
 };
