@@ -18,7 +18,7 @@ const menuItems: MenuItem[] = [
     label: "Locations",
     children: [
       { key: "locations-inverters", label: "Inverters" },
-      { key: "locations-manage", label: "ManageAdr" },
+      { key: "locations-manage", label: "Addresses" },
       { key: "locations-readings", label: "Readings" },   
     ],
   },

@@ -111,8 +111,7 @@ export default function Inverters() {
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Inverter</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1, minWidth: 400 }}>
-            <TextField label="AddressId" type="number" value={newInverter.addressId || ""} onChange={e => setNewInverter(a => ({ ...a, addressId: Number(e.target.value) }))} />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1, minWidth: 400 }}>          
             <TextField label="Serial Number" value={newInverter.serialNumber || ""} onChange={e => setNewInverter(a => ({ ...a, serialNumber: e.target.value }))} />
             <TextField label="Model" value={newInverter.model || ""} onChange={e => setNewInverter(a => ({ ...a, model: e.target.value }))} />
             <TextField label="Manufacturer" value={newInverter.manufacturer || ""} onChange={e => setNewInverter(a => ({ ...a, manufacturer: e.target.value }))} />
