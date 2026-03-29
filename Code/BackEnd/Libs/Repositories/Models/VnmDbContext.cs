@@ -113,6 +113,11 @@ public partial class VnmDbContext : DbContext
             entity.Property(e => e.Manufacturer).HasMaxLength(50);
             entity.Property(e => e.Model).HasMaxLength(50);
             entity.Property(e => e.SerialNumber).HasMaxLength(50);
+
+            entity.HasOne(d => d.Address)
+                .WithMany()
+                .HasForeignKey(d => d.AddressId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<InverterReading>(entity =>

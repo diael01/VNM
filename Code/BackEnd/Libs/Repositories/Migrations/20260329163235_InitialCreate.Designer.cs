@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repositories.Models;
 
@@ -11,9 +12,11 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    partial class VnmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260329163235_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,6 +61,9 @@ namespace Repositories.Migrations
                     b.Property<string>("County")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("InverterId")
+                        .HasColumnType("int");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(50)
@@ -248,9 +254,6 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AddressId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Manufacturer")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -264,8 +267,6 @@ namespace Repositories.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
 
                     b.ToTable("InverterInfos");
                 });
@@ -407,17 +408,6 @@ namespace Repositories.Migrations
                         .HasConstraintName("FK_DailyEnergyBalances_Addresses");
 
                     b.Navigation("Location");
-                });
-
-            modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
-                {
-                    b.HasOne("Repositories.Models.Address", "Address")
-                        .WithMany()
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("Repositories.Models.InverterReading", b =>

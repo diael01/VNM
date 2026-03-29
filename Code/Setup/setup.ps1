@@ -372,13 +372,26 @@ if (-not $vnmExists) {
     # Create initial migration
     $migrationName = "InitialCreate"
     Write-Host "Creating InitialCreate migration from scaffolded code..."
-    dotnet ef migrations add $migrationName --project Repositories.csproj --startup-project ../../Webs/MeterIngestion/MeterIngestion.csproj
+    dotnet ef migrations add $migrationName --project Repositories.csproj --startup-project Repositories.csproj
     if ($LASTEXITCODE -ne 0) {
         throw "EF Core migration creation failed. See output above."
     }
+
+
     $migrationFile = Get-ChildItem ./Migrations/*.cs | Select-Object -First 1
     $migrationId = if ($migrationFile) { [System.IO.Path]::GetFileNameWithoutExtension($migrationFile.Name) } else { "" }
     if ($migrationId) {
+        Write-Host "Ensuring __EFMigrationsHistory table exists..."
+        $createHistoryTable = @"
+IF OBJECT_ID(N'__EFMigrationsHistory', N'U') IS NULL
+CREATE TABLE [__EFMigrationsHistory] (
+    [MigrationId] nvarchar(150) NOT NULL,
+    [ProductVersion] nvarchar(32) NOT NULL,
+    CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+);
+"@
+        Invoke-Sql -Query $createHistoryTable -Db 'VNM'
+
         Write-Host "Marking migration '$migrationId' as applied in __EFMigrationsHistory..."
         $insertHistory = "INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ('$migrationId', '$(dotnet --version)');"
         Invoke-Sql -Query $insertHistory -Db 'VNM'

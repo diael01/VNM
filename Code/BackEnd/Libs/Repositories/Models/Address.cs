@@ -19,7 +19,6 @@ public partial class Address
 
     public string? PostalCode { get; set; }
 
-    public int InverterId { get; set; }
 
     public virtual ICollection<ConsumptionReading> ConsumptionReadings { get; set; } = new List<ConsumptionReading>();
 

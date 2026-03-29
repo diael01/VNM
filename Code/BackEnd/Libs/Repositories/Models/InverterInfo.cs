@@ -5,6 +5,9 @@ namespace Repositories.Models;
 
 public partial class InverterInfo
 {
+    public int AddressId { get; set; }
+
+    public virtual Address? Address { get; set; }
     public int Id { get; set; }
 
     public string? Model { get; set; }

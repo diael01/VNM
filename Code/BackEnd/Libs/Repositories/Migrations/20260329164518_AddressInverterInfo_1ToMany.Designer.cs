@@ -12,8 +12,8 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    [Migration("20260324223904_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260329164518_AddressInverterInfo_1ToMany")]
+    partial class AddressInverterInfo_1ToMany
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -61,9 +61,6 @@ namespace Repositories.Migrations
                     b.Property<string>("County")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("InverterId")
-                        .HasColumnType("int");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(50)
@@ -254,6 +251,9 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AddressId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Manufacturer")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -267,6 +267,8 @@ namespace Repositories.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AddressId");
 
                     b.ToTable("InverterInfos");
                 });
@@ -408,6 +410,17 @@ namespace Repositories.Migrations
                         .HasConstraintName("FK_DailyEnergyBalances_Addresses");
 
                     b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
+                {
+                    b.HasOne("Repositories.Models.Address", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("Repositories.Models.InverterReading", b =>
