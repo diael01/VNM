@@ -21,7 +21,7 @@ public partial class ProviderSettlement
 
     public decimal? EnergyCreditKwh { get; set; }
 
-    public string? Mode { get; set; }
+    public SettlementMode SettlementMode { get; set; }
 
     public DateTime? ProcessedAtUtc { get; set; }
 

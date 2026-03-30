@@ -30,6 +30,7 @@ public partial class VnmDbContext : DbContext
     public virtual DbSet<InverterReading> InverterReadings { get; set; }
 
     public virtual DbSet<ProviderSettlement> ProviderSettlements { get; set; }
+    public virtual DbSet<TransferRequest> TransferRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -86,8 +87,7 @@ public partial class VnmDbContext : DbContext
         });
 
         modelBuilder.Entity<ConsumptionReading>(entity =>
-        {
-            entity.Property(e => e.Power).HasMaxLength(50);
+        {          
             entity.Property(e => e.Source).HasMaxLength(50);
 
             entity.HasOne(d => d.Location).WithMany(p => p.ConsumptionReadings)
@@ -137,8 +137,7 @@ public partial class VnmDbContext : DbContext
         {
             entity.Property(e => e.AcceptedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.EnergyCreditKwh).HasColumnType("decimal(18, 0)");
-            entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 0)");
-            entity.Property(e => e.Mode).HasMaxLength(50);
+            entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 0)");         
             entity.Property(e => e.MonetaryCredit).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.RatePerKwh).HasColumnType("decimal(18, 0)");
 

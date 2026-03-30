@@ -82,6 +82,11 @@ builder.Services.AddConsumptionPolling();
 builder.AddServiceDefaults();
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
+
+// builder.Services.AddScoped<IDailyBalanceCalculationService, DailyBalanceCalculationService>();
+// builder.Services.AddScoped<IProviderSettlementService, ProviderSettlementService>();
+// builder.Services.AddScoped<IAvailableBalanceService, AvailableBalanceService>();
+// builder.Services.AddScoped<ITransferService, TransferService>();
 // ---------------------
 // Build the app
 // ---------------------
