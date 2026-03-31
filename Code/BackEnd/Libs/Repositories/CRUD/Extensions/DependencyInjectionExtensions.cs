@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IConsumptionReadingRepository, ConsumptionReadingRepository>();
         services.AddScoped<IAddressRepository, AddressRepository>();
         services.AddScoped<IInverterInfoRepository, InverterInfoRepository>();
+         services.AddScoped<IDailyEnergyBalanceRepository, DailyEnergyBalanceRepository>();
 
         services.AddScoped<IAspNetRoleRepository, AspNetRoleRepository>();
         services.AddScoped<IAspNetRoleClaimRepository, AspNetRoleClaimRepository>();

@@ -2,19 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 using Repositories.Models;
 using Microsoft.EntityFrameworkCore;
 using EnergyManagement.Services.Analytics;
+using Services.Analytics;
 
 namespace EnergyManagement.Controllers
 {
     [ApiController]
-    [Route("api/analytics")]
+    [Route("api/v1/[controller]")]
     public class AnalyticsController : ControllerBase
     {
-        private readonly VnmDbContext _db;
+        private readonly IDailyBalanceDBService _dbService;
         private readonly IDailyBalanceCalculationService _service;
 
-        public AnalyticsController(VnmDbContext db, IDailyBalanceCalculationService service)
+        public AnalyticsController(IDailyBalanceDBService dbService, IDailyBalanceCalculationService service)
         {
-            _db = db;
+            _dbService = dbService;
             _service = service;
         }
 
@@ -22,13 +23,11 @@ namespace EnergyManagement.Controllers
         public async Task<IActionResult> Calculate(int addressId, DateOnly day)
             => Ok(await _service.CalculateDailyBalancesAsync(addressId, day));
 
-        [HttpGet("balance/{addressId}/{day}")]
-        public async Task<IActionResult> Get(int addressId, DateOnly day)
+        [HttpGet("dailybalance")]
+        public async Task<IActionResult> Get()
         {
-            var result = await _db.DailyEnergyBalances
-                .FirstOrDefaultAsync(x => x.LocationId == addressId && x.Day.HasValue && DateOnly.FromDateTime(x.Day.Value) == day);
-
-            return result == null ? NotFound() : Ok(result);
+            var result = await _dbService.GetAllAsync();
+            return Ok(result);
         }
     }
 }

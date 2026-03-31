@@ -46,6 +46,7 @@ const inverterReadingsPath = (import.meta.env.VITE_INVERTERS_PATH || "/api/v1/da
 const addressesPath = import.meta.env.VITE_ADDRESSES_PATH || "/api/v1/dashboard/addressInfo"
 const invertersPath = import.meta.env.VITE_INVERTERS_PATH || "/api/v1/dashboard/inverterInfo"
 const consumptionPath = import.meta.env.VITE_CONSUMPTION_PATH || "/api/v1/dashboard/consumptionReadings"
+const dailyBalancePath = import.meta.env.VITE_DAILY_BALANCE_PATH || "/api/v1/dashboard/analytics/dailybalance"
 
 export const appConfig = {
   apiBaseUrl,
@@ -59,6 +60,7 @@ export const appConfig = {
     addresses: addressesPath,
     inverters: invertersPath,
     consumption: consumptionPath,
+    dailyBalance: dailyBalancePath,
   },
   urls: {
     authMe: combine(apiBaseUrl, authMePath),
@@ -70,6 +72,7 @@ export const appConfig = {
     addresses: combine(apiBaseUrl, addressesPath),
     inverters: combine(apiBaseUrl, invertersPath),
     consumptionReadings: combine(apiBaseUrl, consumptionPath),
+    dailyBalance: combine(apiBaseUrl, dailyBalancePath),
   },
 }
 

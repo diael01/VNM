@@ -1,5 +1,6 @@
 
 using ConsumptionPolling.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Polling.Services.Auth;
 
 public class ConsumptionPollerFactory : IConsumptionPollerFactory
