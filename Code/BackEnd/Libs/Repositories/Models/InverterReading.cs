@@ -11,11 +11,11 @@ public partial class InverterReading
 
     public DateTime? Timestamp { get; set; }
 
-    public int? Power { get; set; }
+    public decimal? Power { get; set; }
 
-    public int? Voltage { get; set; }
+    public decimal? Voltage { get; set; }
 
-    public int? Current { get; set; }
+    public decimal? Current { get; set; }
 
     public string? Source { get; set; }
 

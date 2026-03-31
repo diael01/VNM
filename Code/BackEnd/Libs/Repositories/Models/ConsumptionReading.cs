@@ -11,7 +11,7 @@ public partial class ConsumptionReading
 
     public DateTime? Timestamp { get; set; }
 
-    public int? Power { get; set; }
+    public decimal? Power { get; set; }
 
     public string? Source { get; set; }
 
