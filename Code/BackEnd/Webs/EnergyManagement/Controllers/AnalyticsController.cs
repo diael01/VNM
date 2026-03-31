@@ -20,7 +20,7 @@ namespace EnergyManagement.Controllers
 
         [HttpPost("calculate/{addressId}/{day}")]
         public async Task<IActionResult> Calculate(int addressId, DateOnly day)
-            => Ok(await _service.CalculateForAddressAsync(addressId, day));
+            => Ok(await _service.CalculateDailyBalancesAsync(addressId, day));
 
         [HttpGet("balance/{addressId}/{day}")]
         public async Task<IActionResult> Get(int addressId, DateOnly day)

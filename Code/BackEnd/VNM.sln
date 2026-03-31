@@ -15,8 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integration", "Integration"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InverterPolling", "InverterPolling", "{BCFFA5C7-F5EA-596A-9DF6-51C33986E41F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InverterPollingIntegration", "Tests\Integration\InverterPolling\InverterPollingIntegration.csproj", "{899CF9D6-A659-4D15-8905-743E34B1FC0B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unit", "Unit", "{9D556B49-86D1-93A7-9596-FFAAB74EC556}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EventBusHarness", "EventBusHarness", "{F0D85E00-DE54-800C-E040-EDF57CB80A8F}"
@@ -25,7 +23,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBusHarnessUnit", "Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InverterPolling", "InverterPolling", "{6ED68B87-2933-B220-E245-5793360DA46B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InverterPollingUnit", "Tests\Unit\InverterPolling\InverterPollingUnit.csproj", "{6D5B666A-2D7F-4294-B64D-E30B2CF3BAFA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnergyMgmtIntegration", "Tests\Integration\EnergyMgmt\EnergyMgmtIntegration.csproj", "{899CF9D6-A659-4D15-8905-743E34B1FC0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnergyMgmtUnit", "Tests\Unit\EnergyMgmt\EnergyMgmtUnit.csproj", "{6D5B666A-2D7F-4294-B64D-E30B2CF3BAFA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IdentityProvider", "IdentityProvider", "{821893E3-69B9-B638-621D-FC55C732DDA2}"
 EndProject

@@ -19,6 +19,8 @@ public partial class DailyEnergyBalance
 
     public decimal? DeficitKwh { get; set; }
 
+    public decimal? NetKwh { get; set; }
+
     public DateTime? CalculatedAtUtc { get; set; }
 
     public string? Status { get; set; }

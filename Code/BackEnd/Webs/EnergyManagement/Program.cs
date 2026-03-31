@@ -10,6 +10,8 @@ using Services.DependencyInjection;
 using Services.Profiles;
 using Repositories.Models;
 using Polling.Services.Auth;
+using EnergyManagement.Extensions;
+using EnergyManagement.Services.Transfers;
 
 // ---------------------
 // Build the application
@@ -83,10 +85,7 @@ builder.AddServiceDefaults();
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// builder.Services.AddScoped<IDailyBalanceCalculationService, DailyBalanceCalculationService>();
-// builder.Services.AddScoped<IProviderSettlementService, ProviderSettlementService>();
-// builder.Services.AddScoped<IAvailableBalanceService, AvailableBalanceService>();
-// builder.Services.AddScoped<ITransferService, TransferService>();
+builder.Services.AddDailyBalanceComputation(builder.Configuration);
 // ---------------------
 // Build the app
 // ---------------------
