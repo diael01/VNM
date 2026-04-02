@@ -50,6 +50,7 @@ namespace InverterPolling.Services
                 Power = data.Power,
                 Voltage = data.Voltage,
                 Current = data.Current,
+                InverterInfoId = data.InverterInfoId,
                 Source = _source
             };
         }

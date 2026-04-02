@@ -60,6 +60,7 @@ namespace InverterPolling.Services
                             Power = reading.Power,
                             Voltage = reading.Voltage,
                             Current = reading.Current,
+                            InverterInfoId = reading.InverterInfoId,
                             Source = _options.Source,
                         };
 
