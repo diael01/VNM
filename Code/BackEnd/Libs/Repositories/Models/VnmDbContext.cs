@@ -161,7 +161,6 @@ public partial class VnmDbContext : DbContext
             entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.MonetaryCredit).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.RatePerKwh).HasColumnType("decimal(18, 0)");
-            entity.Property(e => e.SettlementMode).HasMaxLength(32);
 
             entity.HasOne(d => d.Address).WithMany(p => p.ProviderSettlements)
                 .HasForeignKey(d => d.AddressId)
@@ -173,7 +172,6 @@ public partial class VnmDbContext : DbContext
         {
             entity.Property(e => e.ActualAmount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.RequestedAmount).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.SettlementMode).HasMaxLength(32);
             entity.Property(e => e.Status).HasMaxLength(32);
         });
 

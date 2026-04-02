@@ -45,16 +45,16 @@ namespace EnergyManagement.Services.ModeSwitching;
             DailyEnergyBalance balance,
             decimal rate)
         {
-            var coveredKwh = Math.Min(transfer.ActualAmount, balance.DeficitKwh ?? 0m);
-            var originalCost =  (balance.DeficitKwh ?? 0m) * rate;
+            var coveredKwh = Math.Min(transfer.ActualAmount, balance.DeficitKwh);
+            var originalCost =  (balance.DeficitKwh) * rate;
 
             return new TransferImpactDto
             {
                 DestinationAddressId = transfer.DestinationAddressId,
                 Day = transfer.Day,
-                OriginalDeficitKwh = balance.DeficitKwh ?? 0m,
+                OriginalDeficitKwh = balance.DeficitKwh,
                 CoveredByTransferKwh = coveredKwh,
-                RemainingDeficitKwh = Math.Max((balance.DeficitKwh ?? 0m) - coveredKwh, 0m),
+                RemainingDeficitKwh = Math.Max((balance.DeficitKwh) - coveredKwh, 0m),
                 OriginalCost = originalCost,
                 CoveredValue = coveredKwh * rate,
                 RemainingCost = Math.Max(originalCost - coveredKwh * rate, 0)

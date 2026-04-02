@@ -44,16 +44,16 @@ public class MoneySettlementModeStrategy : ISettlementModeStrategy
             DailyEnergyBalance balance,
             decimal rate)
         {
-            var originalCost = (balance.DeficitKwh ?? 0m) * rate;
+            var originalCost = (balance.DeficitKwh) * rate;
             var coveredKwh = transfer.ActualAmount / rate;
 
             return new TransferImpactDto
             {
                 DestinationAddressId = transfer.DestinationAddressId,
                 Day = transfer.Day,
-                OriginalDeficitKwh = balance.DeficitKwh ?? 0m,
+                OriginalDeficitKwh = balance.DeficitKwh,
                 CoveredByTransferKwh = coveredKwh,
-                RemainingDeficitKwh = Math.Max((balance.DeficitKwh ?? 0m) - coveredKwh, 0m),
+                RemainingDeficitKwh = Math.Max((balance.DeficitKwh) - coveredKwh, 0m),
                 OriginalCost = originalCost,
                 CoveredValue = transfer.ActualAmount,
                 RemainingCost = Math.Max(originalCost - transfer.ActualAmount, 0m)

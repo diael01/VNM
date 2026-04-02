@@ -38,8 +38,7 @@ public class DailyBalanceCalculationService : IDailyBalanceCalculationService
         var balance = await _db.DailyEnergyBalances
                         .FirstOrDefaultAsync(
                                 x => x.InverterInfoId == inverterInfoId
-                                    && x.Day.HasValue
-                                    && x.Day.Value == dayStart,
+                                    && DateOnly.FromDateTime(x.Day) == day,
                                 ct);
 
         if (balance == null)
