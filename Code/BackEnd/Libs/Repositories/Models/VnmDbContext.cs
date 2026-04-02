@@ -161,12 +161,11 @@ public partial class VnmDbContext : DbContext
             entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.MonetaryCredit).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.RatePerKwh).HasColumnType("decimal(18, 0)");
-
-            // Store SettlementMode as string in the database
-            entity.Property(e => e.SettlementMode).HasConversion<string>();
+            entity.Property(e => e.SettlementMode).HasMaxLength(32);
 
             entity.HasOne(d => d.Address).WithMany(p => p.ProviderSettlements)
                 .HasForeignKey(d => d.AddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProviderSettlements_Addresses");
         });
 
@@ -174,6 +173,8 @@ public partial class VnmDbContext : DbContext
         {
             entity.Property(e => e.ActualAmount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.RequestedAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.SettlementMode).HasMaxLength(32);
+            entity.Property(e => e.Status).HasMaxLength(32);
         });
 
         OnModelCreatingPartial(modelBuilder);

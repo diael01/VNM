@@ -17,7 +17,7 @@ public partial class TransferRequest
 
     public decimal ActualAmount { get; set; }
 
-    public SettlementMode SettlementMode { get; set; }
+    public string SettlementMode { get; set; } = null!;
 
     public string Status { get; set; } = null!;
 

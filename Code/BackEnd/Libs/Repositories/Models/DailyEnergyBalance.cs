@@ -9,21 +9,21 @@ public partial class DailyEnergyBalance
 
     public int AddressId { get; set; }
 
-    public DateTime? Day { get; set; }
+    public DateTime Day { get; set; }
 
-    public decimal? ProducedKwh { get; set; }
+    public decimal ProducedKwh { get; set; }
 
-    public decimal? ConsumedKwh { get; set; }
+    public decimal ConsumedKwh { get; set; }
 
-    public decimal? SurplusKwh { get; set; }
+    public decimal SurplusKwh { get; set; }
 
-    public decimal? DeficitKwh { get; set; }
+    public decimal DeficitKwh { get; set; }
 
-    public DateTime? CalculatedAtUtc { get; set; }
+    public DateTime CalculatedAtUtc { get; set; }
 
-    public string? Status { get; set; }
+    public string Status { get; set; } = null!;
 
-    public decimal? NetKwh { get; set; }
+    public decimal NetKwh { get; set; }
 
     public int InverterInfoId { get; set; }
 

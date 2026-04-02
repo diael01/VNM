@@ -7,11 +7,11 @@ public partial class InverterInfo
 {
     public int Id { get; set; }
 
-    public string? Model { get; set; }
+    public string Model { get; set; } = null!;
 
-    public string? Manufacturer { get; set; }
+    public string Manufacturer { get; set; } = null!;
 
-    public string? SerialNumber { get; set; }
+    public string SerialNumber { get; set; } = null!;
 
     public int AddressId { get; set; }
 

@@ -7,17 +7,17 @@ public partial class Address
 {
     public int Id { get; set; }
 
-    public string? Country { get; set; }
+    public string Country { get; set; } = null!;
 
-    public string? County { get; set; }
+    public string County { get; set; } = null!;
 
-    public string? City { get; set; }
+    public string City { get; set; } = null!;
 
-    public string? Street { get; set; }
+    public string Street { get; set; } = null!;
 
-    public string? StreetNumber { get; set; }
+    public string StreetNumber { get; set; } = null!;
 
-    public string? PostalCode { get; set; }
+    public string PostalCode { get; set; } = null!;
 
     public virtual ICollection<DailyEnergyBalance> DailyEnergyBalances { get; set; } = new List<DailyEnergyBalance>();
 

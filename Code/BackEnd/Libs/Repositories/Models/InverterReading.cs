@@ -9,15 +9,15 @@ public partial class InverterReading
 
     public int InverterInfoId { get; set; }
 
-    public DateTime? Timestamp { get; set; }
+    public DateTime Timestamp { get; set; }
 
-    public decimal? Power { get; set; }
+    public decimal Power { get; set; }
 
-    public decimal? Voltage { get; set; }
+    public decimal Voltage { get; set; }
 
-    public decimal? Current { get; set; }
+    public decimal Current { get; set; }
 
-    public string? Source { get; set; }
+    public string Source { get; set; } = null!;
 
     public virtual InverterInfo InverterInfo { get; set; } = null!;
 }

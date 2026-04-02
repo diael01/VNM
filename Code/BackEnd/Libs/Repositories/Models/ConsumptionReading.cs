@@ -7,11 +7,11 @@ public partial class ConsumptionReading
 {
     public int Id { get; set; }
 
-    public DateTime? Timestamp { get; set; }
+    public DateTime Timestamp { get; set; }
 
-    public decimal? Power { get; set; }
+    public decimal Power { get; set; }
 
-    public string? Source { get; set; }
+    public string Source { get; set; } = null!;
 
     public int InverterInfoId { get; set; }
 
