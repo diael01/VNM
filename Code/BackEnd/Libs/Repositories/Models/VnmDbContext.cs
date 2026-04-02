@@ -94,23 +94,30 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<ConsumptionReading>(entity =>
         {
+            entity.HasIndex(e => e.AddressId, "IX_ConsumptionReadings_AddressId");
+
             entity.HasIndex(e => e.InverterInfoId, "IX_ConsumptionReadings_InverterInfoId");
 
             entity.Property(e => e.Power).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Source).HasMaxLength(50);
 
-            entity.HasOne(d => d.InverterInfo).WithMany()
+            entity.HasOne(d => d.Address).WithMany(p => p.ConsumptionReadings).HasForeignKey(d => d.AddressId);
+
+            entity.HasOne(d => d.InverterInfo).WithMany(p => p.ConsumptionReadings)
                 .HasForeignKey(d => d.InverterInfoId)
                 .HasConstraintName("FK_ConsumptionReadings_InverterInfos");
         });
 
         modelBuilder.Entity<DailyEnergyBalance>(entity =>
         {
-            entity.HasIndex(e => e.AddressId, "IX_DailyEnergyBalances_AddressId"); 
-             entity.HasIndex(e => e.InverterInfoId, "IX_DailyEnergyBalances_InverterInfoId");          
+            entity.HasIndex(e => e.AddressId, "IX_DailyEnergyBalances_AddressId");
+
+            entity.HasIndex(e => e.InverterInfoId, "IX_DailyEnergyBalances_InverterInfoId");
+
             entity.Property(e => e.ConsumedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.DeficitKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.NetKwh).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.NetPerAddressKwh).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.ProducedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.SurplusKwh).HasColumnType("decimal(18, 0)");
@@ -119,11 +126,9 @@ public partial class VnmDbContext : DbContext
                 .HasForeignKey(d => d.AddressId)
                 .HasConstraintName("FK_DailyEnergyBalances_Addresses");
 
-            entity.HasOne(d => d.InverterInfo)
-                .WithMany()
+            entity.HasOne(d => d.InverterInfo).WithMany(p => p.DailyEnergyBalances)
                 .HasForeignKey(d => d.InverterInfoId)
-                .OnDelete(DeleteBehavior.NoAction)
-                .HasConstraintName("FK_DailyEnergyBalances_InverterInfos_InverterInfoId");
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<InverterInfo>(entity =>
@@ -146,7 +151,7 @@ public partial class VnmDbContext : DbContext
             entity.Property(e => e.Source).HasMaxLength(50);
             entity.Property(e => e.Voltage).HasColumnType("decimal(18, 2)");
 
-            entity.HasOne(d => d.InverterInfo).WithMany()
+            entity.HasOne(d => d.InverterInfo).WithMany(p => p.InverterReadings)
                 .HasForeignKey(d => d.InverterInfoId)
                 .HasConstraintName("FK_InverterReadings_InverterInfos");
         });

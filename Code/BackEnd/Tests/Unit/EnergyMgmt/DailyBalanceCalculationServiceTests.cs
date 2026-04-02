@@ -40,32 +40,6 @@ namespace EnergyManagement.Tests.Services.Analytics
         }
 
         [Fact]
-        public async Task CalculateDailyBalancesAsync_NoReadings_ReturnsZero()
-        {
-            using var db = CreateContext();
-
-            db.Addresses.Add(new Address { Id = 1 });
-            db.InverterInfos.Add(new InverterInfo { Id = 10, AddressId = 1 });
-            await db.SaveChangesAsync();
-
-            var service = new DailyBalanceCalculationService(db);
-            var day = DateOnly.FromDateTime(DateTime.UtcNow);
-
-            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
-
-            Assert.NotNull(result);
-            Assert.Equal(1, result.AddressId);
-            Assert.Equal(0m, result.ProducedKwh);
-            Assert.Equal(0m, result.ConsumedKwh);
-            Assert.Equal(0m, result.NetKwh);
-            Assert.Equal(0m, result.SurplusKwh);
-            Assert.Equal(0m, result.DeficitKwh);
-
-            var count = await db.DailyEnergyBalances.CountAsync();
-            Assert.Equal(1, count);
-        }
-
-        [Fact]
         public async Task CalculateDailyBalancesAsync_ProducedGreaterThanConsumed_ReturnsSurplus()
         {
             using var db = CreateContext();
@@ -73,12 +47,16 @@ namespace EnergyManagement.Tests.Services.Analytics
             var now = DateTime.UtcNow;
             var day = DateOnly.FromDateTime(now);
 
-            db.Addresses.Add(new Address { Id = 1 });
-            db.InverterInfos.Add(new InverterInfo { Id = 10, AddressId = 1 });
+            var address = new Address { Id = 1 };
+            db.Addresses.Add(address);
+            var inverterInfo = new InverterInfo { Id = 10, AddressId = 1, Address = address, Model = "M1", Manufacturer = "Manu", SerialNumber = "SN1" };
+            db.InverterInfos.Add(inverterInfo);
+            await db.SaveChangesAsync();
             db.InverterReadings.Add(new InverterReading
             {
                 Id = 100,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 4000
             });
@@ -86,6 +64,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             {
                 Id = 200,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 1000m
             });
@@ -110,12 +89,16 @@ namespace EnergyManagement.Tests.Services.Analytics
             var now = DateTime.UtcNow;
             var day = DateOnly.FromDateTime(now);
 
-            db.Addresses.Add(new Address { Id = 1 });
-            db.InverterInfos.Add(new InverterInfo { Id = 10, AddressId = 1 });
+            var address = new Address { Id = 1 };
+            db.Addresses.Add(address);
+            var inverterInfo = new InverterInfo { Id = 10, AddressId = 1, Address = address, Model = "M1", Manufacturer = "Manu", SerialNumber = "SN1" };
+            db.InverterInfos.Add(inverterInfo);
+            await db.SaveChangesAsync();
             db.InverterReadings.Add(new InverterReading
             {
                 Id = 101,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 1000m
             });
@@ -123,6 +106,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             {
                 Id = 201,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 4000m
             });
@@ -140,6 +124,34 @@ namespace EnergyManagement.Tests.Services.Analytics
         }
 
         [Fact]
+        public async Task CalculateDailyBalancesAsync_NoReadings_ReturnsZero()
+        {
+            using var db = CreateContext();
+
+            var address = new Address { Id = 1 };
+            db.Addresses.Add(address);
+            var inverterInfo = new InverterInfo { Id = 10, AddressId = 1, Address = address, Model = "M1", Manufacturer = "Manu", SerialNumber = "SN1" };
+            db.InverterInfos.Add(inverterInfo);
+            await db.SaveChangesAsync();
+
+            var service = new DailyBalanceCalculationService(db);
+            var day = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.Equal(1, result.AddressId);
+            Assert.Equal(0m, result.ProducedKwh);
+            Assert.Equal(0m, result.ConsumedKwh);
+            Assert.Equal(0m, result.NetKwh);
+            Assert.Equal(0m, result.SurplusKwh);
+            Assert.Equal(0m, result.DeficitKwh);
+
+            var count = await db.DailyEnergyBalances.CountAsync();
+            Assert.Equal(1, count);
+        }
+
+        [Fact]
         public async Task CalculateDailyBalancesAsync_WhenBalanceAlreadyExists_UpdatesExistingRow()
         {
             using var db = CreateContext();
@@ -148,18 +160,17 @@ namespace EnergyManagement.Tests.Services.Analytics
             var day = DateOnly.FromDateTime(now);
             var dayStart = day.ToDateTime(TimeOnly.MinValue);
 
-            db.Addresses.Add(new Address { Id = 1 });
-            db.InverterInfos.Add(new InverterInfo
-            {
-                Id = 10,
-                AddressId = 1
-            });
-
+            var address = new Address { Id = 1 };
+            db.Addresses.Add(address);
+            var inverterInfo = new InverterInfo { Id = 10, AddressId = 1, Address = address };
+            db.InverterInfos.Add(inverterInfo);
             db.DailyEnergyBalances.Add(new DailyEnergyBalance
             {
                 Id = 999,
                 AddressId = 1,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
+                Address = address,
                 Day = dayStart,
                 ProducedKwh = 123m,
                 ConsumedKwh = 456m,
@@ -169,28 +180,27 @@ namespace EnergyManagement.Tests.Services.Analytics
                 CalculatedAtUtc = now.AddHours(-1),
                 Status = "Old"
             });
-
             db.InverterReadings.Add(new InverterReading
             {
                 Id = 102,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 4000m
             });
-
             db.ConsumptionReadings.Add(new ConsumptionReading
             {
                 Id = 202,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 1000m
             });
-
             await db.SaveChangesAsync();
 
             var service = new DailyBalanceCalculationService(db);
 
-            var result = await service.CalculateDailyBalancesAsync(1, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
 
             var balances = await db.DailyEnergyBalances
                 .Where(x => x.AddressId == 1)
@@ -220,13 +230,16 @@ namespace EnergyManagement.Tests.Services.Analytics
             var nextDay = day.AddDays(1).ToDateTime(new TimeOnly(12, 0));
             var todayReadingTime = day.ToDateTime(new TimeOnly(10, 0));
 
-            db.Addresses.Add(new Address { Id = 1 });
-            db.InverterInfos.Add(new InverterInfo { Id = 10, AddressId = 1 });
+            var address = new Address { Id = 1 };
+            db.Addresses.Add(address);
+            var inverterInfo = new InverterInfo { Id = 10, AddressId = 1, Address = address };
+            db.InverterInfos.Add(inverterInfo);
             db.InverterReadings.AddRange(
                 new InverterReading
                 {
                     Id = 103,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo,
                     Timestamp = previousDay,
                     Power = 5000m
                 },
@@ -234,6 +247,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 104,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo,
                     Timestamp = todayReadingTime,
                     Power = 4000m
                 },
@@ -241,6 +255,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 105,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo,
                     Timestamp = nextDay,
                     Power = 6000m
                 });
@@ -249,6 +264,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 203,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo,
                     Timestamp = previousDay,
                     Power = 5000m
                 },
@@ -256,6 +272,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 204,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo,
                     Timestamp = todayReadingTime,
                     Power = 1000m
                 },
@@ -263,6 +280,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 205,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo,
                     Timestamp = nextDay,
                     Power = 6000m
                 });
@@ -285,17 +303,18 @@ namespace EnergyManagement.Tests.Services.Analytics
             var now = DateTime.UtcNow;
             var day = DateOnly.FromDateTime(now);
 
-            db.Addresses.AddRange(
-                new Address { Id = 1 },
-                new Address { Id = 2 });
-            db.InverterInfos.AddRange(
-                new InverterInfo { Id = 10, AddressId = 1 },
-                new InverterInfo { Id = 20, AddressId = 2 });
+            var address1 = new Address { Id = 1 };
+            var address2 = new Address { Id = 2 };
+            db.Addresses.AddRange(address1, address2);
+            var inverterInfo1 = new InverterInfo { Id = 10, AddressId = 1, Address = address1 };
+            var inverterInfo2 = new InverterInfo { Id = 20, AddressId = 2, Address = address2 };
+            db.InverterInfos.AddRange(inverterInfo1, inverterInfo2);
             db.InverterReadings.AddRange(
                 new InverterReading
                 {
                     Id = 106,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo1,
                     Timestamp = now,
                     Power = 4000m
                 },
@@ -303,6 +322,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 107,
                     InverterInfoId = 20,
+                    InverterInfo = inverterInfo2,
                     Timestamp = now,
                     Power = 9000m
                 });
@@ -311,6 +331,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 206,
                     InverterInfoId = 10,
+                    InverterInfo = inverterInfo1,
                     Timestamp = now,
                     Power = 1000m
                 },
@@ -318,6 +339,7 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 207,
                     InverterInfoId = 20,
+                    InverterInfo = inverterInfo2,
                     Timestamp = now,
                     Power = 8000m
                 });
@@ -341,22 +363,22 @@ namespace EnergyManagement.Tests.Services.Analytics
             var now = DateTime.UtcNow;
             var day = DateOnly.FromDateTime(now);
 
-            db.Addresses.AddRange(
-                new Address { Id = 1 },
-                new Address { Id = 2 },
-                new Address { Id = 3 });
-            db.InverterInfos.AddRange(
-                new InverterInfo { Id = 10, AddressId = 1 },
-                new InverterInfo { Id = 20, AddressId = 2 },
-                new InverterInfo { Id = 30, AddressId = 3 });
+            var address1 = new Address { Id = 1 };
+            var address2 = new Address { Id = 2 };
+            var address3 = new Address { Id = 3 };
+            db.Addresses.AddRange(address1, address2, address3);
+            var inverterInfo1 = new InverterInfo { Id = 10, AddressId = 1, Address = address1 };
+            var inverterInfo2 = new InverterInfo { Id = 20, AddressId = 2, Address = address2 };
+            var inverterInfo3 = new InverterInfo { Id = 30, AddressId = 3, Address = address3 };
+            db.InverterInfos.AddRange(inverterInfo1, inverterInfo2, inverterInfo3);
             db.InverterReadings.AddRange(
-                new InverterReading { Id = 108, InverterInfoId = 10, Timestamp = now, Power = 4000m },
-                new InverterReading { Id = 109, InverterInfoId = 20, Timestamp = now, Power = 2000m },
-                new InverterReading { Id = 110, InverterInfoId = 30, Timestamp = now, Power = 0m });
+                new InverterReading { Id = 108, InverterInfoId = 10, InverterInfo = inverterInfo1, Timestamp = now, Power = 4000m },
+                new InverterReading { Id = 109, InverterInfoId = 20, InverterInfo = inverterInfo2, Timestamp = now, Power = 2000m },
+                new InverterReading { Id = 110, InverterInfoId = 30, InverterInfo = inverterInfo3, Timestamp = now, Power = 0m });
             db.ConsumptionReadings.AddRange(
-                new ConsumptionReading { Id = 208, InverterInfoId = 10, Timestamp = now, Power = 1000m },
-                new ConsumptionReading { Id = 209, InverterInfoId = 20, Timestamp = now, Power = 3000m },
-                new ConsumptionReading { Id = 210, InverterInfoId = 30, Timestamp = now, Power = 500m });
+                new ConsumptionReading { Id = 208, InverterInfoId = 10, InverterInfo = inverterInfo1, Timestamp = now, Power = 1000m },
+                new ConsumptionReading { Id = 209, InverterInfoId = 20, InverterInfo = inverterInfo2, Timestamp = now, Power = 3000m },
+                new ConsumptionReading { Id = 210, InverterInfoId = 30, InverterInfo = inverterInfo3, Timestamp = now, Power = 500m });
             await db.SaveChangesAsync();
 
             var service = new DailyBalanceCalculationService(db);
@@ -383,12 +405,15 @@ namespace EnergyManagement.Tests.Services.Analytics
             var now = DateTime.UtcNow;
             var day = DateOnly.FromDateTime(now);
 
-            db.Addresses.Add(new Address { Id = 1 });
-            db.InverterInfos.Add(new InverterInfo { Id = 10, AddressId = 1 });
+            var address = new Address { Id = 1 };
+            db.Addresses.Add(address);
+            var inverterInfo = new InverterInfo { Id = 10, AddressId = 1, Address = address, Model = "M1", Manufacturer = "Manu", SerialNumber = "SN1" };
+            db.InverterInfos.Add(inverterInfo);
             db.InverterReadings.Add(new InverterReading
             {
                 Id = 111,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 4000m
             });
@@ -396,6 +421,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             {
                 Id = 211,
                 InverterInfoId = 10,
+                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 1000m
             });

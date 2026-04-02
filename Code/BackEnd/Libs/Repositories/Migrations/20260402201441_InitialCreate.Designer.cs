@@ -12,8 +12,8 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    [Migration("20260402191715_AddReadingsAndDailyBalanceLinks_NoCascade")]
-    partial class AddReadingsAndDailyBalanceLinks_NoCascade
+    [Migration("20260402201441_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -200,7 +200,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AddressId");
+                    b.HasIndex(new[] { "AddressId" }, "IX_ConsumptionReadings_AddressId");
 
                     b.HasIndex(new[] { "InverterInfoId" }, "IX_ConsumptionReadings_InverterInfoId");
 
@@ -237,7 +237,7 @@ namespace Repositories.Migrations
                         .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal?>("NetPerAddressKwh")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal?>("ProducedKwh")
                         .HasColumnType("decimal(18, 0)");
@@ -296,9 +296,6 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AddressId")
-                        .HasColumnType("int");
-
                     b.Property<decimal?>("Current")
                         .HasColumnType("decimal(18, 2)");
 
@@ -319,8 +316,6 @@ namespace Repositories.Migrations
                         .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
 
                     b.HasIndex(new[] { "InverterInfoId" }, "IX_InverterReadings_InverterInfoId");
 
@@ -446,16 +441,18 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.ConsumptionReading", b =>
                 {
-                    b.HasOne("Repositories.Models.Address", null)
+                    b.HasOne("Repositories.Models.Address", "Address")
                         .WithMany("ConsumptionReadings")
                         .HasForeignKey("AddressId");
 
                     b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
-                        .WithMany()
+                        .WithMany("ConsumptionReadings")
                         .HasForeignKey("InverterInfoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_ConsumptionReadings_InverterInfos");
+
+                    b.Navigation("Address");
 
                     b.Navigation("InverterInfo");
                 });
@@ -470,11 +467,9 @@ namespace Repositories.Migrations
                         .HasConstraintName("FK_DailyEnergyBalances_Addresses");
 
                     b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
-                        .WithMany()
+                        .WithMany("DailyEnergyBalances")
                         .HasForeignKey("InverterInfoId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("FK_DailyEnergyBalances_InverterInfos_InverterInfoId");
+                        .IsRequired();
 
                     b.Navigation("Address");
 
@@ -494,12 +489,8 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.InverterReading", b =>
                 {
-                    b.HasOne("Repositories.Models.Address", null)
-                        .WithMany("InverterReadings")
-                        .HasForeignKey("AddressId");
-
                     b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
-                        .WithMany()
+                        .WithMany("InverterReadings")
                         .HasForeignKey("InverterInfoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -526,8 +517,6 @@ namespace Repositories.Migrations
 
                     b.Navigation("InverterInfos");
 
-                    b.Navigation("InverterReadings");
-
                     b.Navigation("ProviderSettlements");
                 });
 
@@ -539,6 +528,15 @@ namespace Repositories.Migrations
             modelBuilder.Entity("Repositories.Models.AspNetUser", b =>
                 {
                     b.Navigation("AspNetUserClaims");
+                });
+
+            modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
+                {
+                    b.Navigation("ConsumptionReadings");
+
+                    b.Navigation("DailyEnergyBalances");
+
+                    b.Navigation("InverterReadings");
                 });
 #pragma warning restore 612, 618
         }

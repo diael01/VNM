@@ -77,53 +77,6 @@ namespace Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ConsumptionReadings",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    LocationId = table.Column<int>(type: "int", nullable: true),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ConsumptionReadings", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ConsumptionReadings_Addresses",
-                        column: x => x.LocationId,
-                        principalTable: "Addresses",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DailyEnergyBalances",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    LocationId = table.Column<int>(type: "int", nullable: true),
-                    Day = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ProducedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    ConsumedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    SurplusKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    DeficitKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    CalculatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    NetKwh = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DailyEnergyBalances", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DailyEnergyBalances_Addresses",
-                        column: x => x.LocationId,
-                        principalTable: "Addresses",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "InverterInfos",
                 columns: table => new
                 {
@@ -151,7 +104,7 @@ namespace Repositories.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    LocationId = table.Column<int>(type: "int", nullable: true),
+                    AddressId = table.Column<int>(type: "int", nullable: true),
                     Day = table.Column<DateTime>(type: "datetime2", nullable: true),
                     InjectedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
                     AcceptedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
@@ -166,7 +119,7 @@ namespace Repositories.Migrations
                     table.PrimaryKey("PK_ProviderSettlements", x => x.Id);
                     table.ForeignKey(
                         name: "FK_ProviderSettlements_Addresses",
-                        column: x => x.LocationId,
+                        column: x => x.AddressId,
                         principalTable: "Addresses",
                         principalColumn: "Id");
                 });
@@ -238,32 +191,89 @@ namespace Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ConsumptionReadings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    AddressId = table.Column<int>(type: "int", nullable: true),
+                    InverterInfoId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ConsumptionReadings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ConsumptionReadings_Addresses_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ConsumptionReadings_InverterInfos",
+                        column: x => x.InverterInfoId,
+                        principalTable: "InverterInfos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DailyEnergyBalances",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AddressId = table.Column<int>(type: "int", nullable: false),
+                    Day = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ProducedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
+                    ConsumedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
+                    SurplusKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
+                    DeficitKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
+                    CalculatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    NetKwh = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    InverterInfoId = table.Column<int>(type: "int", nullable: false),
+                    NetPerAddressKwh = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DailyEnergyBalances", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DailyEnergyBalances_Addresses",
+                        column: x => x.AddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DailyEnergyBalances_InverterInfos_InverterInfoId",
+                        column: x => x.InverterInfoId,
+                        principalTable: "InverterInfos",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "InverterReadings",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    LocationId = table.Column<int>(type: "int", nullable: true),
+                    InverterInfoId = table.Column<int>(type: "int", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Power = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Voltage = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Current = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    InverterId = table.Column<int>(type: "int", nullable: true)
+                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_InverterReadings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_InverterReadings_Addresses",
-                        column: x => x.LocationId,
-                        principalTable: "Addresses",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_InverterReadings_InverterInfos",
-                        column: x => x.InverterId,
+                        column: x => x.InverterInfoId,
                         principalTable: "InverterInfos",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -282,14 +292,24 @@ namespace Repositories.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ConsumptionReadings_LocationId",
+                name: "IX_ConsumptionReadings_AddressId",
                 table: "ConsumptionReadings",
-                column: "LocationId");
+                column: "AddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DailyEnergyBalances_LocationId",
+                name: "IX_ConsumptionReadings_InverterInfoId",
+                table: "ConsumptionReadings",
+                column: "InverterInfoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DailyEnergyBalances_AddressId",
                 table: "DailyEnergyBalances",
-                column: "LocationId");
+                column: "AddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DailyEnergyBalances_InverterInfoId",
+                table: "DailyEnergyBalances",
+                column: "InverterInfoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_InverterInfos_AddressId",
@@ -297,19 +317,14 @@ namespace Repositories.Migrations
                 column: "AddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InverterReadings_InverterId",
+                name: "IX_InverterReadings_InverterInfoId",
                 table: "InverterReadings",
-                column: "InverterId");
+                column: "InverterInfoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InverterReadings_LocationId",
-                table: "InverterReadings",
-                column: "LocationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProviderSettlements_LocationId",
+                name: "IX_ProviderSettlements_AddressId",
                 table: "ProviderSettlements",
-                column: "LocationId");
+                column: "AddressId");
         }
 
         /// <inheritdoc />

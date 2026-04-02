@@ -1,8 +1,10 @@
 
 import { useEffect, useState } from "react"
 import AppLayout from "./components/AppLayout"
-import MainMenuRouter from "./pages/MainMenuRouter"
+import { MainMenuRouter } from "./pages/MainMenuRouter"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+// Create a QueryClient instance
+const queryClient = new QueryClient();
 import { fetchBackendReady, fetchCurrentUser, type BackendReadiness, type UserInfo } from "./api/bffApi"
 
 const readyBackendState: BackendReadiness = {

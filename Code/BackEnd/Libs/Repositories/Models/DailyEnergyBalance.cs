@@ -6,7 +6,9 @@ namespace Repositories.Models;
 public partial class DailyEnergyBalance
 {
     public int Id { get; set; }
-   
+
+    public int AddressId { get; set; }
+
     public DateTime? Day { get; set; }
 
     public decimal? ProducedKwh { get; set; }
@@ -23,13 +25,11 @@ public partial class DailyEnergyBalance
 
     public decimal? NetKwh { get; set; }
 
-     public decimal? NetPerAddressKwh { get; set; }
-   
-    public int InverterInfoId { get; set; }    
+    public int InverterInfoId { get; set; }
 
-    public virtual InverterInfo InverterInfo { get; set; }
+    public decimal? NetPerAddressKwh { get; set; }
 
-    public int AddressId { get; set; }    
+    public virtual Address Address { get; set; } = null!;
 
-    public virtual Address Address { get; set; }
+    public virtual InverterInfo InverterInfo { get; set; } = null!;
 }
