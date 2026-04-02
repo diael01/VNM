@@ -94,14 +94,12 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<ConsumptionReading>(entity =>
         {
-            entity.HasIndex(e => e.InverterInfoId, "IX_ConsumptionReadings_AddressId");
+            entity.HasIndex(e => e.AddressId, "IX_ConsumptionReadings_AddressId");
 
             entity.HasIndex(e => e.InverterInfoId, "IX_ConsumptionReadings_InverterInfoId");
 
             entity.Property(e => e.Power).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Source).HasMaxLength(50);
-
-            entity.HasOne(d => d.InverterInfo).WithMany(p => p.ConsumptionReadings).HasForeignKey(d => d.InverterInfo);
 
             entity.HasOne(d => d.InverterInfo).WithMany(p => p.ConsumptionReadings)
                 .HasForeignKey(d => d.InverterInfoId)
@@ -165,6 +163,9 @@ public partial class VnmDbContext : DbContext
             entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.MonetaryCredit).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.RatePerKwh).HasColumnType("decimal(18, 0)");
+
+            // Store SettlementMode as string in the database
+            entity.Property(e => e.SettlementMode).HasConversion<string>();
 
             entity.HasOne(d => d.Address).WithMany(p => p.ProviderSettlements)
                 .HasForeignKey(d => d.AddressId)

@@ -404,14 +404,9 @@ CREATE TABLE [__EFMigrationsHistory] (
     Write-Host "VNM database already exists. Skipping creation and migration marking."
 }
 
-Write-Host "`n[3/4] Dropping and recreating VNM_TEST database..."
-Drop-IfExists 'VNM_TEST'
-Invoke-SqlFile -LocalPath $vnmTestScript
-Write-Host '      done.'
 
 Write-Host "`n[4/4] Seeding reference data into VNM and VNM_TEST (Seed.sql is idempotent)..."
 Invoke-SqlFile -LocalPath $seedScript -Db 'VNM'
-Invoke-SqlFile -LocalPath $seedScript -Db 'VNM_TEST'
 Write-Host '      done.'
 
-Write-Host "`nSetup complete. VNM and VNM_TEST databases are ready."
+Write-Host "`nSetup complete. VNM database is ready."
