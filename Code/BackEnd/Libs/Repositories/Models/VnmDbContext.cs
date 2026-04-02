@@ -94,8 +94,6 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<ConsumptionReading>(entity =>
         {
-            entity.HasIndex(e => e.AddressId, "IX_ConsumptionReadings_AddressId");
-
             entity.HasIndex(e => e.InverterInfoId, "IX_ConsumptionReadings_InverterInfoId");
 
             entity.Property(e => e.Power).HasColumnType("decimal(18, 2)");
