@@ -48,10 +48,10 @@ namespace InverterPolling.Services
                     if (reading != null)
                     {
                         var totalReadings = await dbContext.InverterReadings.CountAsync(stoppingToken);
-                        if (totalReadings >= 100) //todo: remove this when is stable
+                        if (totalReadings >= 10) //todo: remove this when is stable
                         {
                             await dbContext.InverterReadings.ExecuteDeleteAsync(stoppingToken);
-                            _logger.LogWarning("InverterReadings reached retention cap (100). Cleared table.");
+                            _logger.LogWarning("InverterReadings reached retention cap (10). Cleared table.");
                         }
 
                         var entity = new InverterReading

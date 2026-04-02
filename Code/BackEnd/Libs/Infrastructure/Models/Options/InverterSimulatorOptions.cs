@@ -10,5 +10,8 @@ public class InverterSimulatorOptions
 
     public int MinCurrent { get; set; } = 0;
     public int MaxCurrent { get; set; } = 20;
+
+     public int MinInverterId { get; set; } = 1;
+    public int MaxInverterId { get; set; } = 10;
 }
 

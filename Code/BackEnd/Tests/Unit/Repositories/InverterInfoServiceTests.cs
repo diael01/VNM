@@ -4,6 +4,8 @@ using Services.Inverter;
 using Repositories.Models;
 using Repositories.Models;
 using Xunit;
+using Infrastructure.DTOs;
+using AutoMapper;
 
 namespace BackEnd.Tests.Unit.Repositories;
 
@@ -22,9 +24,10 @@ public class InverterInfoServiceTests
     {
         using var context = CreateContext("InverterInfo_Service_CRUD");
         var repository = new InverterInfoRepository(context);
-        var service = new InverterInfoService(repository);
+        var mapper = new MapperConfiguration(cfg => { }).CreateMapper();
+        var service = new InverterInfoService(repository, mapper);
 
-        var info = new InverterInfo
+        var info = new InverterInfoDto
         {
             Model = "ModelX",
             Manufacturer = "BrandY",
@@ -41,7 +44,7 @@ public class InverterInfoServiceTests
         Assert.Equal("ModelX", fetched!.Model);
 
         created.Manufacturer = "BrandZ";
-        var updated = await service.UpdateAsync(created);
+        var updated = await service.UpdateAsync(created.Id, created);
         Assert.Equal("BrandZ", updated.Manufacturer);
 
         var all = (await service.GetAllAsync()).ToList();

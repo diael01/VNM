@@ -27,7 +27,8 @@ public class InverterController : ControllerBase
             Power: _rand.Next(_options.MinPower, _options.MaxPower + 1),
             Voltage: _rand.Next(_options.MinVoltage, _options.MaxVoltage + 1),
             Current: _rand.Next(_options.MinCurrent, _options.MaxCurrent + 1),
-            Timestamp: DateTime.UtcNow
+            Timestamp: DateTime.UtcNow,
+            InverterInfoId: _rand.Next(_options.MinInverterId, _options.MaxInverterId + 1)
         );
 
         return Ok(data);

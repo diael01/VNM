@@ -34,7 +34,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("UserId", "RoleId");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
@@ -112,7 +112,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex(new[] { "RoleId" }, "IX_AspNetRoleClaims_RoleId");
 
                     b.ToTable("AspNetRoleClaims");
                 });
@@ -166,7 +166,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex(new[] { "UserId" }, "IX_AspNetUserClaims_UserId");
 
                     b.ToTable("AspNetUserClaims");
                 });
@@ -179,11 +179,14 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("LocationId")
+                    b.Property<int?>("AddressId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InverterInfoId")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("Power")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("Source")
                         .HasMaxLength(50)
@@ -194,7 +197,9 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex("AddressId");
+
+                    b.HasIndex(new[] { "InverterInfoId" }, "IX_ConsumptionReadings_InverterInfoId");
 
                     b.ToTable("ConsumptionReadings");
                 });
@@ -206,6 +211,9 @@ namespace Repositories.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AddressId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CalculatedAtUtc")
                         .HasColumnType("datetime2");
@@ -219,10 +227,13 @@ namespace Repositories.Migrations
                     b.Property<decimal?>("DeficitKwh")
                         .HasColumnType("decimal(18, 0)");
 
-                    b.Property<int?>("LocationId")
+                    b.Property<int>("InverterInfoId")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("NetKwh")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal?>("NetPerAddressKwh")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("ProducedKwh")
@@ -237,7 +248,9 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex(new[] { "AddressId" }, "IX_DailyEnergyBalances_AddressId");
+
+                    b.HasIndex(new[] { "InverterInfoId" }, "IX_DailyEnergyBalances_InverterInfoId");
 
                     b.ToTable("DailyEnergyBalances");
                 });
@@ -267,7 +280,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AddressId");
+                    b.HasIndex(new[] { "AddressId" }, "IX_InverterInfos_AddressId");
 
                     b.ToTable("InverterInfos");
                 });
@@ -280,17 +293,17 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("Current")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("InverterId")
+                    b.Property<int?>("AddressId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LocationId")
+                    b.Property<decimal?>("Current")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int>("InverterInfoId")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("Power")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("Source")
                         .HasMaxLength(50)
@@ -300,13 +313,13 @@ namespace Repositories.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal?>("Voltage")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InverterId");
+                    b.HasIndex("AddressId");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex(new[] { "InverterInfoId" }, "IX_InverterReadings_InverterInfoId");
 
                     b.ToTable("InverterReadings");
                 });
@@ -322,6 +335,9 @@ namespace Repositories.Migrations
                     b.Property<decimal?>("AcceptedKwh")
                         .HasColumnType("decimal(18, 0)");
 
+                    b.Property<int?>("AddressId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("Day")
                         .HasColumnType("datetime2");
 
@@ -330,9 +346,6 @@ namespace Repositories.Migrations
 
                     b.Property<decimal?>("InjectedKwh")
                         .HasColumnType("decimal(18, 0)");
-
-                    b.Property<int?>("LocationId")
-                        .HasColumnType("int");
 
                     b.Property<decimal?>("MonetaryCredit")
                         .HasColumnType("decimal(18, 0)");
@@ -348,12 +361,12 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex(new[] { "AddressId" }, "IX_ProviderSettlements_AddressId");
 
                     b.ToTable("ProviderSettlements");
                 });
 
-            modelBuilder.Entity("TransferRequest", b =>
+            modelBuilder.Entity("Repositories.Models.TransferRequest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -362,7 +375,7 @@ namespace Repositories.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("ActualAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
@@ -374,7 +387,7 @@ namespace Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("RequestedAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("SettlementMode")
                         .HasColumnType("int");
@@ -430,28 +443,45 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.ConsumptionReading", b =>
                 {
-                    b.HasOne("Repositories.Models.Address", "Location")
+                    b.HasOne("Repositories.Models.Address", null)
                         .WithMany("ConsumptionReadings")
-                        .HasForeignKey("LocationId")
-                        .HasConstraintName("FK_ConsumptionReadings_Addresses");
+                        .HasForeignKey("AddressId");
 
-                    b.Navigation("Location");
+                    b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
+                        .WithMany()
+                        .HasForeignKey("InverterInfoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ConsumptionReadings_InverterInfos");
+
+                    b.Navigation("InverterInfo");
                 });
 
             modelBuilder.Entity("Repositories.Models.DailyEnergyBalance", b =>
                 {
-                    b.HasOne("Repositories.Models.Address", "Location")
+                    b.HasOne("Repositories.Models.Address", "Address")
                         .WithMany("DailyEnergyBalances")
-                        .HasForeignKey("LocationId")
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("FK_DailyEnergyBalances_Addresses");
 
-                    b.Navigation("Location");
+                    b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
+                        .WithMany()
+                        .HasForeignKey("InverterInfoId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("FK_DailyEnergyBalances_InverterInfos_InverterInfoId");
+
+                    b.Navigation("Address");
+
+                    b.Navigation("InverterInfo");
                 });
 
             modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
                 {
                     b.HasOne("Repositories.Models.Address", "Address")
-                        .WithMany()
+                        .WithMany("InverterInfos")
                         .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -461,29 +491,28 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.InverterReading", b =>
                 {
-                    b.HasOne("Repositories.Models.InverterInfo", "Inverter")
+                    b.HasOne("Repositories.Models.Address", null)
                         .WithMany("InverterReadings")
-                        .HasForeignKey("InverterId")
+                        .HasForeignKey("AddressId");
+
+                    b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
+                        .WithMany()
+                        .HasForeignKey("InverterInfoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("FK_InverterReadings_InverterInfos");
 
-                    b.HasOne("Repositories.Models.Address", "Location")
-                        .WithMany("InverterReadings")
-                        .HasForeignKey("LocationId")
-                        .HasConstraintName("FK_InverterReadings_Addresses");
-
-                    b.Navigation("Inverter");
-
-                    b.Navigation("Location");
+                    b.Navigation("InverterInfo");
                 });
 
             modelBuilder.Entity("Repositories.Models.ProviderSettlement", b =>
                 {
-                    b.HasOne("Repositories.Models.Address", "Location")
+                    b.HasOne("Repositories.Models.Address", "Address")
                         .WithMany("ProviderSettlements")
-                        .HasForeignKey("LocationId")
+                        .HasForeignKey("AddressId")
                         .HasConstraintName("FK_ProviderSettlements_Addresses");
 
-                    b.Navigation("Location");
+                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("Repositories.Models.Address", b =>
@@ -491,6 +520,8 @@ namespace Repositories.Migrations
                     b.Navigation("ConsumptionReadings");
 
                     b.Navigation("DailyEnergyBalances");
+
+                    b.Navigation("InverterInfos");
 
                     b.Navigation("InverterReadings");
 
@@ -505,11 +536,6 @@ namespace Repositories.Migrations
             modelBuilder.Entity("Repositories.Models.AspNetUser", b =>
                 {
                     b.Navigation("AspNetUserClaims");
-                });
-
-            modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
-                {
-                    b.Navigation("InverterReadings");
                 });
 #pragma warning restore 612, 618
         }

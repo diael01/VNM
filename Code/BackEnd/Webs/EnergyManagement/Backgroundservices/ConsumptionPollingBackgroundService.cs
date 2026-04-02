@@ -43,10 +43,10 @@ namespace ConsumptionPolling.Services
                     if (reading != null)
                     {
                         var totalReadings = await dbContext.ConsumptionReadings.CountAsync(stoppingToken);
-                        if (totalReadings >= 100) // retention cap for demo
+                        if (totalReadings >= 10) // retention cap for demo
                         {
                             await dbContext.ConsumptionReadings.ExecuteDeleteAsync(stoppingToken);
-                            _logger.LogWarning("ConsumptionReadings reached retention cap (100). Cleared table.");
+                            _logger.LogWarning("ConsumptionReadings reached retention cap (10). Cleared table.");
                         }
 
                         dbContext.ConsumptionReadings.Add(reading);

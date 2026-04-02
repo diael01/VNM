@@ -1,6 +1,6 @@
 export type DailyBalance = {
   id: number;
-  locationId: number;
+  addressId: number;
   day: string;
   producedKwh: number;
   consumedKwh: number;

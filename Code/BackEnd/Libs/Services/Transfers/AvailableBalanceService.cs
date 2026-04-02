@@ -22,7 +22,7 @@ namespace EnergyManagement.Services.Transfers
         public async Task<AvailableTransferBalanceDto> GetAvailableBalanceAsync(int addressId, DateOnly day, CancellationToken ct = default)
         {
             var settlement = await _dbContext.ProviderSettlements
-                .FirstOrDefaultAsync(x => x.LocationId == addressId && x.Day.HasValue && DateOnly.FromDateTime(x.Day.Value) == day);
+                .FirstOrDefaultAsync(x => x.AddressId == addressId && x.Day.HasValue && DateOnly.FromDateTime(x.Day.Value) == day);
 
             if (settlement == null)
                 return new AvailableTransferBalanceDto();

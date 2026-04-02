@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
 
-namespace Repositories.Models;
-
-public partial class InverterInfo
+namespace Infrastructure.DTOs;
+public class InverterInfoDto
 {
     public int Id { get; set; }
 
@@ -14,6 +11,4 @@ public partial class InverterInfo
     public string? SerialNumber { get; set; }
 
     public int AddressId { get; set; }
-
-    public virtual Address Address { get; set; } = null!;
 }

@@ -48,7 +48,7 @@ namespace DashboardBFF.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> CreateInverter([FromBody] InverterInfo info, CancellationToken cancellationToken)
+        public async Task<IActionResult> CreateInverter([FromBody] InverterInfoDto info, CancellationToken cancellationToken)
         {
             var accessToken = await HttpContextAccessTokenHelper.GetAccessTokenOrThrowAsync(HttpContext, cancellationToken);
             var created = await _dashboardService.CreateInverterInfoAsync(accessToken, info, cancellationToken);
@@ -57,7 +57,7 @@ namespace DashboardBFF.Controllers
 
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdateInverter(int id, [FromBody] InverterInfo info, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateInverter(int id, [FromBody] InverterInfoDto info, CancellationToken cancellationToken)
         {
             var accessToken = await HttpContextAccessTokenHelper.GetAccessTokenOrThrowAsync(HttpContext, cancellationToken);
             var updated = await _dashboardService.UpdateInverterInfoAsync(accessToken, id, info, cancellationToken);

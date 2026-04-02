@@ -30,6 +30,7 @@ public partial class VnmDbContext : DbContext
     public virtual DbSet<InverterReading> InverterReadings { get; set; }
 
     public virtual DbSet<ProviderSettlement> ProviderSettlements { get; set; }
+
     public virtual DbSet<TransferRequest> TransferRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -52,6 +53,8 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<AspNetRoleClaim>(entity =>
         {
+            entity.HasIndex(e => e.RoleId, "IX_AspNetRoleClaims_RoleId");
+
             entity.Property(e => e.RoleId).HasMaxLength(225);
 
             entity.HasOne(d => d.Role).WithMany(p => p.AspNetRoleClaims).HasForeignKey(d => d.RoleId);
@@ -74,6 +77,7 @@ public partial class VnmDbContext : DbContext
                     {
                         j.HasKey("UserId", "RoleId");
                         j.ToTable("AspNetUserRoles");
+                        j.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
                         j.IndexerProperty<string>("UserId").HasMaxLength(225);
                         j.IndexerProperty<string>("RoleId").HasMaxLength(225);
                     });
@@ -81,69 +85,91 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<AspNetUserClaim>(entity =>
         {
+            entity.HasIndex(e => e.UserId, "IX_AspNetUserClaims_UserId");
+
             entity.Property(e => e.UserId).HasMaxLength(225);
 
             entity.HasOne(d => d.User).WithMany(p => p.AspNetUserClaims).HasForeignKey(d => d.UserId);
         });
 
         modelBuilder.Entity<ConsumptionReading>(entity =>
-        {          
+        {
+            entity.HasIndex(e => e.InverterInfoId, "IX_ConsumptionReadings_InverterInfoId");
+
+            entity.Property(e => e.Power).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Source).HasMaxLength(50);
 
-            entity.HasOne(d => d.Location).WithMany(p => p.ConsumptionReadings)
-                .HasForeignKey(d => d.LocationId)
-                .HasConstraintName("FK_ConsumptionReadings_Addresses");
+            entity.HasOne(d => d.InverterInfo).WithMany()
+                .HasForeignKey(d => d.InverterInfoId)
+                .HasConstraintName("FK_ConsumptionReadings_InverterInfos");
         });
 
         modelBuilder.Entity<DailyEnergyBalance>(entity =>
         {
+            entity.HasIndex(e => e.AddressId, "IX_DailyEnergyBalances_AddressId"); 
+             entity.HasIndex(e => e.InverterInfoId, "IX_DailyEnergyBalances_InverterInfoId");          
             entity.Property(e => e.ConsumedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.DeficitKwh).HasColumnType("decimal(18, 0)");
+            entity.Property(e => e.NetKwh).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.ProducedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.SurplusKwh).HasColumnType("decimal(18, 0)");
 
-            entity.HasOne(d => d.Location).WithMany(p => p.DailyEnergyBalances)
-                .HasForeignKey(d => d.LocationId)
+            entity.HasOne(d => d.Address).WithMany(p => p.DailyEnergyBalances)
+                .HasForeignKey(d => d.AddressId)
                 .HasConstraintName("FK_DailyEnergyBalances_Addresses");
+
+            entity.HasOne(d => d.InverterInfo)
+                .WithMany()
+                .HasForeignKey(d => d.InverterInfoId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_DailyEnergyBalances_InverterInfos_InverterInfoId");
         });
 
         modelBuilder.Entity<InverterInfo>(entity =>
         {
+            entity.HasIndex(e => e.AddressId, "IX_InverterInfos_AddressId");
+
             entity.Property(e => e.Manufacturer).HasMaxLength(50);
             entity.Property(e => e.Model).HasMaxLength(50);
             entity.Property(e => e.SerialNumber).HasMaxLength(50);
 
-            entity.HasOne(d => d.Address)
-                .WithMany()
-                .HasForeignKey(d => d.AddressId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.Address).WithMany(p => p.InverterInfos).HasForeignKey(d => d.AddressId);
         });
 
         modelBuilder.Entity<InverterReading>(entity =>
         {
+            entity.HasIndex(e => e.InverterInfoId, "IX_InverterReadings_InverterInfoId");
+
+            entity.Property(e => e.Current).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Power).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Source).HasMaxLength(50);
+            entity.Property(e => e.Voltage).HasColumnType("decimal(18, 2)");
 
-            entity.HasOne(d => d.Inverter).WithMany(p => p.InverterReadings)
-                .HasForeignKey(d => d.InverterId)
+            entity.HasOne(d => d.InverterInfo).WithMany()
+                .HasForeignKey(d => d.InverterInfoId)
                 .HasConstraintName("FK_InverterReadings_InverterInfos");
-
-            entity.HasOne(d => d.Location).WithMany(p => p.InverterReadings)
-                .HasForeignKey(d => d.LocationId)
-                .HasConstraintName("FK_InverterReadings_Addresses");
         });
 
         modelBuilder.Entity<ProviderSettlement>(entity =>
         {
+            entity.HasIndex(e => e.AddressId, "IX_ProviderSettlements_AddressId");
+
             entity.Property(e => e.AcceptedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.EnergyCreditKwh).HasColumnType("decimal(18, 0)");
-            entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 0)");         
+            entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.MonetaryCredit).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.RatePerKwh).HasColumnType("decimal(18, 0)");
 
-            entity.HasOne(d => d.Location).WithMany(p => p.ProviderSettlements)
-                .HasForeignKey(d => d.LocationId)
+            entity.HasOne(d => d.Address).WithMany(p => p.ProviderSettlements)
+                .HasForeignKey(d => d.AddressId)
                 .HasConstraintName("FK_ProviderSettlements_Addresses");
+        });
+
+        modelBuilder.Entity<TransferRequest>(entity =>
+        {
+            entity.Property(e => e.ActualAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RequestedAmount).HasColumnType("decimal(18, 2)");
         });
 
         OnModelCreatingPartial(modelBuilder);

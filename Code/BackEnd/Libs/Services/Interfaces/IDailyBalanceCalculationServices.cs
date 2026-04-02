@@ -9,7 +9,7 @@ namespace EnergyManagement.Services.Analytics;
 
 public interface IDailyBalanceCalculationService
 {
-    Task<DailyEnergyBalance> CalculateDailyBalancesAsync(int addressId, DateOnly day, CancellationToken ct = default);
-    Task<IReadOnlyList<DailyEnergyBalance>> CalculateDailyBalancesForAllAddressesAsync(DateOnly day, CancellationToken ct = default);
+    Task<DailyEnergyBalance> CalculateDailyBalancesAsync(int inverterInfoId, DateOnly day, CancellationToken ct = default);
+    Task<IReadOnlyList<DailyEnergyBalance>> CalculateDailyBalancesForAllInvertersAsync(DateOnly day, CancellationToken ct = default);
 }
 

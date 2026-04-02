@@ -12,8 +12,8 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    [Migration("20260330215729_UpdateSettlementAndTransferFields")]
-    partial class UpdateSettlementAndTransferFields
+    [Migration("20260402155445_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,7 +37,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("UserId", "RoleId");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
@@ -115,7 +115,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex(new[] { "RoleId" }, "IX_AspNetRoleClaims_RoleId");
 
                     b.ToTable("AspNetRoleClaims");
                 });
@@ -169,7 +169,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex(new[] { "UserId" }, "IX_AspNetUserClaims_UserId");
 
                     b.ToTable("AspNetUserClaims");
                 });
@@ -185,9 +185,8 @@ namespace Repositories.Migrations
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Power")
-                        .HasMaxLength(50)
-                        .HasColumnType("int");
+                    b.Property<decimal?>("Power")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("Source")
                         .HasMaxLength(50)
@@ -198,7 +197,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex(new[] { "LocationId" }, "IX_ConsumptionReadings_LocationId");
 
                     b.ToTable("ConsumptionReadings");
                 });
@@ -226,6 +225,9 @@ namespace Repositories.Migrations
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("NetKwh")
+                        .HasColumnType("decimal(18, 2)");
+
                     b.Property<decimal?>("ProducedKwh")
                         .HasColumnType("decimal(18, 0)");
 
@@ -238,7 +240,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex(new[] { "LocationId" }, "IX_DailyEnergyBalances_LocationId");
 
                     b.ToTable("DailyEnergyBalances");
                 });
@@ -268,7 +270,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AddressId");
+                    b.HasIndex(new[] { "AddressId" }, "IX_InverterInfos_AddressId");
 
                     b.ToTable("InverterInfos");
                 });
@@ -281,8 +283,8 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("Current")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("Current")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int?>("InverterId")
                         .HasColumnType("int");
@@ -290,8 +292,8 @@ namespace Repositories.Migrations
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Power")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("Power")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("Source")
                         .HasMaxLength(50)
@@ -300,14 +302,14 @@ namespace Repositories.Migrations
                     b.Property<DateTime?>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("Voltage")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("Voltage")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InverterId");
+                    b.HasIndex(new[] { "InverterId" }, "IX_InverterReadings_InverterId");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex(new[] { "LocationId" }, "IX_InverterReadings_LocationId");
 
                     b.ToTable("InverterReadings");
                 });
@@ -345,14 +347,51 @@ namespace Repositories.Migrations
                         .HasColumnType("decimal(18, 0)");
 
                     b.Property<int>("SettlementMode")
-                        .HasMaxLength(50)
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex(new[] { "LocationId" }, "IX_ProviderSettlements_LocationId");
 
                     b.ToTable("ProviderSettlements");
+                });
+
+            modelBuilder.Entity("Repositories.Models.TransferRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("ActualAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<int>("DestinationAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("RequestedAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int>("SettlementMode")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SourceAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TransferRequests");
                 });
 
             modelBuilder.Entity("AspNetUserRole", b =>
@@ -415,7 +454,7 @@ namespace Repositories.Migrations
             modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
                 {
                     b.HasOne("Repositories.Models.Address", "Address")
-                        .WithMany()
+                        .WithMany("InverterInfos")
                         .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -455,6 +494,8 @@ namespace Repositories.Migrations
                     b.Navigation("ConsumptionReadings");
 
                     b.Navigation("DailyEnergyBalances");
+
+                    b.Navigation("InverterInfos");
 
                     b.Navigation("InverterReadings");
 

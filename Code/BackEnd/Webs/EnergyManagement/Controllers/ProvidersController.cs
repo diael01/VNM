@@ -25,7 +25,7 @@ public class ProvidersController : ControllerBase
     public async Task<IActionResult> Get(int addressId, DateOnly day)
     {
         var result = await _db.ProviderSettlements
-            .FirstOrDefaultAsync(x => x.LocationId == addressId && x.Day.HasValue && DateOnly.FromDateTime(x.Day.Value) == day);
+            .FirstOrDefaultAsync(x => x.AddressId == addressId && x.Day.HasValue && DateOnly.FromDateTime(x.Day.Value) == day);
 
         return result == null ? NotFound() : Ok(result);
     }

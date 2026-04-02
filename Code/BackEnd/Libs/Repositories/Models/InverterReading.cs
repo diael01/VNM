@@ -7,8 +7,6 @@ public partial class InverterReading
 {
     public int Id { get; set; }
 
-    public int? LocationId { get; set; }
-
     public DateTime? Timestamp { get; set; }
 
     public decimal? Power { get; set; }
@@ -19,9 +17,7 @@ public partial class InverterReading
 
     public string? Source { get; set; }
 
-    public int? InverterId { get; set; }
+    public int InverterInfoId { get; set; }
 
-    public virtual InverterInfo? Inverter { get; set; }
-
-    public virtual Address? Location { get; set; }
+    public virtual InverterInfo InverterInfo { get; set; } = null!;
 }

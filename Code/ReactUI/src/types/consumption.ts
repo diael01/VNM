@@ -3,5 +3,5 @@ export type ConsumptionReading = {
   timestamp: string;
   power?: string;
   source?: string;
-  locationId?: number;
+  inverterInfoId: number;
 };

@@ -1,6 +1,6 @@
 public class InverterPollingOptions
 {
-    public int PollIntervalMinutes { get; set; } = 1440; // default 24 hours
+    public int PollIntervalMinutes { get; set; } = 5; // default 5 minutes
     public string Source { get; set; } = "Simulator";
 
     // New fields for protocol selection

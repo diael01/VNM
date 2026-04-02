@@ -22,14 +22,14 @@ namespace EnergyManagement.Services.Providers
          public async Task<ProviderSettlement> ProcessSettlementAsync(int addressId, DateOnly day, CancellationToken ct)
         {   
             var balance = await _db.DailyEnergyBalances
-                .FirstAsync(x => x.LocationId == addressId && x.Day.HasValue && DateOnly.FromDateTime(x.Day.Value) == day, ct);
+                .FirstAsync(x => x.AddressId == addressId && x.Day.HasValue && DateOnly.FromDateTime(x.Day.Value) == day, ct);
 
             var mode = _resolver.GetCurrentMode();
             var strategy = _resolver.Resolve(mode);
 
             var settlement = new ProviderSettlement
             {
-                LocationId = addressId,
+                AddressId = addressId,
                 Day = day.ToDateTime(TimeOnly.MinValue)
             };
 

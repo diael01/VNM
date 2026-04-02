@@ -22,8 +22,7 @@ namespace Repositories.Migrations
                     City = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     Street = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     StreetNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    PostalCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    InverterId = table.Column<int>(type: "int", nullable: true)
+                    PostalCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -58,18 +57,23 @@ namespace Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "InverterInfos",
+                name: "TransferRequests",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Model = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Manufacturer = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    SerialNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                    SourceAddressId = table.Column<int>(type: "int", nullable: false),
+                    DestinationAddressId = table.Column<int>(type: "int", nullable: false),
+                    Day = table.Column<DateOnly>(type: "date", nullable: false),
+                    RequestedAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ActualAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    SettlementMode = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_InverterInfos", x => x.Id);
+                    table.PrimaryKey("PK_TransferRequests", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -80,7 +84,7 @@ namespace Repositories.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     LocationId = table.Column<int>(type: "int", nullable: true),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Power = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
@@ -106,7 +110,8 @@ namespace Repositories.Migrations
                     SurplusKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
                     DeficitKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
                     CalculatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    NetKwh = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -116,6 +121,28 @@ namespace Repositories.Migrations
                         column: x => x.LocationId,
                         principalTable: "Addresses",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InverterInfos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Model = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Manufacturer = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    SerialNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    AddressId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InverterInfos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InverterInfos_Addresses_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -131,8 +158,8 @@ namespace Repositories.Migrations
                     RatePerKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
                     MonetaryCredit = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
                     EnergyCreditKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: true),
-                    Mode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    ProcessedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    ProcessedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    SettlementMode = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -218,9 +245,9 @@ namespace Repositories.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     LocationId = table.Column<int>(type: "int", nullable: true),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Power = table.Column<int>(type: "int", nullable: true),
-                    Voltage = table.Column<int>(type: "int", nullable: true),
-                    Current = table.Column<int>(type: "int", nullable: true),
+                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Voltage = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Current = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     InverterId = table.Column<int>(type: "int", nullable: true)
                 },
@@ -265,6 +292,11 @@ namespace Repositories.Migrations
                 column: "LocationId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_InverterInfos_AddressId",
+                table: "InverterInfos",
+                column: "AddressId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_InverterReadings_InverterId",
                 table: "InverterReadings",
                 column: "InverterId");
@@ -303,6 +335,9 @@ namespace Repositories.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProviderSettlements");
+
+            migrationBuilder.DropTable(
+                name: "TransferRequests");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

@@ -7,13 +7,13 @@ public partial class ConsumptionReading
 {
     public int Id { get; set; }
 
-    public int? LocationId { get; set; }
-
     public DateTime? Timestamp { get; set; }
 
     public decimal? Power { get; set; }
 
     public string? Source { get; set; }
 
-    public virtual Address? Location { get; set; }
+    public int InverterInfoId { get; set; }
+
+    public virtual InverterInfo InverterInfo { get; set; } = null!;
 }

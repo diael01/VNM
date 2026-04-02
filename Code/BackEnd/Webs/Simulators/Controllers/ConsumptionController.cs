@@ -22,10 +22,10 @@ public class ConsumptionController : ControllerBase
     [HttpGet("data")]
     public ActionResult<ConsumerReadingData> GetData()
     {
-        var data = new ConsumerReadingData(
-            Power: _rand.Next(_options.MinConsumption, _options.MaxConsumption + 1),          
+	    var data = new ConsumerReadingData(
+            Power: _rand.Next(_options.MinConsumption, _options.MaxConsumption + 1),
             Timestamp: DateTime.UtcNow,
-            LocationId: _options.LocationId
+            InverterInfoId: _rand.Next(_options.MinInverterId, _options.MaxInverterId + 1)
         );
 
         return Ok(data);

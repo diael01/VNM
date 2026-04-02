@@ -52,7 +52,7 @@ namespace EnergyManagement.Services.Transfers
                 {
                     var svc = scope.ServiceProvider.GetRequiredService<IDailyBalanceCalculationService>();
                     var today = DateOnly.FromDateTime(DateTime.Now);
-                    await svc.CalculateDailyBalancesForAllAddressesAsync(today, stoppingToken);
+                    await svc.CalculateDailyBalancesForAllInvertersAsync(today, stoppingToken);
                     _logger.LogInformation("Daily balance calculation completed successfully at {Time}.", DateTime.Now);
                 }
             }

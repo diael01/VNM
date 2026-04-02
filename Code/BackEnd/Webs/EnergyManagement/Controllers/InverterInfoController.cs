@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Models;
+using Infrastructure.DTOs;
+using AutoMapper;
 using Services.Inverter;
 
 namespace EnergyManagement.Controllers;
@@ -9,10 +11,12 @@ namespace EnergyManagement.Controllers;
 public class InverterInfoController : ControllerBase
 {
     private readonly IInverterInfoService _inverterInfoService;
+    private readonly IMapper _mapper;
 
-    public InverterInfoController(IInverterInfoService inverterInfoService)
+    public InverterInfoController(IInverterInfoService inverterInfoService, IMapper mapper)
     {
         _inverterInfoService = inverterInfoService;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -31,17 +35,17 @@ public class InverterInfoController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] InverterInfo info)
+    public async Task<IActionResult> Create([FromBody] InverterInfoDto dto)
     {
-        var created = await _inverterInfoService.CreateAsync(info);
+        var created = await _inverterInfoService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] InverterInfo info)
+    public async Task<IActionResult> Update(int id, [FromBody] InverterInfoDto dto)
     {
-        if (id != info.Id) return BadRequest();
-        var updated = await _inverterInfoService.UpdateAsync(info);
+        if (id != dto.Id) return BadRequest();
+        var updated = await _inverterInfoService.UpdateAsync(id, dto);
         return Ok(updated);
     }
 
