@@ -25,7 +25,7 @@ public class ConsumptionController : ControllerBase
 	    var data = new ConsumerReadingData(
             Power: _rand.Next(_options.MinConsumption, _options.MaxConsumption + 1),
             Timestamp: DateTime.UtcNow,
-            InverterInfoId: 1//_rand.Next(_options.MinInverterId, _options.MaxInverterId + 1)
+            AddressId: 1//_rand.Next(_options.MinInverterId, _options.MaxInverterId + 1)
         );
 
         return Ok(data);

@@ -7,6 +7,7 @@ export type DailyBalance = {
   surplusKwh: number;
   deficitKwh: number;
   netKwh: number;
+  netPerAddressKwh?: number;
   calculatedAtUtc: string;
   status: string;
 }

@@ -38,11 +38,12 @@ export default function DailyBalancePage({ permissions }: DailyBalancePageProps)
 
   const columns: GridColDef[] = [
     { field: 'day', headerName: 'Day', width: 120 },
-    { field: 'producedKwh', headerName: 'Produced (kWh)', width: 150 },
-    { field: 'consumedKwh', headerName: 'Consumed (kWh)', width: 150 },
-    { field: 'netKwh', headerName: 'Net (kWh)', width: 120 },
-    { field: 'surplusKwh', headerName: 'Surplus (kWh)', width: 140 },
-    { field: 'deficitKwh', headerName: 'Deficit (kWh)', width: 140 },
+    { field: 'producedKwh', headerName: 'Produced(kWh)', width: 150 },
+    { field: 'consumedKwh', headerName: 'Consumed(kWh)', width: 150 },
+    { field: 'netKwh', headerName: 'Net(kWh)', width: 120 },
+    { field: 'netPerAddressKwh', headerName: 'Net/Adr(kWh)', width: 100 },
+    { field: 'surplusKwh', headerName: 'Surplus(kWh)', width: 140 },
+    { field: 'deficitKwh', headerName: 'Deficit(kWh)', width: 140 },
   ];
 
   return (
