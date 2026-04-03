@@ -12,7 +12,7 @@ export type InverterReading = {
   voltage: number
   current: number
   source: string
-  addressId: number
+  inverterInfoId: number
 }
 
 interface InverterReadingsPageProps {
@@ -60,7 +60,7 @@ export default function InverterReadingsPage({ permissions }: InverterReadingsPa
   if (!readings.length) return <p>No inverter readings available.</p>;
 
   const columns: GridColDef[] = [
-    { field: 'addressId', headerName: 'Address ID', flex: 1, sortable: true, filterable: true },
+    { field: 'inverterInfoId', headerName: 'Inverter ID', flex: 1, sortable: true, filterable: true },
     { field: 'power', headerName: 'Power (W)', flex: 1, sortable: true, filterable: true },
     { field: 'voltage', headerName: 'Voltage (V)', flex: 1, sortable: true, filterable: true },
     { field: 'current', headerName: 'Current (A)', flex: 1, sortable: true, filterable: true },
