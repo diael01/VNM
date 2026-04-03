@@ -46,7 +46,7 @@ namespace ConsumptionPolling.Services
                 Timestamp = data.Timestamp,
                 Power = data.Power,
                 Source = _source,
-                InverterInfoId = data.InverterInfoId
+                AddressId = data.AddressId
             };
         }
     }

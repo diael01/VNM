@@ -77,6 +77,28 @@ namespace Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ConsumptionReadings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    AddressId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ConsumptionReadings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ConsumptionReadings_Addresses_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "InverterInfos",
                 columns: table => new
                 {
@@ -191,28 +213,6 @@ namespace Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ConsumptionReadings",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    InverterInfoId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ConsumptionReadings", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ConsumptionReadings_InverterInfos",
-                        column: x => x.InverterInfoId,
-                        principalTable: "InverterInfos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "DailyEnergyBalances",
                 columns: table => new
                 {
@@ -286,9 +286,9 @@ namespace Repositories.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ConsumptionReadings_InverterInfoId",
+                name: "IX_ConsumptionReadings_AddressId",
                 table: "ConsumptionReadings",
-                column: "InverterInfoId");
+                column: "AddressId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DailyEnergyBalances_AddressId",

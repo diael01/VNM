@@ -19,6 +19,8 @@ public partial class Address
 
     public string PostalCode { get; set; } = null!;
 
+    public virtual ICollection<ConsumptionReading> ConsumptionReadings { get; set; } = new List<ConsumptionReading>();
+
     public virtual ICollection<DailyEnergyBalance> DailyEnergyBalances { get; set; } = new List<DailyEnergyBalance>();
 
     public virtual ICollection<InverterInfo> InverterInfos { get; set; } = new List<InverterInfo>();

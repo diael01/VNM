@@ -94,14 +94,12 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<ConsumptionReading>(entity =>
         {
-            entity.HasIndex(e => e.InverterInfoId, "IX_ConsumptionReadings_InverterInfoId");
+            entity.HasIndex(e => e.AddressId, "IX_ConsumptionReadings_AddressId");
 
             entity.Property(e => e.Power).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Source).HasMaxLength(50);
 
-            entity.HasOne(d => d.InverterInfo).WithMany(p => p.ConsumptionReadings)
-                .HasForeignKey(d => d.InverterInfoId)
-                .HasConstraintName("FK_ConsumptionReadings_InverterInfos");
+            entity.HasOne(d => d.Address).WithMany(p => p.ConsumptionReadings).HasForeignKey(d => d.AddressId);
         });
 
         modelBuilder.Entity<DailyEnergyBalance>(entity =>

@@ -12,7 +12,7 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    [Migration("20260402215745_InitialCreate")]
+    [Migration("20260403195016_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -188,7 +188,7 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("InverterInfoId")
+                    b.Property<int>("AddressId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Power")
@@ -204,7 +204,7 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "InverterInfoId" }, "IX_ConsumptionReadings_InverterInfoId");
+                    b.HasIndex(new[] { "AddressId" }, "IX_ConsumptionReadings_AddressId");
 
                     b.ToTable("ConsumptionReadings");
                 });
@@ -449,14 +449,13 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.ConsumptionReading", b =>
                 {
-                    b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
+                    b.HasOne("Repositories.Models.Address", "Address")
                         .WithMany("ConsumptionReadings")
-                        .HasForeignKey("InverterInfoId")
+                        .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_ConsumptionReadings_InverterInfos");
+                        .IsRequired();
 
-                    b.Navigation("InverterInfo");
+                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("Repositories.Models.DailyEnergyBalance", b =>
@@ -514,6 +513,8 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.Address", b =>
                 {
+                    b.Navigation("ConsumptionReadings");
+
                     b.Navigation("DailyEnergyBalances");
 
                     b.Navigation("InverterInfos");
@@ -533,8 +534,6 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
                 {
-                    b.Navigation("ConsumptionReadings");
-
                     b.Navigation("DailyEnergyBalances");
 
                     b.Navigation("InverterReadings");

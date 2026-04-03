@@ -35,7 +35,7 @@ export default function ConsumptionPage({ permissions }: ConsumptionPageProps) {
     { field: 'timestamp', headerName: 'Timestamp', width: 180 },
     { field: 'power', headerName: 'Power', width: 120 },
     { field: 'source', headerName: 'Source', width: 120 },
-    { field: 'inverterInfoId', headerName: 'Inverter ID', width: 120 },
+    { field: 'addressId', headerName: 'Address ID', width: 120 },
   ];
 
   if (loading) return <p>Loading consumption readings...</p>;

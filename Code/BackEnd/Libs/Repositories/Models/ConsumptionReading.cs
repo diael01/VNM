@@ -13,7 +13,7 @@ public partial class ConsumptionReading
 
     public string Source { get; set; } = null!;
 
-    public int InverterInfoId { get; set; }
+    public int AddressId { get; set; }
 
-    public virtual InverterInfo InverterInfo { get; set; } = null!;
+    public virtual Address Address { get; set; } = null!;
 }

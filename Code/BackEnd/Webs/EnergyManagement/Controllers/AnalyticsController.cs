@@ -19,10 +19,6 @@ namespace EnergyManagement.Controllers
             _service = service;
         }
 
-        [HttpPost("calculate/{addressId}/{day}")]
-        public async Task<IActionResult> Calculate(int addressId, DateOnly day)
-            => Ok(await _service.CalculateDailyBalancesAsync(addressId, day));
-
         [HttpGet("dailybalance")]
         public async Task<IActionResult> Get()
         {
