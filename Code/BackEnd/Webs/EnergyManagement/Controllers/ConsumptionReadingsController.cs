@@ -28,11 +28,4 @@ public class ConsumptionReadingsController : ControllerBase
         var readings = await _consumptionReadingService.GetLatestAsync(count);
         return Ok(readings);
     }
-
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] ConsumptionReading reading)
-    {
-        var created = await _consumptionReadingService.CreateAsync(reading);
-        return CreatedAtAction(nameof(GetAll), new { id = created.Id }, created);
-    }
 }

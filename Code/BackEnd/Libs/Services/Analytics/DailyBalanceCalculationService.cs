@@ -3,14 +3,45 @@ using Repositories.Models;
 
 namespace EnergyManagement.Services.Analytics;
 
+using Metering.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+
 public class DailyBalanceCalculationService : IDailyBalanceCalculationService
 {
     private readonly VnmDbContext _db;
-    private const decimal QuarterHourInHours = 0.25m;
+    private readonly MeteringOptions _metering;
 
-    public DailyBalanceCalculationService(VnmDbContext dbContext)
+    public DailyBalanceCalculationService(
+        VnmDbContext db,
+        IOptions<MeteringOptions> meteringOptions)
     {
-        _db = dbContext;
+        _db = db;
+        _metering = meteringOptions.Value;
+    }
+
+    private decimal IntervalHours =>
+        (_metering.ReadingIntervalMinutes > 0
+            ? _metering.ReadingIntervalMinutes
+            : 5) / 60m;
+
+    public async Task<IReadOnlyList<DailyEnergyBalance>> CalculateDailyBalancesForAllInvertersAsync(
+        DateOnly day,
+        CancellationToken ct = default)
+    {
+        var result = new List<DailyEnergyBalance>();
+
+        var inverterInfos = await _db.InverterInfos
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        foreach (var inverterInfo in inverterInfos)
+        {
+            var balance = await CalculateDailyBalancesAsync(inverterInfo, day, ct);
+            result.Add(balance);
+        }
+
+        return result;
     }
 
     public async Task<DailyEnergyBalance> CalculateDailyBalancesAsync(
@@ -21,42 +52,50 @@ public class DailyBalanceCalculationService : IDailyBalanceCalculationService
         var dayStart = day.ToDateTime(TimeOnly.MinValue);
         var dayEnd = dayStart.AddDays(1);
 
+        var interval = IntervalHours;
+
         var produced = (await _db.InverterReadings
             .Where(x => x.InverterInfoId == inverterInfo.Id
                      && x.Timestamp >= dayStart
                      && x.Timestamp < dayEnd)
-            .SumAsync(x => (decimal?)x.Power * QuarterHourInHours / 1000m, ct)) ?? 0m;
+            .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
 
         var consumed = (await _db.ConsumptionReadings
             .Where(x => x.AddressId == inverterInfo.AddressId
                      && x.Timestamp >= dayStart
                      && x.Timestamp < dayEnd)
-            .SumAsync(x => (decimal?)x.Power * QuarterHourInHours / 1000m, ct)) ?? 0m;
+            .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
 
         var net = produced - consumed;
 
-        var netPerAddress = await CalculateNetPerAddressAsync(inverterInfo.AddressId, dayStart, dayEnd, ct);
+        var netPerAddress = await CalculateNetPerAddressAsync(
+            inverterInfo.AddressId,
+            dayStart,
+            dayEnd,
+            ct);
+
         var balance = await _db.DailyEnergyBalances
-                        .FirstOrDefaultAsync(
-                                x => x.InverterInfoId == inverterInfo.Id
-                                    && DateOnly.FromDateTime(x.Day) == day,
-                                ct);
+            .FirstOrDefaultAsync(
+                x => x.InverterInfoId == inverterInfo.Id
+                  && x.Day >= dayStart
+                  && x.Day < dayEnd,
+                ct);
 
         if (balance == null)
         {
             balance = new DailyEnergyBalance
             {
                 InverterInfoId = inverterInfo.Id,
-                Day = dayStart,
                 AddressId = inverterInfo.AddressId,
-                NetPerAddressKwh = netPerAddress
+                Day = dayStart
             };
 
             _db.DailyEnergyBalances.Add(balance);
         }
         else
-            // in case old rows exist without address filled correctly
+        {
             balance.AddressId = inverterInfo.AddressId;
+        }
 
         balance.ProducedKwh = produced;
         balance.ConsumedKwh = consumed;
@@ -74,35 +113,26 @@ public class DailyBalanceCalculationService : IDailyBalanceCalculationService
         return balance;
     }
 
-private async Task<decimal> CalculateNetPerAddressAsync(int addressId, DateTime dayStart, DateTime dayEnd, CancellationToken ct)
-{
-    var producedPerAddress = (await _db.InverterReadings
-        .Where(x => x.InverterInfo.AddressId == addressId
-                 && x.Timestamp >= dayStart
-                 && x.Timestamp < dayEnd)
-        .SumAsync(x => (decimal?)x.Power * QuarterHourInHours / 1000m, ct)) ?? 0m;
+    private async Task<decimal> CalculateNetPerAddressAsync(
+        int addressId,
+        DateTime dayStart,
+        DateTime dayEnd,
+        CancellationToken ct)
+    {
+        var interval = IntervalHours;
 
-    var consumedPerAddress = (await _db.ConsumptionReadings
-        .Where(x => x.AddressId == addressId
-                 && x.Timestamp >= dayStart
-                 && x.Timestamp < dayEnd)
-        .SumAsync(x => (decimal?)x.Power * QuarterHourInHours / 1000m, ct)) ?? 0m;
+        var produced = (await _db.InverterReadings
+            .Where(x => x.InverterInfo.AddressId == addressId
+                     && x.Timestamp >= dayStart
+                     && x.Timestamp < dayEnd)
+            .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
 
-    return producedPerAddress - consumedPerAddress;
-}
+        var consumed = (await _db.ConsumptionReadings
+            .Where(x => x.AddressId == addressId
+                     && x.Timestamp >= dayStart
+                     && x.Timestamp < dayEnd)
+            .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
 
-    public async Task<IReadOnlyList<DailyEnergyBalance>> CalculateDailyBalancesForAllInvertersAsync(
-        DateOnly day,
-        CancellationToken ct = default)
-    {    
-        var result = new List<DailyEnergyBalance>();
-
-        foreach (var inverterInfo in _db.InverterInfos.AsNoTracking())
-        {           
-                var balance = await CalculateDailyBalancesAsync(inverterInfo, day, ct);
-                result.Add(balance);            
-        }
-
-        return result;
+        return produced - consumed;
     }
 }

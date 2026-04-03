@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Models;
+using Metering.Services;
 
 namespace InverterPolling.Services
 {
@@ -19,19 +20,27 @@ namespace InverterPolling.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<InverterPollingService> _logger;
         private readonly InverterPollingOptions _options;
+        private readonly MeteringOptions _meteringOptions;
 
         public InverterPollingService(
             IServiceProvider serviceProvider,
             ILogger<InverterPollingService> logger,
-            IOptions<InverterPollingOptions> options)
+            IOptions<InverterPollingOptions> options,
+            IOptions<MeteringOptions> meteringOptions)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
             _options = options.Value;
+            _meteringOptions = meteringOptions.Value;   
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            if (!_options.Enabled)
+			{
+				_logger.LogInformation("DailyBalanceComputationBackgroundService is disabled in configuration.");
+				return;
+			}
             _logger.LogInformation("Inverter polling service started");
 
             while (!stoppingToken.IsCancellationRequested)
@@ -76,7 +85,7 @@ namespace InverterPolling.Services
                 {
                     _logger.LogError(ex, "Error polling inverter");
                 }
-                await Task.Delay(TimeSpan.FromMinutes(_options.PollIntervalMinutes), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(_meteringOptions.ReadingIntervalMinutes), stoppingToken);
             }
         }
     }

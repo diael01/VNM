@@ -64,20 +64,12 @@ export default function InverterReadingsPage({ permissions }: InverterReadingsPa
     { field: 'power', headerName: 'Power (W)', flex: 1, sortable: true, filterable: true },
     { field: 'voltage', headerName: 'Voltage (V)', flex: 1, sortable: true, filterable: true },
     { field: 'current', headerName: 'Current (A)', flex: 1, sortable: true, filterable: true },
-    { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true, valueFormatter: (params) => new Date(params.value as string).toLocaleString() },
+    { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true },
     { field: 'source', headerName: 'Source', flex: 1, sortable: true, filterable: true },
   ];
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Box component="h2" sx={{ m: 0, mr: 'auto' }}>
-          Inverter Readings
-        </Box>
-        {canRetry && (
-          <Button variant="outlined" onClick={load} sx={{ mb: 0.5 }}>Retry</Button>
-        )}
-      </Box>
       <DataGrid
         autoHeight
         rows={readings}

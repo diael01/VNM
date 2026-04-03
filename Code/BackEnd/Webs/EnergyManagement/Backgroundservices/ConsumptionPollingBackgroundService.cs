@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Models;
 using Polling.Services.Auth;
+using Metering.Services;
 
 namespace ConsumptionPolling.Services
 {
@@ -10,22 +11,30 @@ namespace ConsumptionPolling.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ConsumptionPollingService> _logger;
         private readonly ConsumptionPollingOptions _options;
+        private readonly MeteringOptions _meteringOptions;
          private readonly IAccessTokenProvider _accessTokenProvider;
 
         public ConsumptionPollingService(
             IServiceProvider serviceProvider,
             ILogger<ConsumptionPollingService> logger,
             IOptions<ConsumptionPollingOptions> options,
+            IOptions<MeteringOptions> meteringOptions,
                 IAccessTokenProvider accessTokenProvider)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
             _options = options.Value;
-               _accessTokenProvider = accessTokenProvider;
+            _meteringOptions = meteringOptions.Value;
+            _accessTokenProvider = accessTokenProvider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            if (!_options.Enabled)
+			{
+				_logger.LogInformation("DailyBalanceComputationBackgroundService is disabled in configuration.");
+				return;
+			}
             _logger.LogInformation("Consumption polling service started");
 
             while (!stoppingToken.IsCancellationRequested)
@@ -61,7 +70,7 @@ namespace ConsumptionPolling.Services
                 {
                     _logger.LogError(ex, "Error polling consumption meter");
                 }
-                await Task.Delay(TimeSpan.FromMinutes(_options.PollIntervalMinutes), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(_meteringOptions.ReadingIntervalMinutes), stoppingToken);
             }
         }
     }

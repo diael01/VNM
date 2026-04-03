@@ -12,6 +12,7 @@ using Repositories.Models;
 using Polling.Services.Auth;
 using EnergyManagement.Extensions;
 using EnergyManagement.Services.Transfers;
+using Metering.Services;
 
 // ---------------------
 // Build the application
@@ -53,6 +54,12 @@ builder.Services.Configure<InverterPollingOptions>(
 // Consumption Polling Options
 builder.Services.Configure<ConsumptionPolling.Services.ConsumptionPollingOptions>(
     builder.Configuration.GetSection("ConsumptionPolling"));
+
+builder.Services.Configure<MeteringOptions>(
+    builder.Configuration.GetSection("Metering"));
+
+builder.Services.Configure<DailyBalanceComputationOptions>(
+    builder.Configuration.GetSection("DailyBalanceComputation"));
 
 // ---------------------
 // HTTP client for polling

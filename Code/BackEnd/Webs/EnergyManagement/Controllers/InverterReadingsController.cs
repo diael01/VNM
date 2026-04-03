@@ -29,11 +29,5 @@ public class InverterReadingsController : ControllerBase
         return Ok(readings);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] InverterReading reading)
-    {
-        var created = await _inverterReadingService.CreateAsync(reading);
-        return CreatedAtAction(nameof(GetAll), new { id = created.Id }, created);
-    }
 }
 
