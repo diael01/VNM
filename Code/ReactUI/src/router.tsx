@@ -30,7 +30,7 @@ export const router = createBrowserRouter([
 
 // Wrapper to get menuHorizontal from Outlet context
 import { useOutletContext } from "react-router-dom";
-import ConsumptionPage from "./pages/ConsumptionPage";
+import ConsumptionPage from "./pages/ConsumptionReadingsPage";
 import DailyBalancePage from "./pages/DailyBalancePage";
 function MainMenuRouterWrapper() {
   const { menuHorizontal } = useOutletContext<{ menuHorizontal: boolean }>();

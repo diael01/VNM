@@ -12,7 +12,7 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    [Migration("20260403195016_InitialCreate")]
+    [Migration("20260404204421_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -192,7 +192,7 @@ namespace Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Power")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<string>("Source")
                         .IsRequired()
@@ -224,25 +224,25 @@ namespace Repositories.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("ConsumedKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<DateTime>("Day")
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("DeficitKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("InverterInfoId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("NetKwh")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18, 5)");
 
-                    b.Property<decimal?>("NetPerAddressKwh")
-                        .HasColumnType("decimal(18, 2)");
+                    b.Property<decimal>("NetPerAddressKwh")
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<decimal>("ProducedKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -250,7 +250,7 @@ namespace Repositories.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("SurplusKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.HasKey("Id");
 
@@ -303,13 +303,13 @@ namespace Repositories.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Current")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("InverterInfoId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Power")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<string>("Source")
                         .IsRequired()
@@ -320,7 +320,7 @@ namespace Repositories.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("Voltage")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.HasKey("Id");
 
@@ -338,7 +338,7 @@ namespace Repositories.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("AcceptedKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("AddressId")
                         .HasColumnType("int");
@@ -347,19 +347,19 @@ namespace Repositories.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("EnergyCreditKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<decimal>("InjectedKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<decimal>("MonetaryCredit")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<DateTime>("ProcessedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("RatePerKwh")
-                        .HasColumnType("decimal(18, 0)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("SettlementMode")
                         .HasColumnType("int");
@@ -380,7 +380,7 @@ namespace Repositories.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("ActualAmount")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
@@ -392,7 +392,7 @@ namespace Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("RequestedAmount")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("SettlementMode")
                         .HasColumnType("int");
@@ -402,8 +402,8 @@ namespace Repositories.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 

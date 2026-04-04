@@ -31,11 +31,10 @@ export default function ConsumptionPage({ permissions }: ConsumptionPageProps) {
   }, []);
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 80 },
-    { field: 'timestamp', headerName: 'Timestamp', width: 180 },
-    { field: 'power', headerName: 'Power', width: 120 },
-    { field: 'source', headerName: 'Source', width: 120 },
-    { field: 'addressId', headerName: 'Address ID', width: 120 },
+    { field: 'addressId', headerName: 'Address ID', flex: 1, sortable: true, filterable: true },
+    { field: 'power', headerName: 'Power', flex: 1, sortable: true, filterable: true },
+    { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true },
+    { field: 'source', headerName: 'Source', flex: 1, sortable: true, filterable: true },
   ];
 
   if (loading) return <p>Loading consumption readings...</p>;
@@ -43,12 +42,13 @@ export default function ConsumptionPage({ permissions }: ConsumptionPageProps) {
   if (!readings.length) return <p>No consumption readings available.</p>;
 
   return (
-    <Box sx={{ height: 500, width: '100%' }}>
+    <Box sx={{ p: 3 }}>
       <DataGrid
+        autoHeight
         rows={readings}
         columns={columns}
-        pageSize={25}
-        rowsPerPageOptions={[25, 50, 100]}
+        pageSize={10}
+        rowsPerPageOptions={[10, 20, 50]}
         disableSelectionOnClick
         getRowId={row => row.id}
       />

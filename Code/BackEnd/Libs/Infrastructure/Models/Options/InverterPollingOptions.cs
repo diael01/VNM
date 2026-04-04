@@ -1,6 +1,6 @@
 public class InverterPollingOptions
 {
-    public string Source { get; set; } = "Simulator";
+    public string Source { get; set; } = "InverterSimulator";
 
     // New fields for protocol selection
     public string Protocol { get; set; } = "Http";  // "Http" or "Tcp"

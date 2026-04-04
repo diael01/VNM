@@ -23,12 +23,17 @@ public class InverterController : ControllerBase
     [HttpGet("data")]
     public ActionResult<InverterData> GetData()
     {
+        // Generate random decimal for Power
+        decimal power = new decimal(3333.33333);//decimal)_options.MinPower + (decimal)_rand.NextDouble() * ((decimal)_options.MaxPower - (decimal)_options.MinPower);
+        decimal voltage = (decimal)_options.MinVoltage + (decimal)_rand.NextDouble() * ((decimal)_options.MaxVoltage - (decimal)_options.MinVoltage);
+        decimal current = (decimal)_options.MinCurrent + (decimal)_rand.NextDouble() * ((decimal)_options.MaxCurrent - (decimal)_options.MinCurrent);
+        int inverterInfoId = 1;//(int)_rand.Next((int)_options.MinInverterId, (int)_options.MaxInverterId + 1);
         var data = new InverterData(
-            Power: _rand.Next(_options.MinPower, _options.MaxPower + 1),
-            Voltage: _rand.Next(_options.MinVoltage, _options.MaxVoltage + 1),
-            Current: _rand.Next(_options.MinCurrent, _options.MaxCurrent + 1),
+            Power: power,
+            Voltage: voltage,
+            Current: current,
             Timestamp: DateTime.UtcNow,
-            InverterInfoId: 1//_rand.Next(_options.MinInverterId, _options.MaxInverterId + 1)
+            InverterInfoId: inverterInfoId
         );
 
         return Ok(data);

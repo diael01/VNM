@@ -1,7 +1,7 @@
 namespace Simulators.Models;
 
 public record ConsumerReadingData(
-    int Power,
+    decimal Power,
     DateTime Timestamp, //Utc
     int AddressId
 );

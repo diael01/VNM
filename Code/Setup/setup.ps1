@@ -405,7 +405,7 @@ CREATE TABLE [__EFMigrationsHistory] (
 }
 
 
-Write-Host "`n[4/4] Seeding reference data into VNM and VNM_TEST (Seed.sql is idempotent)..."
+Write-Host "`n[4/4] Seeding reference data into VNM (Seed.sql is idempotent)..."
 Invoke-SqlFile -LocalPath $seedScript -Db 'VNM'
 Write-Host '      done.'
 

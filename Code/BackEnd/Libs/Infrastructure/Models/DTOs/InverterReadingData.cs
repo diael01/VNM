@@ -1,9 +1,9 @@
 namespace Simulators.Models;
 
 public record InverterData(
-    int Power,
-    int Voltage,
-    int Current,
+    decimal Power,
+    decimal Voltage,
+    decimal Current,
     DateTime Timestamp, //Utc
     int InverterInfoId
 );

@@ -27,7 +27,7 @@ public partial class DailyEnergyBalance
 
     public int InverterInfoId { get; set; }
 
-    public decimal? NetPerAddressKwh { get; set; }
+    public decimal NetPerAddressKwh { get; set; }
 
     public virtual Address Address { get; set; } = null!;
 

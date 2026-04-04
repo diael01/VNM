@@ -2,14 +2,14 @@ namespace Simulators.Configuration;
 
 public class InverterSimulatorOptions
 {
-    public int MinPower { get; set; } = 0;
-    public int MaxPower { get; set; } = 5000;
+    public decimal MinPower { get; set; } = 0;
+    public decimal MaxPower { get; set; } = 5000.55m;
 
-    public int MinVoltage { get; set; } = 200;
-    public int MaxVoltage { get; set; } = 250;
+    public decimal MinVoltage { get; set; } = 200.22m;
+    public decimal MaxVoltage { get; set; } = 250.55m;
 
-    public int MinCurrent { get; set; } = 0;
-    public int MaxCurrent { get; set; } = 20;
+    public decimal MinCurrent { get; set; } = 0m;
+    public decimal MaxCurrent { get; set; } = 20.22m;
 
      public int MinInverterId { get; set; } = 1;
     public int MaxInverterId { get; set; } = 10;

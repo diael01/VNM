@@ -65,10 +65,10 @@ namespace Repositories.Migrations
                     SourceAddressId = table.Column<int>(type: "int", nullable: false),
                     DestinationAddressId = table.Column<int>(type: "int", nullable: false),
                     Day = table.Column<DateOnly>(type: "date", nullable: false),
-                    RequestedAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ActualAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    RequestedAmount = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    ActualAmount = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     SettlementMode = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -83,7 +83,7 @@ namespace Repositories.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Power = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     AddressId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -128,11 +128,11 @@ namespace Repositories.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AddressId = table.Column<int>(type: "int", nullable: false),
                     Day = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    InjectedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    AcceptedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    RatePerKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    MonetaryCredit = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    EnergyCreditKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    InjectedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    AcceptedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    RatePerKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    MonetaryCredit = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    EnergyCreditKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     ProcessedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     SettlementMode = table.Column<int>(type: "int", nullable: false)
                 },
@@ -220,15 +220,15 @@ namespace Repositories.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AddressId = table.Column<int>(type: "int", nullable: false),
                     Day = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ProducedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    ConsumedKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    SurplusKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    DeficitKwh = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    ProducedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    ConsumedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    SurplusKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    DeficitKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     CalculatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NetKwh = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    NetKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     InverterInfoId = table.Column<int>(type: "int", nullable: false),
-                    NetPerAddressKwh = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                    NetPerAddressKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -254,9 +254,9 @@ namespace Repositories.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     InverterInfoId = table.Column<int>(type: "int", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Power = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Voltage = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Current = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Power = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    Voltage = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    Current = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>

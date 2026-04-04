@@ -43,11 +43,11 @@ public class DailyBalanceComputationBackgroundService : BackgroundService
                 var svc = scope.ServiceProvider
                     .GetRequiredService<IDailyBalanceCalculationService>();
 
-                var today = DateOnly.FromDateTime(DateTime.Now);
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
                 await svc.CalculateDailyBalancesForAllInvertersAsync(today, stoppingToken);
 
-                _logger.LogInformation("Daily balance calculated at {Time}", DateTime.Now);
+                _logger.LogInformation("Daily balance calculated at {Time}", DateTime.UtcNow);
             }
         }
         catch (OperationCanceledException)

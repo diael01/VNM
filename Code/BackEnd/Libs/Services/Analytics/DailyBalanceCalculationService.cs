@@ -49,8 +49,11 @@ public class DailyBalanceCalculationService : IDailyBalanceCalculationService
         DateOnly day,
         CancellationToken ct = default)
     {
-        var dayStart = day.ToDateTime(TimeOnly.MinValue);
-        var dayEnd = dayStart.AddDays(1);
+    var dayStart = DateTime.SpecifyKind(
+        day.ToDateTime(TimeOnly.MinValue),
+        DateTimeKind.Utc);
+
+    var dayEnd = dayStart.AddDays(1);
 
         var interval = IntervalHours;
 

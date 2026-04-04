@@ -37,18 +37,26 @@ export default function DailyBalancePage({ permissions }: DailyBalancePageProps)
   if (!balances.length) return <p>No daily balance data available.</p>;
 
   const columns: GridColDef[] = [
-    { field: 'day', headerName: 'Day', width: 120 },
-    { field: 'producedKwh', headerName: 'Produced(kWh)', width: 150 },
-    { field: 'consumedKwh', headerName: 'Consumed(kWh)', width: 150 },
-    { field: 'netKwh', headerName: 'Net(kWh)', width: 120 },
-    { field: 'netPerAddressKwh', headerName: 'Net/Adr(kWh)', width: 100 },
-    { field: 'surplusKwh', headerName: 'Surplus(kWh)', width: 140 },
-    { field: 'deficitKwh', headerName: 'Deficit(kWh)', width: 140 },
+    { field: 'day', headerName: 'Day', flex: 1, sortable: true, filterable: true },
+    { field: 'producedKwh', headerName: 'Produced(kWh)', flex: 1, sortable: true, filterable: true },
+    { field: 'consumedKwh', headerName: 'Consumed(kWh)', flex: 1, sortable: true, filterable: true },
+    { field: 'netKwh', headerName: 'Net(kWh)', flex: 1, sortable: true, filterable: true },
+    { field: 'netPerAddressKwh', headerName: 'Net/Adr(kWh)', flex: 1, sortable: true, filterable: true },
+    { field: 'surplusKwh', headerName: 'Surplus(kWh)', flex: 1, sortable: true, filterable: true },
+    { field: 'deficitKwh', headerName: 'Deficit(kWh)', flex: 1, sortable: true, filterable: true },
   ];
 
   return (
-    <Box sx={{ height: 400, width: '100%' }}>
-      <DataGrid rows={balances} columns={columns} pageSize={10} rowsPerPageOptions={[10]} />
+    <Box sx={{ p: 3 }}>
+      <DataGrid
+        autoHeight
+        rows={balances}
+        columns={columns}
+        pageSize={10}
+        rowsPerPageOptions={[10, 20, 50]}
+        disableSelectionOnClick
+        getRowId={row => row.id}
+      />
     </Box>
   );
 }
