@@ -23,7 +23,7 @@ public partial class ProviderSettlement
 
     public DateTime ProcessedAtUtc { get; set; }
 
-    public SettlementMode SettlementMode { get; set; } 
+    public int SettlementMode { get; set; }
 
     public virtual Address Address { get; set; } = null!;
 }

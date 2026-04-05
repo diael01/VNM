@@ -1,4 +1,3 @@
-using Simulators.Configuration;
 using ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +6,7 @@ using EventBusCore;
 using Serilog;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using VNM.Infrastructure.Extensions;
+using Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -31,7 +31,11 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<ProviderSettlement> ProviderSettlements { get; set; }
 
+    public virtual DbSet<TransferExecution> TransferExecutions { get; set; }
+
     public virtual DbSet<TransferRequest> TransferRequests { get; set; }
+
+    public virtual DbSet<TransferRule> TransferRules { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -166,11 +170,53 @@ public partial class VnmDbContext : DbContext
                 .HasConstraintName("FK_ProviderSettlements_Addresses");
         });
 
+        modelBuilder.Entity<TransferExecution>(entity =>
+        {
+            entity.HasIndex(e => e.DestinationAddressId, "IX_TransferExecutions_DestinationAddressId");
+
+            entity.HasIndex(e => e.SourceAddressId, "IX_TransferExecutions_SourceAddressId");
+
+            entity.HasIndex(e => e.TransferRuleId, "IX_TransferExecutions_TransferRuleId");
+
+            entity.Property(e => e.AllocatedKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.Notes).HasMaxLength(255);
+            entity.Property(e => e.RequestedKwh).HasColumnType("decimal(18, 5)");
+
+            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferExecutionDestinationAddresses)
+                .HasForeignKey(d => d.DestinationAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferExecutionSourceAddresses)
+                .HasForeignKey(d => d.SourceAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.TransferRule).WithMany(p => p.TransferExecutions)
+                .HasForeignKey(d => d.TransferRuleId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         modelBuilder.Entity<TransferRequest>(entity =>
         {
             entity.Property(e => e.ActualAmount).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.RequestedAmount).HasColumnType("decimal(18, 5)");
-            entity.Property(e => e.Status).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<TransferRule>(entity =>
+        {
+            entity.HasIndex(e => e.DestinationAddressId, "IX_TransferRules_DestinationAddressId");
+
+            entity.HasIndex(e => e.SourceAddressId, "IX_TransferRules_SourceAddressId");
+
+            entity.Property(e => e.MaxDailyKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.WeightPercent).HasColumnType("decimal(18, 5)");
+
+            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferRuleDestinationAddresses)
+                .HasForeignKey(d => d.DestinationAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferRuleSourceAddresses)
+                .HasForeignKey(d => d.SourceAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         OnModelCreatingPartial(modelBuilder);

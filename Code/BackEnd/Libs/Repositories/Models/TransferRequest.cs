@@ -17,8 +17,9 @@ public partial class TransferRequest
 
     public decimal ActualAmount { get; set; }
 
-    public SettlementMode SettlementMode { get; set; }
-    public string Status { get; set; } = null!;
+    public int SettlementMode { get; set; }
+
+    public int Status { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
 }

@@ -1,9 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using Repositories.Models;
-
 namespace EnergyManagement.Services.Analytics;
-
-using Metering.Services;
+using Infrastructure.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 

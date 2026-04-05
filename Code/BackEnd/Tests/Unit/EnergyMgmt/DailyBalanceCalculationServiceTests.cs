@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using Microsoft.Data.Sqlite;
 using System.Threading;
 using System.Threading.Tasks;
 using EnergyManagement.Services.Analytics;
@@ -62,17 +60,18 @@ namespace EnergyManagement.Tests.Services.Analytics
             });
             db.ConsumptionReadings.Add(new ConsumptionReading
             {
-                Id = 200,
-                InverterInfoId = 10,
-                InverterInfo = inverterInfo,
+                Id = 101,
+                AddressId = 1,
+                Address = address,
                 Timestamp = now,
                 Power = 1000m
             });
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
 
             Assert.Equal(1.00m, result.ProducedKwh);
             Assert.Equal(0.25m, result.ConsumedKwh);
@@ -96,7 +95,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             await db.SaveChangesAsync();
             db.InverterReadings.Add(new InverterReading
             {
-                Id = 101,
+                Id = 200,
                 InverterInfoId = 10,
                 InverterInfo = inverterInfo,
                 Timestamp = now,
@@ -105,16 +104,17 @@ namespace EnergyManagement.Tests.Services.Analytics
             db.ConsumptionReadings.Add(new ConsumptionReading
             {
                 Id = 201,
-                InverterInfoId = 10,
-                InverterInfo = inverterInfo,
+                AddressId = 1,
+                Address = address,
                 Timestamp = now,
                 Power = 4000m
             });
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
 
             Assert.Equal(0.25m, result.ProducedKwh);
             Assert.Equal(1.00m, result.ConsumedKwh);
@@ -134,10 +134,11 @@ namespace EnergyManagement.Tests.Services.Analytics
             db.InverterInfos.Add(inverterInfo);
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
             var day = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Equal(1, result.AddressId);
@@ -182,25 +183,25 @@ namespace EnergyManagement.Tests.Services.Analytics
             });
             db.InverterReadings.Add(new InverterReading
             {
-                Id = 102,
+                Id = 201,
                 InverterInfoId = 10,
-                InverterInfo = inverterInfo,
                 Timestamp = now,
                 Power = 4000m
             });
             db.ConsumptionReadings.Add(new ConsumptionReading
             {
                 Id = 202,
-                InverterInfoId = 10,
-                InverterInfo = inverterInfo,
+                AddressId = 1,
+                Address = address,
                 Timestamp = now,
                 Power = 1000m
             });
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
 
             var balances = await db.DailyEnergyBalances
                 .Where(x => x.AddressId == 1)
@@ -239,7 +240,6 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 103,
                     InverterInfoId = 10,
-                    InverterInfo = inverterInfo,
                     Timestamp = previousDay,
                     Power = 5000m
                 },
@@ -247,7 +247,6 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 104,
                     InverterInfoId = 10,
-                    InverterInfo = inverterInfo,
                     Timestamp = todayReadingTime,
                     Power = 4000m
                 },
@@ -255,7 +254,6 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 105,
                     InverterInfoId = 10,
-                    InverterInfo = inverterInfo,
                     Timestamp = nextDay,
                     Power = 6000m
                 });
@@ -263,32 +261,30 @@ namespace EnergyManagement.Tests.Services.Analytics
                 new ConsumptionReading
                 {
                     Id = 203,
-                    InverterInfoId = 10,
-                    InverterInfo = inverterInfo,
+                    AddressId = 1,
                     Timestamp = previousDay,
                     Power = 5000m
                 },
                 new ConsumptionReading
                 {
                     Id = 204,
-                    InverterInfoId = 10,
-                    InverterInfo = inverterInfo,
+                    AddressId = 1,
                     Timestamp = todayReadingTime,
                     Power = 1000m
                 },
                 new ConsumptionReading
                 {
                     Id = 205,
-                    InverterInfoId = 10,
-                    InverterInfo = inverterInfo,
+                    AddressId = 1,
                     Timestamp = nextDay,
                     Power = 6000m
                 });
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
 
             Assert.Equal(1.00m, result.ProducedKwh);
             Assert.Equal(0.25m, result.ConsumedKwh);
@@ -314,7 +310,6 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 106,
                     InverterInfoId = 10,
-                    InverterInfo = inverterInfo1,
                     Timestamp = now,
                     Power = 4000m
                 },
@@ -322,7 +317,6 @@ namespace EnergyManagement.Tests.Services.Analytics
                 {
                     Id = 107,
                     InverterInfoId = 20,
-                    InverterInfo = inverterInfo2,
                     Timestamp = now,
                     Power = 9000m
                 });
@@ -330,24 +324,25 @@ namespace EnergyManagement.Tests.Services.Analytics
                 new ConsumptionReading
                 {
                     Id = 206,
-                    InverterInfoId = 10,
-                    InverterInfo = inverterInfo1,
+                    AddressId = 1,
+                    Address = address1,
                     Timestamp = now,
                     Power = 1000m
                 },
                 new ConsumptionReading
                 {
                     Id = 207,
-                    InverterInfoId = 20,
-                    InverterInfo = inverterInfo2,
+                    AddressId = 2,
+                    Address = address2,
                     Timestamp = now,
                     Power = 8000m
                 });
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesAsync(inverterInfo1, day, CancellationToken.None);
 
             Assert.Equal(1, result.AddressId);
             Assert.Equal(1.00m, result.ProducedKwh);
@@ -376,12 +371,13 @@ namespace EnergyManagement.Tests.Services.Analytics
                 new InverterReading { Id = 109, InverterInfoId = 20, InverterInfo = inverterInfo2, Timestamp = now, Power = 2000m },
                 new InverterReading { Id = 110, InverterInfoId = 30, InverterInfo = inverterInfo3, Timestamp = now, Power = 0m });
             db.ConsumptionReadings.AddRange(
-                new ConsumptionReading { Id = 208, InverterInfoId = 10, InverterInfo = inverterInfo1, Timestamp = now, Power = 1000m },
-                new ConsumptionReading { Id = 209, InverterInfoId = 20, InverterInfo = inverterInfo2, Timestamp = now, Power = 3000m },
-                new ConsumptionReading { Id = 210, InverterInfoId = 30, InverterInfo = inverterInfo3, Timestamp = now, Power = 500m });
+                new ConsumptionReading { Id = 208, AddressId = 1, Address = address1, Timestamp = now, Power = 1000m },
+                new ConsumptionReading { Id = 209, AddressId = 2, Address = address2, Timestamp = now, Power = 3000m },
+                new ConsumptionReading { Id = 210, AddressId = 3, Address = address3, Timestamp = now, Power = 500m });
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
 
             var result = await service.CalculateDailyBalancesForAllInvertersAsync(day, CancellationToken.None);
 
@@ -420,17 +416,18 @@ namespace EnergyManagement.Tests.Services.Analytics
             db.ConsumptionReadings.Add(new ConsumptionReading
             {
                 Id = 211,
-                InverterInfoId = 10,
-                InverterInfo = inverterInfo,
+                AddressId = 1,
+                Address = address,
                 Timestamp = now,
                 Power = 1000m
             });
             await db.SaveChangesAsync();
 
-            var service = new DailyBalanceCalculationService(db);
+            var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
+            var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
-            await service.CalculateDailyBalancesAsync(10, day, CancellationToken.None);
+            await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
+            await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
 
             var rows = await db.DailyEnergyBalances
                 .Where(x => x.AddressId == 1)

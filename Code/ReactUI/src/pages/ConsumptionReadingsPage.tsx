@@ -32,7 +32,7 @@ export default function ConsumptionPage({ permissions }: ConsumptionPageProps) {
 
   const columns: GridColDef[] = [
     { field: 'addressId', headerName: 'Address ID', flex: 1, sortable: true, filterable: true },
-    { field: 'power', headerName: 'Power', flex: 1, sortable: true, filterable: true },
+    { field: 'power', headerName: 'Power(W)', flex: 1, sortable: true, filterable: true },
     { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true },
     { field: 'source', headerName: 'Source', flex: 1, sortable: true, filterable: true },
   ];

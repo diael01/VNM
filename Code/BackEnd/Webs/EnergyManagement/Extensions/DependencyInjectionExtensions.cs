@@ -3,6 +3,7 @@ using EnergyManagement.Services.Analytics;
 using EnergyManagement.Services.ModeSwitching;
 using EnergyManagement.Services.Providers;
 using EnergyManagement.Services.Transfers;
+using Infrastructure.Options;
 
 
 namespace EnergyManagement.Extensions;

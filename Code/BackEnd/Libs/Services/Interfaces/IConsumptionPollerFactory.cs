@@ -1,4 +1,5 @@
 using ConsumptionPolling.Services;
+using Infrastructure.Options;
 
 public interface IConsumptionPollerFactory
 {

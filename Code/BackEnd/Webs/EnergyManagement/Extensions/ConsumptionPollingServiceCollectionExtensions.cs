@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ConsumptionPolling.Services;
+using Infrastructure.Options;
 
 namespace Infrastructure.Polling;
 

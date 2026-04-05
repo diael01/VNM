@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Simulators.Configuration;
 using Simulators.Models;
 using Microsoft.AspNetCore.Authorization;
+using Infrastructure.Options;
 
 namespace Simulators.Controllers;
 
@@ -24,7 +24,7 @@ public class InverterController : ControllerBase
     public ActionResult<InverterData> GetData()
     {
         // Generate random decimal for Power
-        decimal power = new decimal(3333.33333);//decimal)_options.MinPower + (decimal)_rand.NextDouble() * ((decimal)_options.MaxPower - (decimal)_options.MinPower);
+        decimal power = new decimal(55555.5555);//decimal)_options.MinPower + (decimal)_rand.NextDouble() * ((decimal)_options.MaxPower - (decimal)_options.MinPower);
         decimal voltage = (decimal)_options.MinVoltage + (decimal)_rand.NextDouble() * ((decimal)_options.MaxVoltage - (decimal)_options.MinVoltage);
         decimal current = (decimal)_options.MinCurrent + (decimal)_rand.NextDouble() * ((decimal)_options.MaxCurrent - (decimal)_options.MinCurrent);
         int inverterInfoId = 1;//(int)_rand.Next((int)_options.MinInverterId, (int)_options.MaxInverterId + 1);

@@ -1,3 +1,4 @@
+using Infrastructure.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -12,7 +13,7 @@ namespace EnergyManagement.Services.ModeSwitching
   
     public interface ISettlementModeStrategy
     {
-        SettlementMode SettlementMode { get; }
+        ProviderSettlementMode SettlementMode { get; }
 
         void FillSettlement(
             ProviderSettlement settlement,

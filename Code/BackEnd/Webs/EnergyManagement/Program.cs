@@ -12,7 +12,7 @@ using Repositories.Models;
 using Polling.Services.Auth;
 using EnergyManagement.Extensions;
 using EnergyManagement.Services.Transfers;
-using Metering.Services;
+using Infrastructure.Options;
 
 // ---------------------
 // Build the application
@@ -52,7 +52,7 @@ builder.Services.Configure<InverterPollingOptions>(
     builder.Configuration.GetSection("InverterPolling"));
 
 // Consumption Polling Options
-builder.Services.Configure<ConsumptionPolling.Services.ConsumptionPollingOptions>(
+builder.Services.Configure<ConsumptionPollingOptions>(
     builder.Configuration.GetSection("ConsumptionPolling"));
 
 builder.Services.Configure<MeteringOptions>(
@@ -75,7 +75,6 @@ builder.Services.AddAutoMapper(typeof(AddressProfile).Assembly);
 // DbContext
 // ---------------------
 builder.Services.AddSqlServerDbContexts<VnmDbContext, VnmDbContext>(builder.Configuration);
-
 builder.Services.AddRepositoriesCrud();
 builder.Services.AddAppServices();
 
@@ -89,10 +88,15 @@ builder.Services.AddConsumptionPolling();
 // Aspire / Service defaults
 // ---------------------
 builder.AddServiceDefaults();
-
 builder.Services.AddJwtAuthentication(builder.Configuration);
-
 builder.Services.AddDailyBalanceComputation(builder.Configuration);
+
+
+builder.Services.Configure<TransferAllocationOptions>(
+    builder.Configuration.GetSection("TransferAllocation"));
+
+builder.Services.AddScoped<ITransferAllocationService, TransferAllocationService>();
+builder.Services.AddHostedService<TransferAllocationBackgroundService>();
 // ---------------------
 // Build the app
 // ---------------------

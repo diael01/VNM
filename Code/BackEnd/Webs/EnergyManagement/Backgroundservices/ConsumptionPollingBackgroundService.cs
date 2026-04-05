@@ -2,7 +2,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Models;
 using Polling.Services.Auth;
-using Metering.Services;
+using Infrastructure.Options;
+
 
 namespace ConsumptionPolling.Services
 {

@@ -68,7 +68,7 @@ namespace Repositories.Migrations
                     RequestedAmount = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     ActualAmount = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     SettlementMode = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -142,6 +142,35 @@ namespace Repositories.Migrations
                     table.ForeignKey(
                         name: "FK_ProviderSettlements_Addresses",
                         column: x => x.AddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransferRules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SourceAddressId = table.Column<int>(type: "int", nullable: false),
+                    DestinationAddressId = table.Column<int>(type: "int", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    Priority = table.Column<int>(type: "int", nullable: false),
+                    WeightPercent = table.Column<decimal>(type: "decimal(18,5)", nullable: true),
+                    MaxDailyKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: true),
+                    DistributionMode = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransferRules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TransferRules_Addresses_DestinationAddressId",
+                        column: x => x.DestinationAddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TransferRules_Addresses_SourceAddressId",
+                        column: x => x.SourceAddressId,
                         principalTable: "Addresses",
                         principalColumn: "Id");
                 });
@@ -270,6 +299,46 @@ namespace Repositories.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "TransferExecutions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EffectiveAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    BalanceDayUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SourceAddressId = table.Column<int>(type: "int", nullable: false),
+                    DestinationAddressId = table.Column<int>(type: "int", nullable: false),
+                    RequestedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    AllocatedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    TriggerType = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AppliedDistributionMode = table.Column<int>(type: "int", nullable: false),
+                    TransferRuleId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransferExecutions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TransferExecutions_Addresses_DestinationAddressId",
+                        column: x => x.DestinationAddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TransferExecutions_Addresses_SourceAddressId",
+                        column: x => x.SourceAddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TransferExecutions_TransferRules_TransferRuleId",
+                        column: x => x.TransferRuleId,
+                        principalTable: "TransferRules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -314,6 +383,31 @@ namespace Repositories.Migrations
                 name: "IX_ProviderSettlements_AddressId",
                 table: "ProviderSettlements",
                 column: "AddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferExecutions_DestinationAddressId",
+                table: "TransferExecutions",
+                column: "DestinationAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferExecutions_SourceAddressId",
+                table: "TransferExecutions",
+                column: "SourceAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferExecutions_TransferRuleId",
+                table: "TransferExecutions",
+                column: "TransferRuleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferRules_DestinationAddressId",
+                table: "TransferRules",
+                column: "DestinationAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferRules_SourceAddressId",
+                table: "TransferRules",
+                column: "SourceAddressId");
         }
 
         /// <inheritdoc />
@@ -341,6 +435,9 @@ namespace Repositories.Migrations
                 name: "ProviderSettlements");
 
             migrationBuilder.DropTable(
+                name: "TransferExecutions");
+
+            migrationBuilder.DropTable(
                 name: "TransferRequests");
 
             migrationBuilder.DropTable(
@@ -351,6 +448,9 @@ namespace Repositories.Migrations
 
             migrationBuilder.DropTable(
                 name: "InverterInfos");
+
+            migrationBuilder.DropTable(
+                name: "TransferRules");
 
             migrationBuilder.DropTable(
                 name: "Addresses");

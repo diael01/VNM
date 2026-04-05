@@ -1,5 +1,6 @@
 
 using ConsumptionPolling.Services;
+using Infrastructure.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Polling.Services.Auth;
 

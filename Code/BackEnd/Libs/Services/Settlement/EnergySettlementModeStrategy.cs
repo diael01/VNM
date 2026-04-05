@@ -1,9 +1,10 @@
+using Infrastructure.Enums;
 using Repositories.Models;
 
 namespace EnergyManagement.Services.ModeSwitching;
  public class EnergySettlementModeStrategy : ISettlementModeStrategy
     {
-        public SettlementMode SettlementMode => SettlementMode.EnergyCredit;
+        public ProviderSettlementMode SettlementMode => ProviderSettlementMode.EnergyCredit;
 
         public void FillSettlement(
             ProviderSettlement settlement,
@@ -19,7 +20,7 @@ namespace EnergyManagement.Services.ModeSwitching;
             settlement.RatePerKwh = ratePerKwh;
             settlement.MonetaryCredit = 0;
             settlement.EnergyCreditKwh = accepted;
-            settlement.SettlementMode = SettlementMode;
+            settlement.SettlementModeEnum = SettlementMode;
         }
 
         public void ValidateRequest(decimal amount, AvailableTransferBalanceDto available)
@@ -37,7 +38,7 @@ namespace EnergyManagement.Services.ModeSwitching;
             transfer.ActualAmount = amount;
             transfer.RequestedAmount = 0;
             transfer.ActualAmount = 0;
-            transfer.SettlementMode = SettlementMode;
+            transfer.SettlementModeEnum = SettlementMode;
         }
 
         public TransferImpactDto BuildImpact(

@@ -1,7 +1,8 @@
 using EnergyManagement.Services.ModeSwitching;
+using Infrastructure.Enums;
 
 public interface ISettlementModeResolver
 {
-    SettlementMode GetCurrentMode();
-    ISettlementModeStrategy Resolve(SettlementMode mode);
+    ProviderSettlementMode GetCurrentMode();
+    ISettlementModeStrategy Resolve(ProviderSettlementMode mode);
 }

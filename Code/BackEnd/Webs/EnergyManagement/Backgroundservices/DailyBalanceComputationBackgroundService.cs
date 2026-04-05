@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using EnergyManagement.Services.Analytics;
-using Metering.Services;
+using Infrastructure.Options;
 
 public class DailyBalanceComputationBackgroundService : BackgroundService
 {

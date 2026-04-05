@@ -26,4 +26,12 @@ public partial class Address
     public virtual ICollection<InverterInfo> InverterInfos { get; set; } = new List<InverterInfo>();
 
     public virtual ICollection<ProviderSettlement> ProviderSettlements { get; set; } = new List<ProviderSettlement>();
+
+    public virtual ICollection<TransferExecution> TransferExecutionDestinationAddresses { get; set; } = new List<TransferExecution>();
+
+    public virtual ICollection<TransferExecution> TransferExecutionSourceAddresses { get; set; } = new List<TransferExecution>();
+
+    public virtual ICollection<TransferRule> TransferRuleDestinationAddresses { get; set; } = new List<TransferRule>();
+
+    public virtual ICollection<TransferRule> TransferRuleSourceAddresses { get; set; } = new List<TransferRule>();
 }

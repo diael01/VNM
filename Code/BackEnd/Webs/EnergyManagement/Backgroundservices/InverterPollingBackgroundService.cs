@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Models;
-using Metering.Services;
+using Infrastructure.Options;
 
 namespace InverterPolling.Services
 {

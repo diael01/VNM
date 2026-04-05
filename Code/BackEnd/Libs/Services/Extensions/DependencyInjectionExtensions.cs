@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProviderSettlementService, ProviderSettlementService>();
         services.AddScoped<IAvailableBalanceService, AvailableBalanceService>();
-        services.AddScoped<ITransferService, TransferService>();  
+        services.AddScoped<ITransferAllocationService, TransferAllocationService>();  
         services.AddScoped<ISettlementModeResolver, SettlementModeResolver>(); 
         services.AddScoped<ISettlementModeStrategy, EnergySettlementModeStrategy>(); 
          services.AddScoped<ISettlementModeStrategy, MoneySettlementModeStrategy>(); 

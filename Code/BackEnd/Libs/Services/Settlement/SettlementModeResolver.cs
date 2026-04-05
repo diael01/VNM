@@ -1,4 +1,6 @@
 using EnergyManagement.Services.ModeSwitching;
+using Infrastructure.Enums;
+using Infrastructure.Options;
 using Microsoft.Extensions.Options;
 
 namespace EnergyManagement.Services.ModeSwitching;
@@ -16,15 +18,15 @@ public class SettlementModeResolver : ISettlementModeResolver
         _options = options.Value;
     }
 
-    public SettlementMode GetCurrentMode()
+    public ProviderSettlementMode GetCurrentMode()
     {
-        if (Enum.TryParse<SettlementMode>(_options.CurrentMode, true, out var mode))
+        if (Enum.TryParse<ProviderSettlementMode>(_options.CurrentMode, true, out var mode))
             return mode;
 
-        return SettlementMode.Money;
+        return ProviderSettlementMode.Money;
     }
 
-    public ISettlementModeStrategy Resolve(SettlementMode mode)
+    public ISettlementModeStrategy Resolve(ProviderSettlementMode mode)
     {
         return _strategies.First(x => x.SettlementMode == mode);
     }

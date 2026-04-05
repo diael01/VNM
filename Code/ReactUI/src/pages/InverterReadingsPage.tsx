@@ -61,9 +61,9 @@ export default function InverterReadingsPage({ permissions }: InverterReadingsPa
 
   const columns: GridColDef[] = [
     { field: 'inverterInfoId', headerName: 'Inverter ID', flex: 1, sortable: true, filterable: true },
-    { field: 'power', headerName: 'Power (W)', flex: 1, sortable: true, filterable: true },
-    { field: 'voltage', headerName: 'Voltage (V)', flex: 1, sortable: true, filterable: true },
-    { field: 'current', headerName: 'Current (A)', flex: 1, sortable: true, filterable: true },
+    { field: 'power', headerName: 'Power(W)', flex: 1, sortable: true, filterable: true },
+    { field: 'voltage', headerName: 'Voltage(V)', flex: 1, sortable: true, filterable: true },
+    { field: 'current', headerName: 'Current(A)', flex: 1, sortable: true, filterable: true },
     { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true },
     { field: 'source', headerName: 'Source', flex: 1, sortable: true, filterable: true },
   ];
