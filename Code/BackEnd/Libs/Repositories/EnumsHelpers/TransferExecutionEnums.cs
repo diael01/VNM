@@ -18,5 +18,12 @@ namespace Repositories.Models
             get => (TransferStatus)this.Status;
             set => this.Status = (int)value;
         }
+
+          [NotMapped]
+        public TransferDistributionMode AppliedDistributionModeEnum
+        {
+            get => (TransferDistributionMode)AppliedDistributionMode;
+            set => AppliedDistributionMode = (int)value;
+        }
     }
 }

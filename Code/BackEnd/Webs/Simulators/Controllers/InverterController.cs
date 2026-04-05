@@ -27,7 +27,7 @@ public class InverterController : ControllerBase
         decimal power = new decimal(55555.5555);//decimal)_options.MinPower + (decimal)_rand.NextDouble() * ((decimal)_options.MaxPower - (decimal)_options.MinPower);
         decimal voltage = (decimal)_options.MinVoltage + (decimal)_rand.NextDouble() * ((decimal)_options.MaxVoltage - (decimal)_options.MinVoltage);
         decimal current = (decimal)_options.MinCurrent + (decimal)_rand.NextDouble() * ((decimal)_options.MaxCurrent - (decimal)_options.MinCurrent);
-        int inverterInfoId = 1;//(int)_rand.Next((int)_options.MinInverterId, (int)_options.MaxInverterId + 1);
+        int inverterInfoId = 1; //producer is only address 1 for now, so inverterInfoId is 1 as well. If we want to have multiple producers, we can make this random as well, like _rand.Next(_options.MinInverterId, _options.MaxInverterId + 1);        
         var data = new InverterData(
             Power: power,
             Voltage: voltage,

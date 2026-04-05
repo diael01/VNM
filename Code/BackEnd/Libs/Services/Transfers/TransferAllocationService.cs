@@ -87,7 +87,9 @@ public TransferAllocationService(
             TriggerTypeEnum = TriggerType.Auto,
             TransferStatusEnum = TransferStatus.Executed,
             Notes = "Automatic allocation",
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
+            TransferRuleId = allocation.TransferRuleId,
+            AppliedDistributionModeEnum = allocation.AppliedDistributionMode,           
         };
 
         _db.TransferExecutions.Add(transfer);
@@ -152,7 +154,8 @@ private List<TransferAllocation> AllocateFair(
                 DestinationAddressId = rule.DestinationAddressId,
                 TransferRuleId = rule.Id,
                 RequestedKwh = amount,
-                AllocatedKwh = amount
+                AllocatedKwh = amount,
+                AppliedDistributionMode = TransferDistributionMode.Fair,              
             });
 
             sourcePosition.AlreadyTransferredOutKwh += amount;
@@ -207,7 +210,9 @@ private List<TransferAllocation> AllocatePriority(
             SourceAddressId = rule.SourceAddressId,
             DestinationAddressId = rule.DestinationAddressId,
             RequestedKwh = amount,
-            AllocatedKwh = amount
+            AllocatedKwh = amount,
+            AppliedDistributionMode = TransferDistributionMode.Priority,
+            TransferRuleId = rule.Id
         });
 
         sourcePosition.AlreadyTransferredOutKwh += amount;
@@ -272,7 +277,9 @@ private List<TransferAllocation> AllocateWeighted(
                 SourceAddressId = rule.SourceAddressId,
                 DestinationAddressId = rule.DestinationAddressId,
                 RequestedKwh = targetAmount,
-                AllocatedKwh = amount
+                AllocatedKwh = amount,
+                AppliedDistributionMode = TransferDistributionMode.Weighted,
+                TransferRuleId = rule.Id
             });
 
             sourcePosition.AlreadyTransferredOutKwh += amount;
@@ -454,7 +461,7 @@ private List<TransferAllocation> AllocateWeighted(
         var transferredOut = await _db.Set<TransferExecution>()
             .AsNoTracking()
             .Where(x => x.BalanceDayUtc >= dayStartUtc && x.BalanceDayUtc < dayEndUtc
-                     && x.TransferStatusEnum == TransferStatus.Executed)
+                     && x.Status == (int)TransferStatus.Executed)
             .GroupBy(x => x.SourceAddressId)
             .Select(g => new
             {
@@ -466,7 +473,7 @@ private List<TransferAllocation> AllocateWeighted(
         var transferredIn = await _db.Set<TransferExecution>()
             .AsNoTracking()
             .Where(x => x.BalanceDayUtc >= dayStartUtc && x.BalanceDayUtc < dayEndUtc
-                     && x.TransferStatusEnum == TransferStatus.Executed)
+                     && x.Status == (int)TransferStatus.Executed)
             .GroupBy(x => x.DestinationAddressId)
             .Select(g => new
             {
@@ -508,7 +515,8 @@ private List<TransferAllocation> AllocateWeighted(
             SourceAddressId = g.Key.SourceAddressId,
             DestinationAddressId = g.Key.DestinationAddressId,
             RequestedKwh = decimal.Round(g.Sum(x => x.RequestedKwh), 4),
-            AllocatedKwh = decimal.Round(g.Sum(x => x.AllocatedKwh), 4)
+            AllocatedKwh = decimal.Round(g.Sum(x => x.AllocatedKwh), 4),
+            TransferRuleId = g.First().TransferRuleId,
         })
         .ToList();
 }
