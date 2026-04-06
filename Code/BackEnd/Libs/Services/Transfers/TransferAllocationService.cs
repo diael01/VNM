@@ -505,7 +505,7 @@ private List<TransferAllocation> AllocateWeighted(
     private static DateTime ToUtcStartOfDay(DateOnly day) =>
         DateTime.SpecifyKind(day.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
 
-    private static List<TransferAllocation> MergeAllocations(
+private static List<TransferAllocation> MergeAllocations(
     List<TransferAllocation> allocations)
 {
     return allocations
@@ -517,9 +517,12 @@ private List<TransferAllocation> AllocateWeighted(
             RequestedKwh = decimal.Round(g.Sum(x => x.RequestedKwh), 4),
             AllocatedKwh = decimal.Round(g.Sum(x => x.AllocatedKwh), 4),
             TransferRuleId = g.First().TransferRuleId,
+            AppliedDistributionMode = g.First().AppliedDistributionMode
         })
         .ToList();
 }
+
+
 private TransferDistributionMode ResolveModeForSource(
     List<TransferRule> sourceRules)
 {

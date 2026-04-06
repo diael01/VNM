@@ -229,8 +229,10 @@ namespace Repositories.Migrations
                     b.Property<decimal>("DeficitKwh")
                         .HasColumnType("decimal(18, 5)");
 
-                    b.Property<int>("InverterInfoId")
-                        .HasColumnType("int");
+                    b.Property<int?>("InverterInfoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0, "DF__DailyEner__Inver__628FA481");
 
                     b.Property<decimal>("NetKwh")
                         .HasColumnType("decimal(18, 5)");
@@ -299,6 +301,9 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AddressId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Current")
                         .HasColumnType("decimal(18, 5)");
 
@@ -320,6 +325,8 @@ namespace Repositories.Migrations
                         .HasColumnType("decimal(18, 5)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AddressId");
 
                     b.HasIndex(new[] { "InverterInfoId" }, "IX_InverterReadings_InverterInfoId");
 
@@ -556,14 +563,7 @@ namespace Repositories.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_DailyEnergyBalances_Addresses");
 
-                    b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
-                        .WithMany("DailyEnergyBalances")
-                        .HasForeignKey("InverterInfoId")
-                        .IsRequired();
-
                     b.Navigation("Address");
-
-                    b.Navigation("InverterInfo");
                 });
 
             modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
@@ -579,12 +579,20 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.InverterReading", b =>
                 {
+                    b.HasOne("Repositories.Models.Address", "Address")
+                        .WithMany("InverterReadings")
+                        .HasForeignKey("AddressId")
+                        .IsRequired()
+                        .HasConstraintName("FK_InverterReadings_Addresses");
+
                     b.HasOne("Repositories.Models.InverterInfo", "InverterInfo")
                         .WithMany("InverterReadings")
                         .HasForeignKey("InverterInfoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_InverterReadings_InverterInfos");
+
+                    b.Navigation("Address");
 
                     b.Navigation("InverterInfo");
                 });
@@ -649,6 +657,8 @@ namespace Repositories.Migrations
 
                     b.Navigation("InverterInfos");
 
+                    b.Navigation("InverterReadings");
+
                     b.Navigation("ProviderSettlements");
 
                     b.Navigation("TransferExecutionDestinationAddresses");
@@ -672,8 +682,6 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.InverterInfo", b =>
                 {
-                    b.Navigation("DailyEnergyBalances");
-
                     b.Navigation("InverterReadings");
                 });
 

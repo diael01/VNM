@@ -45,7 +45,7 @@ public class DailyBalanceComputationBackgroundService : BackgroundService
 
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-                await svc.CalculateDailyBalancesForAllInvertersAsync(today, stoppingToken);
+                await svc.CalculateDailyBalancesForAllAddressesAsync(today, stoppingToken);
 
                 _logger.LogInformation("Daily balance calculated at {Time}", DateTime.UtcNow);
             }

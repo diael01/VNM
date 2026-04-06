@@ -19,5 +19,9 @@ public partial class InverterReading
 
     public string Source { get; set; } = null!;
 
+    public int AddressId { get; set; }
+
+    public virtual Address Address { get; set; } = null!;
+
     public virtual InverterInfo InverterInfo { get; set; } = null!;
 }

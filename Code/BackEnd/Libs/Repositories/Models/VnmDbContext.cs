@@ -114,6 +114,7 @@ public partial class VnmDbContext : DbContext
 
             entity.Property(e => e.ConsumedKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.DeficitKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.InverterInfoId).HasDefaultValue(0, "DF__DailyEner__Inver__628FA481");
             entity.Property(e => e.NetKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.NetPerAddressKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.ProducedKwh).HasColumnType("decimal(18, 5)");
@@ -123,10 +124,6 @@ public partial class VnmDbContext : DbContext
             entity.HasOne(d => d.Address).WithMany(p => p.DailyEnergyBalances)
                 .HasForeignKey(d => d.AddressId)
                 .HasConstraintName("FK_DailyEnergyBalances_Addresses");
-
-            entity.HasOne(d => d.InverterInfo).WithMany(p => p.DailyEnergyBalances)
-                .HasForeignKey(d => d.InverterInfoId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<InverterInfo>(entity =>
@@ -148,6 +145,11 @@ public partial class VnmDbContext : DbContext
             entity.Property(e => e.Power).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.Source).HasMaxLength(50);
             entity.Property(e => e.Voltage).HasColumnType("decimal(18, 5)");
+
+            entity.HasOne(d => d.Address).WithMany(p => p.InverterReadings)
+                .HasForeignKey(d => d.AddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_InverterReadings_Addresses");
 
             entity.HasOne(d => d.InverterInfo).WithMany(p => p.InverterReadings)
                 .HasForeignKey(d => d.InverterInfoId)

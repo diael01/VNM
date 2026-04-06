@@ -25,6 +25,8 @@ public partial class Address
 
     public virtual ICollection<InverterInfo> InverterInfos { get; set; } = new List<InverterInfo>();
 
+    public virtual ICollection<InverterReading> InverterReadings { get; set; } = new List<InverterReading>();
+
     public virtual ICollection<ProviderSettlement> ProviderSettlements { get; set; } = new List<ProviderSettlement>();
 
     public virtual ICollection<TransferExecution> TransferExecutionDestinationAddresses { get; set; } = new List<TransferExecution>();

@@ -37,6 +37,7 @@ export default function DailyBalancePage({ permissions }: DailyBalancePageProps)
   if (!balances.length) return <p>No daily balance data available.</p>;
 
   const columns: GridColDef[] = [
+    { field: 'addressId', headerName: 'Address ID', flex: 1, sortable: true, filterable: true },
     { field: 'day', headerName: 'Day', flex: 1, sortable: true, filterable: true },
     { field: 'producedKwh', headerName: 'Produced(kWh)', flex: 1, sortable: true, filterable: true },
     { field: 'consumedKwh', headerName: 'Consumed(kWh)', flex: 1, sortable: true, filterable: true },

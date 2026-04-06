@@ -5,6 +5,7 @@ export type InverterReading = {
   voltage: number
   current: number
   inverterInfoId: number
+  addressId: number
 }
 
 export type InverterInfo = {

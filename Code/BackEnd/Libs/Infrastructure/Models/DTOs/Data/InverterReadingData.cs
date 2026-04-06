@@ -5,6 +5,7 @@ public record InverterData(
     decimal Voltage,
     decimal Current,
     DateTime Timestamp, //Utc
-    int InverterInfoId
+    int InverterInfoId,
+    int AddressId
 );
 
