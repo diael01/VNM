@@ -39,15 +39,7 @@ namespace ConsumptionPolling.Services
                 PropertyNameCaseInsensitive = true
             });
 
-            if (data is null) return null;
-
-            return new ConsumptionReading
-            {
-                Timestamp = data.Timestamp,
-                Power = data.Power,
-                Source = _source,
-                AddressId = data.AddressId
-            };
+           return data;
         }
     }
 }

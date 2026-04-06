@@ -10,6 +10,7 @@
 
   <ItemGroup>
    <ProjectReference Include="..\..\Libs\Infrastructure\Infrastructure.csproj" />
+  <ProjectReference Include="..\..\Libs\Repositories\Repositories.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Simulators.Models;
 using Microsoft.AspNetCore.Authorization;
 using Infrastructure.Options;
+using Repositories.Models;
 
 namespace Simulators.Controllers;
 
@@ -21,22 +22,19 @@ public class InverterController : ControllerBase
     }
 
     [HttpGet("data")]
-    public ActionResult<InverterData> GetData()
+    public ActionResult<InverterReading> GetData()
     {
-        // Generate random decimal for Power
-        decimal power = new decimal(55555.5555);//decimal)_options.MinPower + (decimal)_rand.NextDouble() * ((decimal)_options.MaxPower - (decimal)_options.MinPower);
-        decimal voltage = (decimal)_options.MinVoltage + (decimal)_rand.NextDouble() * ((decimal)_options.MaxVoltage - (decimal)_options.MinVoltage);
-        decimal current = (decimal)_options.MinCurrent + (decimal)_rand.NextDouble() * ((decimal)_options.MaxCurrent - (decimal)_options.MinCurrent);
-        int inverterInfoId = 1; //producer is only address 1 for now, so inverterInfoId is 1 as well. If we want to have multiple producers, we can make this random as well, like _rand.Next(_options.MinInverterId, _options.MaxInverterId + 1);        
-        int addressId = 1; //same as above, we only have one producer address for now, so addressId is 1 as well. If we want to have multiple producers, we can make this random as well, like _rand.Next(_options.MinAddressId, _options.MaxAddressId + 1);
-        var data = new InverterData(
-            Power: power,
-            Voltage: voltage,
-            Current: current,
-            Timestamp: DateTime.UtcNow,
-            InverterInfoId: inverterInfoId,
-            AddressId: addressId
-        );
+
+        var data = new InverterReading
+        {
+            Power = new decimal(55555.5555),//decimal)_options.MinPower + (decimal)_rand.NextDouble() * ((decimal)_options.MaxPower - (decimal)_options.MinPower);,
+            Voltage = (decimal)_options.MinVoltage + (decimal)_rand.NextDouble() * ((decimal)_options.MaxVoltage - (decimal)_options.MinVoltage),
+            Current = (decimal)_options.MinCurrent + (decimal)_rand.NextDouble() * ((decimal)_options.MaxCurrent - (decimal)_options.MinCurrent),
+            Timestamp = DateTime.UtcNow,
+            InverterInfoId = 1, //producer is only address 1 for now, so inverterInfoId is 1 as well. If we want to have multiple producers, we can make this random as well, like _rand.Next(_options.MinInverterId, _options.MaxInverterId + 1);        
+            AddressId = 1, //same as above, we only have one producer address for now, so addressId is 1 as well. If we want to have multiple producers, we can make this random as well, like _rand.Next(_options.MinAddressId, _options.MaxAddressId + 1);
+            Source = "simulator"
+        };
 
         return Ok(data);
     }

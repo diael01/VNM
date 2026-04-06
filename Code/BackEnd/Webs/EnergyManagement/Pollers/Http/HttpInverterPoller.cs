@@ -42,17 +42,7 @@ namespace InverterPolling.Services
                 PropertyNameCaseInsensitive = true
             });
 
-            if (data is null) return null;
-
-            return new InverterReading
-            {
-                Timestamp = data.Timestamp,
-                Power = data.Power,
-                Voltage = data.Voltage,
-                Current = data.Current,
-                InverterInfoId = data.InverterInfoId,
-                Source = _source
-            };
+           return data;
         }
     }
 }

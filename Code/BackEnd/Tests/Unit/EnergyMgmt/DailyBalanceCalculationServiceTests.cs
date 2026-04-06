@@ -170,7 +170,6 @@ namespace EnergyManagement.Tests.Services.Analytics
                 Id = 999,
                 AddressId = 1,
                 InverterInfoId = 10,
-                InverterInfo = inverterInfo,
                 Address = address,
                 Day = dayStart,
                 ProducedKwh = 123m,
@@ -379,7 +378,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
             var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesForAllInvertersAsync(day, CancellationToken.None);
+            var result = await service.CalculateDailyBalancesForAllAddressesAsync(day, CancellationToken.None);
 
             Assert.Equal(3, result.Count);
 

@@ -1,8 +1,9 @@
 using Repositories.Models;
-namespace EnergyManagement.Services.Analytics;
 using Infrastructure.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
+namespace EnergyManagement.Services.Analytics;
 
 public class DailyBalanceCalculationService : IDailyBalanceCalculationService
 {
@@ -23,144 +24,76 @@ public class DailyBalanceCalculationService : IDailyBalanceCalculationService
             : 5) / 60m;
 
     public async Task<IReadOnlyList<DailyEnergyBalance>> CalculateDailyBalancesForAllAddressesAsync(
-    DateOnly day,
-    CancellationToken ct = default)
-{
-    var result = new List<DailyEnergyBalance>();
-
-    var addresses = await _db.Addresses
-        .AsNoTracking()
-        .ToListAsync(ct);
-
-    foreach (var address in addresses)
-    {
-        var balance = await CalculateDailyBalanceForAddressAsync(address.Id, day, ct);
-        result.Add(balance);
-    }
-
-    return result;
-}
-
-public async Task<DailyEnergyBalance> CalculateDailyBalanceForAddressAsync(
-    int addressId,
-    DateOnly day,
-    CancellationToken ct = default)
-{
-    var dayStart = DateTime.SpecifyKind(day.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-    var dayEnd = dayStart.AddDays(1);
-
-    var interval = IntervalHours;
-
-    var produced = (await _db.InverterReadings
-        .Where(x => x.InverterInfo.AddressId == addressId
-                 && x.Timestamp >= dayStart
-                 && x.Timestamp < dayEnd)
-        .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
-
-    var consumed = (await _db.ConsumptionReadings
-        .Where(x => x.AddressId == addressId
-                 && x.Timestamp >= dayStart
-                 && x.Timestamp < dayEnd)
-        .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
-
-    var net = produced - consumed;
-    var surplus = net > 0 ? net : 0m;
-    var deficit = net < 0 ? Math.Abs(net) : 0m;
-
-    var balance = await _db.DailyEnergyBalances
-        .FirstOrDefaultAsync(
-            x => x.AddressId == addressId &&
-                 x.Day >= dayStart &&
-                 x.Day < dayEnd,
-            ct);
-
-    if (balance == null)
-    {
-        balance = new DailyEnergyBalance
-        {
-            AddressId = addressId,
-            Day = dayStart
-        };
-
-        _db.DailyEnergyBalances.Add(balance);
-    }
-
-    balance.ProducedKwh = produced;
-    balance.ConsumedKwh = consumed;
-    balance.NetKwh = net;
-    balance.NetPerAddressKwh = net;
-    balance.SurplusKwh = surplus;
-    balance.DeficitKwh = deficit;
-    balance.CalculatedAtUtc = DateTime.UtcNow;
-    balance.Status = day == DateOnly.FromDateTime(DateTime.UtcNow)
-        ? "Computed"
-        : "Final";
-
-    await _db.SaveChangesAsync(ct);
-
-    return balance;
-}
-
-    public async Task<DailyEnergyBalance> CalculateDailyBalancesAsync(
-        InverterInfo inverterInfo,
         DateOnly day,
         CancellationToken ct = default)
     {
-    var dayStart = DateTime.SpecifyKind(
-        day.ToDateTime(TimeOnly.MinValue),
-        DateTimeKind.Utc);
+        var result = new List<DailyEnergyBalance>();
 
-    var dayEnd = dayStart.AddDays(1);
+        var addresses = await _db.Addresses
+            .AsNoTracking()
+            .Select(x => x.Id)
+            .ToListAsync(ct);
+
+        foreach (var addressId in addresses)
+        {
+            var balance = await CalculateDailyBalanceForAddressAsync(addressId, day, ct);
+            result.Add(balance);
+        }
+
+        return result;
+    }
+
+    public async Task<DailyEnergyBalance> CalculateDailyBalanceForAddressAsync(
+        int addressId,
+        DateOnly day,
+        CancellationToken ct = default)
+    {
+        var dayStart = DateTime.SpecifyKind(
+            day.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc);
+
+        var dayEnd = dayStart.AddDays(1);
 
         var interval = IntervalHours;
 
+        // ✅ PRODUCED (no join anymore!)
         var produced = (await _db.InverterReadings
-            .Where(x => x.InverterInfoId == inverterInfo.Id
+            .Where(x => x.AddressId == addressId
                      && x.Timestamp >= dayStart
                      && x.Timestamp < dayEnd)
             .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
 
+        // ✅ CONSUMED
         var consumed = (await _db.ConsumptionReadings
-            .Where(x => x.AddressId == inverterInfo.AddressId
+            .Where(x => x.AddressId == addressId
                      && x.Timestamp >= dayStart
                      && x.Timestamp < dayEnd)
             .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
 
         var net = produced - consumed;
 
-        var netPerAddress = await CalculateNetPerAddressAsync(
-            inverterInfo.AddressId,
-            dayStart,
-            dayEnd,
-            ct);
-
         var balance = await _db.DailyEnergyBalances
             .FirstOrDefaultAsync(
-                x => x.InverterInfoId == inverterInfo.Id
-                  && x.Day >= dayStart
-                  && x.Day < dayEnd,
+                x => x.AddressId == addressId &&
+                     x.Day >= dayStart &&
+                     x.Day < dayEnd,
                 ct);
 
         if (balance == null)
         {
             balance = new DailyEnergyBalance
             {
-                InverterInfoId = inverterInfo.Id,
-                AddressId = inverterInfo.AddressId,
+                AddressId = addressId,
                 Day = dayStart
             };
 
             _db.DailyEnergyBalances.Add(balance);
         }
-        else
-        {
-            balance.AddressId = inverterInfo.AddressId;
-        }
 
         balance.ProducedKwh = produced;
         balance.ConsumedKwh = consumed;
         balance.NetKwh = net;
-        balance.NetPerAddressKwh = netPerAddress;
+        balance.NetPerAddressKwh = net;
         balance.SurplusKwh = net > 0 ? net : 0m;
         balance.DeficitKwh = net < 0 ? Math.Abs(net) : 0m;
         balance.CalculatedAtUtc = DateTime.UtcNow;
@@ -171,28 +104,5 @@ public async Task<DailyEnergyBalance> CalculateDailyBalanceForAddressAsync(
         await _db.SaveChangesAsync(ct);
 
         return balance;
-    }
-
-    private async Task<decimal> CalculateNetPerAddressAsync(
-        int addressId,
-        DateTime dayStart,
-        DateTime dayEnd,
-        CancellationToken ct)
-    {
-        var interval = IntervalHours;
-
-        var produced = (await _db.InverterReadings
-            .Where(x => x.InverterInfo.AddressId == addressId
-                     && x.Timestamp >= dayStart
-                     && x.Timestamp < dayEnd)
-            .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
-
-        var consumed = (await _db.ConsumptionReadings
-            .Where(x => x.AddressId == addressId
-                     && x.Timestamp >= dayStart
-                     && x.Timestamp < dayEnd)
-            .SumAsync(x => (decimal?)x.Power * interval / 1000m, ct)) ?? 0m;
-
-        return produced - consumed;
     }
 }

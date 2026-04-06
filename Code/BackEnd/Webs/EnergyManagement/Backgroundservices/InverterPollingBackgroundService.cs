@@ -57,23 +57,23 @@ namespace InverterPolling.Services
                     if (reading != null)
                     {
                         var totalReadings = await dbContext.InverterReadings.CountAsync(stoppingToken);
-                        if (totalReadings >= 10) //todo: remove this when is stable
+                        if (totalReadings >= 10)
                         {
                             await dbContext.InverterReadings.ExecuteDeleteAsync(stoppingToken);
-                            _logger.LogWarning("InverterReadings reached retention cap (10). Cleared table.");
+                            
                         }
 
-                        var entity = new InverterReading
-                        {
-                            Timestamp = reading.Timestamp,
-                            Power = reading.Power,
-                            Voltage = reading.Voltage,
-                            Current = reading.Current,
-                            InverterInfoId = reading.InverterInfoId,
-                            Source = _options.Source,
-                        };
+                        var addressId = await dbContext.InverterInfos
+                            .Where(x => x.Id == reading.InverterInfoId)
+                            .Select(x => x.AddressId)
+                            .SingleAsync(stoppingToken);
 
-                        dbContext.InverterReadings.Add(entity);
+                        if(addressId != reading.AddressId)                        
+                            _logger.LogWarning("AddressId from reading ({ReadingAddressId}) does not match AddressId from InverterInfo ({InverterInfoAddressId}). Using InverterInfo AddressId.", reading.AddressId, addressId);                        
+                        reading.AddressId = addressId;
+                        reading.Source = _options.Source;
+
+                        dbContext.InverterReadings.Add(reading);
                         await dbContext.SaveChangesAsync(stoppingToken);
 
                         _logger.LogInformation(

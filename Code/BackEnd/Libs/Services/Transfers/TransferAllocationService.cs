@@ -1,4 +1,3 @@
-using Azure.Core;
 using Infrastructure.Enums;
 using Infrastructure.Options;
 using Microsoft.EntityFrameworkCore;
@@ -10,289 +9,102 @@ namespace EnergyManagement.Services.Transfers;
 
 public class TransferAllocationService : ITransferAllocationService
 {
-private readonly VnmDbContext _db;
-private readonly ILogger<TransferAllocationService> _logger;
-private readonly IOptionsMonitor<TransferAllocationOptions> _optionsMonitor;
+    private readonly VnmDbContext _db;
+    private readonly ILogger<TransferAllocationService> _logger;
+    private readonly IOptionsMonitor<TransferAllocationOptions> _optionsMonitor;
 
-public TransferAllocationService(
-    VnmDbContext db,
-    ILogger<TransferAllocationService> logger,
-    IOptionsMonitor<TransferAllocationOptions> optionsMonitor)
-{
-    _db = db;
-    _logger = logger;
-    _optionsMonitor = optionsMonitor;
-}
-
+    public TransferAllocationService(
+        VnmDbContext db,
+        ILogger<TransferAllocationService> logger,
+        IOptionsMonitor<TransferAllocationOptions> optionsMonitor)
+    {
+        _db = db;
+        _logger = logger;
+        _optionsMonitor = optionsMonitor;
+    }
 
     public async Task<IReadOnlyList<TransferExecution>> RunAutomaticAllocationAsync(
-    DateOnly day,
-    CancellationToken ct = default)
-{
-    var dayStartUtc = ToUtcStartOfDay(day);
-    var dayEndUtc = dayStartUtc.AddDays(1);
-
-    var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
-    var positionsByAddress = positions.ToDictionary(x => x.AddressId);
-
-    var rules = await _db.TransferRules
-        .AsNoTracking()
-        .Where(x => x.IsEnabled)
-        .OrderBy(x => x.SourceAddressId)
-        .ThenBy(x => x.Priority)
-        .ToListAsync(ct);
-
-    var allAllocations = new List<TransferAllocation>();
-
-    foreach (var sourceGroup in rules.GroupBy(x => x.SourceAddressId))
+        DateOnly day,
+        CancellationToken ct = default)
     {
-        if (!positionsByAddress.TryGetValue(sourceGroup.Key, out var sourcePosition))
-            continue;
+        var dayStartUtc = ToUtcStartOfDay(day);
+        var dayEndUtc = dayStartUtc.AddDays(1);
 
-        if (sourcePosition.RemainingSurplusKwh <= 0.0001m)
-            continue;
+        var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
+        var positionsByAddress = positions.ToDictionary(x => x.AddressId);
 
-        var sourceRules = sourceGroup.ToList();
-        var mode = ResolveModeForSource(sourceRules);
+        var rules = await _db.TransferRules
+            .AsNoTracking()
+            .Where(x => x.IsEnabled)
+            .OrderBy(x => x.SourceAddressId)
+            .ThenBy(x => x.Priority)
+            .ToListAsync(ct);
 
-        List<TransferAllocation> allocations = mode switch
+        var allAllocations = new List<TransferAllocation>();
+
+        foreach (var sourceGroup in rules.GroupBy(x => x.SourceAddressId))
         {
-            TransferDistributionMode.Fair =>
-                AllocateFair(sourcePosition, sourceRules, positionsByAddress),
-
-            TransferDistributionMode.Priority =>
-                AllocatePriority(sourcePosition, sourceRules, positionsByAddress),
-
-            TransferDistributionMode.Weighted =>
-                AllocateWeighted(sourcePosition, sourceRules, positionsByAddress),
-
-            _ => AllocateFair(sourcePosition, sourceRules, positionsByAddress)
-        };
-
-        allAllocations.AddRange(allocations);
-    }
-
-    var created = new List<TransferExecution>();
-
-    foreach (var allocation in allAllocations)
-    {
-        var transfer = new TransferExecution
-        {
-            BalanceDayUtc = dayStartUtc,
-            EffectiveAtUtc = DateTime.UtcNow,
-            SourceAddressId = allocation.SourceAddressId,
-            DestinationAddressId = allocation.DestinationAddressId,
-            RequestedKwh = allocation.RequestedKwh,
-            AllocatedKwh = allocation.AllocatedKwh,
-            TriggerTypeEnum = TriggerType.Auto,
-            TransferStatusEnum = TransferStatus.Executed,
-            Notes = "Automatic allocation",
-            CreatedAtUtc = DateTime.UtcNow,
-            TransferRuleId = allocation.TransferRuleId,
-            AppliedDistributionModeEnum = allocation.AppliedDistributionMode,           
-        };
-
-        _db.TransferExecutions.Add(transfer);
-        created.Add(transfer);
-    }
-
-    if (created.Count > 0)
-        await _db.SaveChangesAsync(ct);
-
-    return created;
-}
-
-/// <summary>
-/// Allocate Fairly
-/// </summary>
-/// <param name="sourcePosition"></param>
-/// <param name="sourceRules"></param>
-/// <param name="positionsByAddress"></param>
-/// <returns></returns>
-private List<TransferAllocation> AllocateFair(
-    AddressTransferPosition sourcePosition,
-    List<TransferRule> sourceRules,
-    Dictionary<int, AddressTransferPosition> positionsByAddress)
-{
-    var result = new List<TransferAllocation>();
-
-    while (sourcePosition.RemainingSurplusKwh > 0.0001m)
-    {
-        var eligible = sourceRules
-            .Where(rule =>
-                positionsByAddress.TryGetValue(rule.DestinationAddressId, out var dest) &&
-                dest.RemainingDeficitKwh > 0.0001m)
-            .ToList();
-
-        if (eligible.Count == 0)
-            break;
-
-        var equalShare = decimal.Round(sourcePosition.RemainingSurplusKwh / eligible.Count, 4);
-
-        if (equalShare <= 0.0001m)
-            break;
-
-        var allocatedThisRound = 0m;
-
-        foreach (var rule in eligible)
-        {
-            var destination = positionsByAddress[rule.DestinationAddressId];
-
-            var amount = Math.Min(equalShare, destination.RemainingDeficitKwh);
-
-            if (rule.MaxDailyKwh.HasValue)
-                amount = Math.Min(amount, rule.MaxDailyKwh.Value);
-
-            amount = decimal.Round(amount, 4);
-
-            if (amount <= 0.0001m)
-                continue;
-
-            result.Add(new TransferAllocation
+            if (!positionsByAddress.TryGetValue(sourceGroup.Key, out var sourcePosition))
             {
-                SourceAddressId = rule.SourceAddressId,
-                DestinationAddressId = rule.DestinationAddressId,
-                TransferRuleId = rule.Id,
-                RequestedKwh = amount,
-                AllocatedKwh = amount,
-                AppliedDistributionMode = TransferDistributionMode.Fair,              
-            });
+                _logger.LogInformation("No balance position found for source address {SourceAddressId}", sourceGroup.Key);
+                continue;
+            }
 
-            sourcePosition.AlreadyTransferredOutKwh += amount;
-            destination.AlreadyTransferredInKwh += amount;
-            allocatedThisRound += amount;
+            if (sourcePosition.RemainingSurplusKwh <= 0.0001m)
+            {
+                _logger.LogInformation(
+                    "Source address {SourceAddressId} has no remaining surplus. RemainingSurplus={RemainingSurplus}",
+                    sourceGroup.Key,
+                    sourcePosition.RemainingSurplusKwh);
+                continue;
+            }
+
+            var sourceRules = sourceGroup.ToList();
+            var mode = ResolveModeForSource(sourceRules);
+
+            _logger.LogInformation(
+                "Allocating for source address {SourceAddressId}. Mode={Mode}, RemainingSurplus={RemainingSurplus}, Rules={RuleCount}",
+                sourceGroup.Key,
+                mode,
+                sourcePosition.RemainingSurplusKwh,
+                sourceRules.Count);
+
+            var allocations = mode switch
+            {
+                TransferDistributionMode.Fair =>
+                    AllocateFair(sourcePosition, sourceRules, positionsByAddress),
+
+                TransferDistributionMode.Priority =>
+                    AllocatePriority(sourcePosition, sourceRules, positionsByAddress),
+
+                TransferDistributionMode.Weighted =>
+                    AllocateWeighted(sourcePosition, sourceRules, positionsByAddress),
+
+                _ => AllocateFair(sourcePosition, sourceRules, positionsByAddress)
+            };
+
+            allAllocations.AddRange(allocations);
         }
 
-        if (allocatedThisRound <= 0.0001m)
-            break;
-    }
+        var created = new List<TransferExecution>();
 
-    return MergeAllocations(result);
-}
-
-/// <summary>
-/// Allocate priority
-/// </summary>
-/// <param name="sourcePosition"></param>
-/// <param name="sourceRules"></param>
-/// <param name="positionsByAddress"></param>
-/// <returns></returns>
-private List<TransferAllocation> AllocatePriority(
-    AddressTransferPosition sourcePosition,
-    List<TransferRule> sourceRules,
-    Dictionary<int, AddressTransferPosition> positionsByAddress)
-{
-    var result = new List<TransferAllocation>();
-
-    foreach (var rule in sourceRules.OrderBy(x => x.Priority))
-    {
-        if (sourcePosition.RemainingSurplusKwh <= 0.0001m)
-            break;
-
-        if (!positionsByAddress.TryGetValue(rule.DestinationAddressId, out var destination))
-            continue;
-
-        if (destination.RemainingDeficitKwh <= 0.0001m)
-            continue;
-
-        var amount = Math.Min(sourcePosition.RemainingSurplusKwh, destination.RemainingDeficitKwh);
-
-        if (rule.MaxDailyKwh.HasValue)
-            amount = Math.Min(amount, rule.MaxDailyKwh.Value);
-
-        amount = decimal.Round(amount, 4);
-
-        if (amount <= 0.0001m)
-            continue;
-
-        result.Add(new TransferAllocation
+        foreach (var allocation in allAllocations)
         {
-            SourceAddressId = rule.SourceAddressId,
-            DestinationAddressId = rule.DestinationAddressId,
-            RequestedKwh = amount,
-            AllocatedKwh = amount,
-            AppliedDistributionMode = TransferDistributionMode.Priority,
-            TransferRuleId = rule.Id
-        });
+            var transfer = CreateTransferExecution(
+                allocation,
+                dayStartUtc,
+                TriggerType.Auto,
+                "Automatic allocation");
 
-        sourcePosition.AlreadyTransferredOutKwh += amount;
-        destination.AlreadyTransferredInKwh += amount;
-    }
-
-    return result;
-}
-
-/// <summary>
-/// Allocate weighted
-/// </summary>
-/// <param name="sourcePosition"></param>
-/// <param name="sourceRules"></param>
-/// <param name="positionsByAddress"></param>
-/// <returns></returns>
-private List<TransferAllocation> AllocateWeighted(
-    AddressTransferPosition sourcePosition,
-    List<TransferRule> sourceRules,
-    Dictionary<int, AddressTransferPosition> positionsByAddress)
-{
-    var result = new List<TransferAllocation>();
-
-    while (sourcePosition.RemainingSurplusKwh > 0.0001m)
-    {
-        var eligible = sourceRules
-            .Where(rule =>
-                rule.WeightPercent.HasValue &&
-                rule.WeightPercent.Value > 0 &&
-                positionsByAddress.TryGetValue(rule.DestinationAddressId, out var dest) &&
-                dest.RemainingDeficitKwh > 0.0001m)
-            .ToList();
-
-        if (eligible.Count == 0)
-            break;
-
-        var totalWeight = eligible.Sum(x => x.WeightPercent!.Value);
-        if (totalWeight <= 0.0001m)
-            break;
-
-        var allocatedThisRound = 0m;
-
-        foreach (var rule in eligible)
-        {
-            var destination = positionsByAddress[rule.DestinationAddressId];
-
-            var ratio = rule.WeightPercent!.Value / totalWeight;
-            var targetAmount = decimal.Round(sourcePosition.RemainingSurplusKwh * ratio, 4);
-
-            var amount = Math.Min(targetAmount, destination.RemainingDeficitKwh);
-
-            if (rule.MaxDailyKwh.HasValue)
-                amount = Math.Min(amount, rule.MaxDailyKwh.Value);
-
-            amount = decimal.Round(amount, 4);
-
-            if (amount <= 0.0001m)
-                continue;
-
-            result.Add(new TransferAllocation
-            {
-                SourceAddressId = rule.SourceAddressId,
-                DestinationAddressId = rule.DestinationAddressId,
-                RequestedKwh = targetAmount,
-                AllocatedKwh = amount,
-                AppliedDistributionMode = TransferDistributionMode.Weighted,
-                TransferRuleId = rule.Id
-            });
-
-            sourcePosition.AlreadyTransferredOutKwh += amount;
-            destination.AlreadyTransferredInKwh += amount;
-            allocatedThisRound += amount;
+            _db.TransferExecutions.Add(transfer);
+            created.Add(transfer);
         }
 
-        if (allocatedThisRound <= 0.0001m)
-            break;
-    }
+        if (created.Count > 0)
+            await _db.SaveChangesAsync(ct);
 
-    return MergeAllocations(result);
-}
+        return created;
+    }
 
     public async Task<IReadOnlyList<TransferExecution>> RunAutomaticAllocationForSourceAsync(
         int sourceAddressId,
@@ -311,55 +123,39 @@ private List<TransferAllocation> AllocateWeighted(
         if (sourcePosition.RemainingSurplusKwh <= 0.0001m)
             return Array.Empty<TransferExecution>();
 
-        var rules = await _db.Set<TransferRule>()
+        var rules = await _db.TransferRules
             .AsNoTracking()
             .Where(x => x.IsEnabled && x.SourceAddressId == sourceAddressId)
             .OrderBy(x => x.Priority)
             .ToListAsync(ct);
 
+        var mode = ResolveModeForSource(rules);
+        var allocations = mode switch
+        {
+            TransferDistributionMode.Fair =>
+                AllocateFair(sourcePosition, rules, positionsByAddress),
+
+            TransferDistributionMode.Priority =>
+                AllocatePriority(sourcePosition, rules, positionsByAddress),
+
+            TransferDistributionMode.Weighted =>
+                AllocateWeighted(sourcePosition, rules, positionsByAddress),
+
+            _ => AllocateFair(sourcePosition, rules, positionsByAddress)
+        };
+
         var created = new List<TransferExecution>();
 
-        foreach (var rule in rules)
+        foreach (var allocation in allocations)
         {
-            if (sourcePosition.RemainingSurplusKwh <= 0.0001m)
-                break;
+            var transfer = CreateTransferExecution(
+                allocation,
+                dayStartUtc,
+                TriggerType.Auto,
+                $"Auto allocation for source {sourceAddressId}");
 
-            if (!positionsByAddress.TryGetValue(rule.DestinationAddressId, out var destinationPosition))
-                continue;
-
-            if (destinationPosition.RemainingDeficitKwh <= 0.0001m)
-                continue;
-
-            var amount = Math.Min(sourcePosition.RemainingSurplusKwh, destinationPosition.RemainingDeficitKwh);
-
-            if (rule.MaxDailyKwh.HasValue)
-                amount = Math.Min(amount, rule.MaxDailyKwh.Value);
-
-            amount = decimal.Round(amount, 4);
-
-            if (amount <= 0.0001m)
-                continue;
-
-            var transfer = new TransferExecution
-            {
-                BalanceDayUtc = dayStartUtc,
-                EffectiveAtUtc = DateTime.UtcNow,
-                SourceAddressId = rule.SourceAddressId,
-                DestinationAddressId = rule.DestinationAddressId,
-                TransferRuleId = rule.Id,
-                RequestedKwh = amount,
-                AllocatedKwh = amount,
-                TriggerTypeEnum = TriggerType.Auto,
-                TransferStatusEnum = TransferStatus.Executed,
-                Notes = $"Auto allocation for source {sourceAddressId}",
-                CreatedAtUtc = DateTime.UtcNow
-            };
-
-            _db.Set<TransferExecution>().Add(transfer);
+            _db.TransferExecutions.Add(transfer);
             created.Add(transfer);
-
-            sourcePosition.AlreadyTransferredOutKwh += amount;
-            destinationPosition.AlreadyTransferredInKwh += amount;
         }
 
         if (created.Count > 0)
@@ -382,7 +178,8 @@ private List<TransferAllocation> AllocateWeighted(
         var positionsByAddress = positions.ToDictionary(x => x.AddressId);
 
         if (!positionsByAddress.TryGetValue(request.SourceAddressId, out var sourcePosition))
-            throw new InvalidOperationException($"Source address {request.SourceAddressId} has no balance position for {request.Day}.");
+            throw new InvalidOperationException(
+                $"Source address {request.SourceAddressId} has no balance position for {request.Day}.");
 
         var created = new List<TransferExecution>();
 
@@ -392,7 +189,8 @@ private List<TransferAllocation> AllocateWeighted(
                 break;
 
             if (!positionsByAddress.TryGetValue(target.DestinationAddressId, out var destinationPosition))
-                throw new InvalidOperationException($"Destination address {target.DestinationAddressId} has no balance position for {request.Day}.");
+                throw new InvalidOperationException(
+                    $"Destination address {target.DestinationAddressId} has no balance position for {request.Day}.");
 
             if (target.DestinationAddressId == request.SourceAddressId)
                 throw new InvalidOperationException("Source and destination cannot be the same address.");
@@ -407,21 +205,23 @@ private List<TransferAllocation> AllocateWeighted(
             if (amount <= 0.0001m)
                 continue;
 
-            var transfer = new TransferExecution
+            var allocation = new TransferAllocation
             {
-                BalanceDayUtc = dayStartUtc,
-                EffectiveAtUtc = DateTime.UtcNow,
                 SourceAddressId = request.SourceAddressId,
                 DestinationAddressId = target.DestinationAddressId,
                 RequestedKwh = decimal.Round(target.RequestedKwh, 4),
                 AllocatedKwh = amount,
-                TriggerTypeEnum = TriggerType.Manual,
-                TransferStatusEnum = TransferStatus.Executed,
-                Notes = request.Notes,
-                CreatedAtUtc = DateTime.UtcNow
+                TransferRuleId = null,
+                AppliedDistributionMode = TransferDistributionMode.Fair // manual exact transfer; mode is informational
             };
 
-            _db.Set<TransferExecution>().Add(transfer);
+            var transfer = CreateTransferExecution(
+                allocation,
+                dayStartUtc,
+                TriggerType.Manual,
+                request.Notes);
+
+            _db.TransferExecutions.Add(transfer);
             created.Add(transfer);
 
             sourcePosition.AlreadyTransferredOutKwh += amount;
@@ -458,10 +258,11 @@ private List<TransferAllocation> AllocateWeighted(
             })
             .ToListAsync(ct);
 
-        var transferredOut = await _db.Set<TransferExecution>()
+        var transferredOut = await _db.TransferExecutions
             .AsNoTracking()
-            .Where(x => x.BalanceDayUtc >= dayStartUtc && x.BalanceDayUtc < dayEndUtc
-                     && x.Status == (int)TransferStatus.Executed)
+            .Where(x => x.BalanceDayUtc >= dayStartUtc &&
+                        x.BalanceDayUtc < dayEndUtc &&
+                        x.Status == (int)TransferStatus.Executed)
             .GroupBy(x => x.SourceAddressId)
             .Select(g => new
             {
@@ -470,10 +271,11 @@ private List<TransferAllocation> AllocateWeighted(
             })
             .ToListAsync(ct);
 
-        var transferredIn = await _db.Set<TransferExecution>()
+        var transferredIn = await _db.TransferExecutions
             .AsNoTracking()
-            .Where(x => x.BalanceDayUtc >= dayStartUtc && x.BalanceDayUtc < dayEndUtc
-                     && x.Status == (int)TransferStatus.Executed)
+            .Where(x => x.BalanceDayUtc >= dayStartUtc &&
+                        x.BalanceDayUtc < dayEndUtc &&
+                        x.Status == (int)TransferStatus.Executed)
             .GroupBy(x => x.DestinationAddressId)
             .Select(g => new
             {
@@ -485,7 +287,7 @@ private List<TransferAllocation> AllocateWeighted(
         var outDict = transferredOut.ToDictionary(x => x.AddressId, x => x.Amount);
         var inDict = transferredIn.ToDictionary(x => x.AddressId, x => x.Amount);
 
-        var positions = dailyBalances
+        return dailyBalances
             .Select(x => new AddressTransferPosition
             {
                 AddressId = x.AddressId,
@@ -495,51 +297,237 @@ private List<TransferAllocation> AllocateWeighted(
                 AlreadyTransferredInKwh = inDict.TryGetValue(x.AddressId, out var inAmount) ? inAmount : 0m
             })
             .ToList();
-
-        return positions;
     }
 
-///////////////////////////////////////////////////////////////////////
-/// //Helpers
+    private List<TransferAllocation> AllocateFair(
+        AddressTransferPosition sourcePosition,
+        List<TransferRule> sourceRules,
+        Dictionary<int, AddressTransferPosition> positionsByAddress)
+    {
+        var result = new List<TransferAllocation>();
+
+        while (sourcePosition.RemainingSurplusKwh > 0.0001m)
+        {
+            var eligible = sourceRules
+                .Where(rule =>
+                    positionsByAddress.TryGetValue(rule.DestinationAddressId, out var dest) &&
+                    dest.RemainingDeficitKwh > 0.0001m)
+                .ToList();
+
+            if (eligible.Count == 0)
+                break;
+
+            var equalShare = decimal.Round(sourcePosition.RemainingSurplusKwh / eligible.Count, 4);
+            if (equalShare <= 0.0001m)
+                break;
+
+            var allocatedThisRound = 0m;
+
+            foreach (var rule in eligible)
+            {
+                var destination = positionsByAddress[rule.DestinationAddressId];
+
+                var amount = Math.Min(equalShare, destination.RemainingDeficitKwh);
+
+                if (rule.MaxDailyKwh.HasValue)
+                    amount = Math.Min(amount, rule.MaxDailyKwh.Value);
+
+                amount = decimal.Round(amount, 4);
+
+                if (amount <= 0.0001m)
+                    continue;
+
+                result.Add(new TransferAllocation
+                {
+                    SourceAddressId = rule.SourceAddressId,
+                    DestinationAddressId = rule.DestinationAddressId,
+                    TransferRuleId = rule.Id,
+                    RequestedKwh = amount,
+                    AllocatedKwh = amount,
+                    AppliedDistributionMode = TransferDistributionMode.Fair
+                });
+
+                sourcePosition.AlreadyTransferredOutKwh += amount;
+                destination.AlreadyTransferredInKwh += amount;
+                allocatedThisRound += amount;
+            }
+
+            if (allocatedThisRound <= 0.0001m)
+                break;
+        }
+
+        return MergeAllocations(result);
+    }
+
+    private List<TransferAllocation> AllocatePriority(
+        AddressTransferPosition sourcePosition,
+        List<TransferRule> sourceRules,
+        Dictionary<int, AddressTransferPosition> positionsByAddress)
+    {
+        var result = new List<TransferAllocation>();
+
+        foreach (var rule in sourceRules.OrderBy(x => x.Priority))
+        {
+            if (sourcePosition.RemainingSurplusKwh <= 0.0001m)
+                break;
+
+            if (!positionsByAddress.TryGetValue(rule.DestinationAddressId, out var destination))
+                continue;
+
+            if (destination.RemainingDeficitKwh <= 0.0001m)
+                continue;
+
+            var amount = Math.Min(sourcePosition.RemainingSurplusKwh, destination.RemainingDeficitKwh);
+
+            if (rule.MaxDailyKwh.HasValue)
+                amount = Math.Min(amount, rule.MaxDailyKwh.Value);
+
+            amount = decimal.Round(amount, 4);
+
+            if (amount <= 0.0001m)
+                continue;
+
+            result.Add(new TransferAllocation
+            {
+                SourceAddressId = rule.SourceAddressId,
+                DestinationAddressId = rule.DestinationAddressId,
+                RequestedKwh = amount,
+                AllocatedKwh = amount,
+                AppliedDistributionMode = TransferDistributionMode.Priority,
+                TransferRuleId = rule.Id
+            });
+
+            sourcePosition.AlreadyTransferredOutKwh += amount;
+            destination.AlreadyTransferredInKwh += amount;
+        }
+
+        return result;
+    }
+
+    private List<TransferAllocation> AllocateWeighted(
+        AddressTransferPosition sourcePosition,
+        List<TransferRule> sourceRules,
+        Dictionary<int, AddressTransferPosition> positionsByAddress)
+    {
+        var result = new List<TransferAllocation>();
+
+        while (sourcePosition.RemainingSurplusKwh > 0.0001m)
+        {
+            var eligible = sourceRules
+                .Where(rule =>
+                    rule.WeightPercent.HasValue &&
+                    rule.WeightPercent.Value > 0 &&
+                    positionsByAddress.TryGetValue(rule.DestinationAddressId, out var dest) &&
+                    dest.RemainingDeficitKwh > 0.0001m)
+                .ToList();
+
+            if (eligible.Count == 0)
+                break;
+
+            var totalWeight = eligible.Sum(x => x.WeightPercent!.Value);
+            if (totalWeight <= 0.0001m)
+                break;
+
+            var allocatedThisRound = 0m;
+
+            foreach (var rule in eligible)
+            {
+                var destination = positionsByAddress[rule.DestinationAddressId];
+
+                var ratio = rule.WeightPercent!.Value / totalWeight;
+                var targetAmount = decimal.Round(sourcePosition.RemainingSurplusKwh * ratio, 4);
+
+                var amount = Math.Min(targetAmount, destination.RemainingDeficitKwh);
+
+                if (rule.MaxDailyKwh.HasValue)
+                    amount = Math.Min(amount, rule.MaxDailyKwh.Value);
+
+                amount = decimal.Round(amount, 4);
+
+                if (amount <= 0.0001m)
+                    continue;
+
+                result.Add(new TransferAllocation
+                {
+                    SourceAddressId = rule.SourceAddressId,
+                    DestinationAddressId = rule.DestinationAddressId,
+                    RequestedKwh = targetAmount,
+                    AllocatedKwh = amount,
+                    AppliedDistributionMode = TransferDistributionMode.Weighted,
+                    TransferRuleId = rule.Id
+                });
+
+                sourcePosition.AlreadyTransferredOutKwh += amount;
+                destination.AlreadyTransferredInKwh += amount;
+                allocatedThisRound += amount;
+            }
+
+            if (allocatedThisRound <= 0.0001m)
+                break;
+        }
+
+        return MergeAllocations(result);
+    }
+
+    private static List<TransferAllocation> MergeAllocations(
+        List<TransferAllocation> allocations)
+    {
+        return allocations
+            .GroupBy(x => new { x.SourceAddressId, x.DestinationAddressId })
+            .Select(g => new TransferAllocation
+            {
+                SourceAddressId = g.Key.SourceAddressId,
+                DestinationAddressId = g.Key.DestinationAddressId,
+                RequestedKwh = decimal.Round(g.Sum(x => x.RequestedKwh), 4),
+                AllocatedKwh = decimal.Round(g.Sum(x => x.AllocatedKwh), 4),
+                TransferRuleId = g.First().TransferRuleId,
+                AppliedDistributionMode = g.First().AppliedDistributionMode
+            })
+            .ToList();
+    }
+
+    private TransferDistributionMode ResolveModeForSource(List<TransferRule> sourceRules)
+    {
+        var modeFromRule = sourceRules
+            .Select(x => x.DistributionMode)
+            .Distinct()
+            .ToList();
+
+        if (modeFromRule.Count > 1)
+        {
+            throw new InvalidOperationException(
+                $"Source address {sourceRules.First().SourceAddressId} has conflicting distribution modes.");
+        }
+
+        if (modeFromRule.Count == 1)
+            return (TransferDistributionMode)modeFromRule[0];
+
+        return _optionsMonitor.CurrentValue.DistributionMode;
+    }
 
     private static DateTime ToUtcStartOfDay(DateOnly day) =>
         DateTime.SpecifyKind(day.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
 
-private static List<TransferAllocation> MergeAllocations(
-    List<TransferAllocation> allocations)
-{
-    return allocations
-        .GroupBy(x => new { x.SourceAddressId, x.DestinationAddressId })
-        .Select(g => new TransferAllocation
-        {
-            SourceAddressId = g.Key.SourceAddressId,
-            DestinationAddressId = g.Key.DestinationAddressId,
-            RequestedKwh = decimal.Round(g.Sum(x => x.RequestedKwh), 4),
-            AllocatedKwh = decimal.Round(g.Sum(x => x.AllocatedKwh), 4),
-            TransferRuleId = g.First().TransferRuleId,
-            AppliedDistributionMode = g.First().AppliedDistributionMode
-        })
-        .ToList();
-}
-
-
-private TransferDistributionMode ResolveModeForSource(
-    List<TransferRule> sourceRules)
-{
-    var modeFromRule = sourceRules
-        .Select(x => x.DistributionMode)
-        .Distinct()
-        .ToList();
-
-    if (modeFromRule.Count > 1)
+    private static TransferExecution CreateTransferExecution(
+        TransferAllocation allocation,
+        DateTime balanceDayUtc,
+        TriggerType triggerType,
+        string? notes)
     {
-        throw new InvalidOperationException(
-            $"Source address {sourceRules.First().SourceAddressId} has conflicting distribution modes.");
+        return new TransferExecution
+        {
+            BalanceDayUtc = balanceDayUtc,
+            EffectiveAtUtc = DateTime.UtcNow,
+            SourceAddressId = allocation.SourceAddressId,
+            DestinationAddressId = allocation.DestinationAddressId,
+            RequestedKwh = allocation.RequestedKwh,
+            AllocatedKwh = allocation.AllocatedKwh,
+            TransferRuleId = allocation.TransferRuleId,
+            TriggerTypeEnum = triggerType,
+            TransferStatusEnum = TransferStatus.Executed,
+            AppliedDistributionModeEnum = allocation.AppliedDistributionMode,
+            Notes = notes,
+            CreatedAtUtc = DateTime.UtcNow
+        };
     }
-
-    if (modeFromRule.Count == 1)
-        return (TransferDistributionMode)modeFromRule[0];
-
-    return _optionsMonitor.CurrentValue.DistributionMode;
-}
 }
