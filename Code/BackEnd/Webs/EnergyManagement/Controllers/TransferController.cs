@@ -1,4 +1,4 @@
-
+﻿
 using EnergyManagement.Services.Transfers;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,9 +8,9 @@ namespace EnergyManagement.Services.Transfers;
 [Route("api/v1/transfers")]
 public class TransfersController : ControllerBase
 {
-    private readonly ITransferAllocationService _service;
+    private readonly ITransferWorkflowService _service;
 
-    public TransfersController(ITransferAllocationService service)
+    public TransfersController(ITransferWorkflowService service)
     {
         _service = service;
     }
@@ -18,7 +18,7 @@ public class TransfersController : ControllerBase
     [HttpPost("auto/{day}")]
     public async Task<IActionResult> RunAutomatic(DateOnly day, CancellationToken ct)
     {
-        var result = await _service.RunAutomaticAllocationAsync(day, ct);
+        var result = await _service.RunAutomaticWorkflowAsync(day, ct);
         return Ok(result);
     }
 
@@ -28,7 +28,7 @@ public class TransfersController : ControllerBase
         int sourceAddressId,
         CancellationToken ct)
     {
-        var result = await _service.RunAutomaticAllocationForSourceAsync(sourceAddressId, day, ct);
+        var result = await _service.RunAutomaticWorkflowForSourceAsync(sourceAddressId, day, ct);
         return Ok(result);
     }
 
@@ -41,3 +41,4 @@ public class TransfersController : ControllerBase
         return Ok(result);
     }
 }
+

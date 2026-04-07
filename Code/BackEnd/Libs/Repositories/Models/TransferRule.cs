@@ -25,5 +25,5 @@ public partial class TransferRule
 
     public virtual Address SourceAddress { get; set; } = null!;
 
-    public virtual ICollection<TransferExecution> TransferExecutions { get; set; } = new List<TransferExecution>();
+    public virtual ICollection<TransferWorkflow> TransferWorkflows { get; set; } = new List<TransferWorkflow>();
 }

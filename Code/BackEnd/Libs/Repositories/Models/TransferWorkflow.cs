@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class TransferExecution
+public partial class TransferWorkflow
 {
     public int Id { get; set; }
 
@@ -24,6 +24,10 @@ public partial class TransferExecution
     public int Status { get; set; }
 
     public string? Notes { get; set; }
+
+    public int? Priority { get; set; }
+    
+    public decimal? WeightPercent { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
 

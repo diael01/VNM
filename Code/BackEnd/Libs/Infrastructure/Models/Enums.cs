@@ -15,8 +15,10 @@ public enum TransferDistributionMode
 public enum TransferStatus
 {
     Planned = 0,
-    Executed = 1,
-    Settled = 2
+    Approved = 1,
+    Executed = 2,
+    Settled = 3,
+    Rejected = 4
 }
 
 public enum TriggerType

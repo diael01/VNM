@@ -1,4 +1,4 @@
-using Infrastructure.Enums;
+﻿using Infrastructure.Enums;
 
 namespace Infrastructure.Options;
     public class ConsumptionPollingOptions
@@ -26,7 +26,7 @@ namespace Infrastructure.Options;
 		 public int IntervalMinutes { get; set; } = 1;
 	}
 
-    public class TransferAllocationOptions
+    public class TransferWorkflowOptions
     {
         public bool Enabled { get; set; } = true;
         public int IntervalMinutes { get; set; } = 1;
@@ -73,4 +73,5 @@ namespace Infrastructure.Options;
     {
         public int ReadingIntervalMinutes { get; set; } = 1;
     }
+
 

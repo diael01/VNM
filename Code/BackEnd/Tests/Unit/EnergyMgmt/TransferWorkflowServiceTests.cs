@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -15,7 +15,7 @@ using Xunit;
 
 namespace Tests.Transfers;
 
-public class TransferAllocationServiceTests
+public class TransferWorkflowServiceTests
 {
     [Fact]
     public async Task RunAutomaticAllocationAsync_Fair_SplitsEqually()
@@ -91,7 +91,7 @@ public class TransferAllocationServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var result = await sut.RunAutomaticAllocationAsync(
+        var result = await sut.RunAutomaticWorkflowAsync(
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
@@ -142,7 +142,7 @@ public class TransferAllocationServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var result = await sut.RunAutomaticAllocationAsync(
+        var result = await sut.RunAutomaticWorkflowAsync(
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
@@ -192,7 +192,7 @@ public class TransferAllocationServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var result = await sut.RunAutomaticAllocationAsync(
+        var result = await sut.RunAutomaticWorkflowAsync(
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
@@ -231,18 +231,18 @@ public class TransferAllocationServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var first = await sut.RunAutomaticAllocationAsync(
+        var first = await sut.RunAutomaticWorkflowAsync(
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
-        var second = await sut.RunAutomaticAllocationAsync(
+        var second = await sut.RunAutomaticWorkflowAsync(
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
         Assert.Single(first);
         Assert.Empty(second);
 
-        var persisted = await db.TransferExecutions.ToListAsync();
+        var persisted = await db.TransferWorkflows.ToListAsync();
         Assert.Single(persisted);
         Assert.Equal(5m, persisted[0].AllocatedKwh);
     }
@@ -274,26 +274,26 @@ public class TransferAllocationServiceTests
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
         var ex = await Record.ExceptionAsync(() =>
-            sut.RunAutomaticAllocationAsync(new DateOnly(2026, 4, 5), CancellationToken.None));
+            sut.RunAutomaticWorkflowAsync(new DateOnly(2026, 4, 5), CancellationToken.None));
 
         Assert.Null(ex);
     }
 
-    private static TransferAllocationService CreateSut(
+    private static TransferWorkflowService CreateSut(
         VnmDbContext db,
         TransferDistributionMode defaultMode)
     {
-        var options = new TestOptionsMonitor<TransferAllocationOptions>(
-            new TransferAllocationOptions
+        var options = new TestOptionsMonitor<TransferWorkflowOptions>(
+            new TransferWorkflowOptions
             {
                 Enabled = true,
                 IntervalMinutes = 15,
                 DistributionMode = defaultMode
             });
 
-        return new TransferAllocationService(
+        return new TransferWorkflowService(
             db,
-            NullLogger<TransferAllocationService>.Instance,
+            NullLogger<TransferWorkflowService>.Instance,
             options);
     }
 

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repositories.Models
 {
-    public partial class TransferExecution
+    public partial class TransferWorkflow
     {
         [NotMapped]
         public TriggerType TriggerTypeEnum

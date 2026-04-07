@@ -71,7 +71,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
             var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalanceForAddressAsync(address.Id, day, CancellationToken.None);
 
             Assert.Equal(1.00m, result.ProducedKwh);
             Assert.Equal(0.25m, result.ConsumedKwh);
@@ -114,7 +114,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
             var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalanceForAddressAsync(address.Id, day, CancellationToken.None);
 
             Assert.Equal(0.25m, result.ProducedKwh);
             Assert.Equal(1.00m, result.ConsumedKwh);
@@ -138,7 +138,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             var service = new DailyBalanceCalculationService(db, meteringOptions);
             var day = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalanceForAddressAsync(address.Id, day, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Equal(1, result.AddressId);
@@ -200,7 +200,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
             var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalanceForAddressAsync(address.Id, day, CancellationToken.None);
 
             var balances = await db.DailyEnergyBalances
                 .Where(x => x.AddressId == 1)
@@ -283,7 +283,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
             var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalanceForAddressAsync(address.Id, day, CancellationToken.None);
 
             Assert.Equal(1.00m, result.ProducedKwh);
             Assert.Equal(0.25m, result.ConsumedKwh);
@@ -341,7 +341,7 @@ namespace EnergyManagement.Tests.Services.Analytics
             var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
             var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            var result = await service.CalculateDailyBalancesAsync(inverterInfo1, day, CancellationToken.None);
+            var result = await service.CalculateDailyBalanceForAddressAsync(address1.Id, day, CancellationToken.None);
 
             Assert.Equal(1, result.AddressId);
             Assert.Equal(1.00m, result.ProducedKwh);
@@ -425,8 +425,8 @@ namespace EnergyManagement.Tests.Services.Analytics
             var meteringOptions = new FakeMeteringOptions(new Infrastructure.Options.MeteringOptions { ReadingIntervalMinutes = 15 });
             var service = new DailyBalanceCalculationService(db, meteringOptions);
 
-            await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
-            await service.CalculateDailyBalancesAsync(inverterInfo, day, CancellationToken.None);
+            await service.CalculateDailyBalanceForAddressAsync(address.Id, day, CancellationToken.None);
+            await service.CalculateDailyBalanceForAddressAsync(address.Id, day, CancellationToken.None);
 
             var rows = await db.DailyEnergyBalances
                 .Where(x => x.AddressId == 1)

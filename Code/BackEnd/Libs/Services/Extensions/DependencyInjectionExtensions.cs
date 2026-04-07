@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Services.Authorization;
 using Services.Inverter;
 using Services.Identity;
@@ -33,10 +33,11 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProviderSettlementService, ProviderSettlementService>();
         services.AddScoped<IAvailableBalanceService, AvailableBalanceService>();
-        services.AddScoped<ITransferAllocationService, TransferAllocationService>();  
+        services.AddScoped<ITransferWorkflowService, TransferWorkflowService>();  
         services.AddScoped<ISettlementModeResolver, SettlementModeResolver>(); 
         services.AddScoped<ISettlementModeStrategy, EnergySettlementModeStrategy>(); 
          services.AddScoped<ISettlementModeStrategy, MoneySettlementModeStrategy>(); 
         return services;
     }
 }
+

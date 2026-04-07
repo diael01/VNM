@@ -1,4 +1,4 @@
-using Infrastructure.Validation;
+﻿using Infrastructure.Validation;
 using ServiceDefaults;
 using EventBusCore;
 using EnergyManagement.Consumers;
@@ -92,11 +92,11 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddDailyBalanceComputation(builder.Configuration);
 
 
-builder.Services.Configure<TransferAllocationOptions>(
-    builder.Configuration.GetSection("TransferAllocation"));
+builder.Services.Configure<TransferWorkflowOptions>(
+    builder.Configuration.GetSection("TransferWorkflow"));
 
-builder.Services.AddScoped<ITransferAllocationService, TransferAllocationService>();
-builder.Services.AddHostedService<TransferAllocationBackgroundService>();
+builder.Services.AddScoped<ITransferWorkflowService, TransferWorkflowService>();
+builder.Services.AddHostedService<TransferWorkflowBackgroundService>();
 // ---------------------
 // Build the app
 // ---------------------
@@ -131,4 +131,5 @@ app.MapDefaultEndpoints(); // health, metrics, etc
 // Run the app
 // ---------------------
 app.Run();
+
 

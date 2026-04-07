@@ -29,9 +29,9 @@ public partial class Address
 
     public virtual ICollection<ProviderSettlement> ProviderSettlements { get; set; } = new List<ProviderSettlement>();
 
-    public virtual ICollection<TransferExecution> TransferExecutionDestinationAddresses { get; set; } = new List<TransferExecution>();
+    public virtual ICollection<TransferWorkflow> TransferWorkflowDestinationAddresses { get; set; } = new List<TransferWorkflow>();
 
-    public virtual ICollection<TransferExecution> TransferExecutionSourceAddresses { get; set; } = new List<TransferExecution>();
+    public virtual ICollection<TransferWorkflow> TransferWorkflowSourceAddresses { get; set; } = new List<TransferWorkflow>();
 
     public virtual ICollection<TransferRule> TransferRuleDestinationAddresses { get; set; } = new List<TransferRule>();
 

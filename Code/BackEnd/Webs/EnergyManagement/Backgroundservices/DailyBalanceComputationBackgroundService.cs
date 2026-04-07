@@ -28,7 +28,7 @@ public class DailyBalanceComputationBackgroundService : BackgroundService
 
         var intervalMinutes = _options.IntervalMinutes > 0
             ? _options.IntervalMinutes
-            : 5;
+            : 1;
 
         using var timer = new PeriodicTimer(TimeSpan.FromMinutes(intervalMinutes));
 

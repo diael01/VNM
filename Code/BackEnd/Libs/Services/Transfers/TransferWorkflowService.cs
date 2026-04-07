@@ -1,4 +1,4 @@
-using Infrastructure.Enums;
+﻿using Infrastructure.Enums;
 using Infrastructure.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,28 +7,31 @@ using Repositories.Models;
 
 namespace EnergyManagement.Services.Transfers;
 
-public class TransferAllocationService : ITransferAllocationService
+public class TransferWorkflowService : ITransferWorkflowService
 {
     private readonly VnmDbContext _db;
-    private readonly ILogger<TransferAllocationService> _logger;
-    private readonly IOptionsMonitor<TransferAllocationOptions> _optionsMonitor;
+    private readonly ILogger<TransferWorkflowService> _logger;
+    private readonly IOptionsMonitor<TransferWorkflowOptions> _optionsMonitor;
 
-    public TransferAllocationService(
+    public TransferWorkflowService(
         VnmDbContext db,
-        ILogger<TransferAllocationService> logger,
-        IOptionsMonitor<TransferAllocationOptions> optionsMonitor)
+        ILogger<TransferWorkflowService> logger,
+        IOptionsMonitor<TransferWorkflowOptions> optionsMonitor)
     {
         _db = db;
         _logger = logger;
         _optionsMonitor = optionsMonitor;
     }
 
-    public async Task<IReadOnlyList<TransferExecution>> RunAutomaticAllocationAsync(
+    public async Task<IReadOnlyList<TransferWorkflow>> RunAutomaticWorkflowAsync(
         DateOnly day,
         CancellationToken ct = default)
     {
         var dayStartUtc = ToUtcStartOfDay(day);
         var dayEndUtc = dayStartUtc.AddDays(1);
+
+        // Refresh auto-planned rows for this day so planner does not duplicate itself forever.
+        await DeleteExistingAutoPlannedRowsAsync(dayStartUtc, dayEndUtc, ct);
 
         var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
         var positionsByAddress = positions.ToDictionary(x => x.AddressId);
@@ -40,7 +43,7 @@ public class TransferAllocationService : ITransferAllocationService
             .ThenBy(x => x.Priority)
             .ToListAsync(ct);
 
-        var allAllocations = new List<TransferAllocation>();
+        var allWorkflows = new List<TransferWorkflow>();
 
         foreach (var sourceGroup in rules.GroupBy(x => x.SourceAddressId))
         {
@@ -63,13 +66,13 @@ public class TransferAllocationService : ITransferAllocationService
             var mode = ResolveModeForSource(sourceRules);
 
             _logger.LogInformation(
-                "Allocating for source address {SourceAddressId}. Mode={Mode}, RemainingSurplus={RemainingSurplus}, Rules={RuleCount}",
+                "Planning for source address {SourceAddressId}. Mode={Mode}, RemainingSurplus={RemainingSurplus}, Rules={RuleCount}",
                 sourceGroup.Key,
                 mode,
                 sourcePosition.RemainingSurplusKwh,
                 sourceRules.Count);
 
-            var allocations = mode switch
+            var Workflows = mode switch
             {
                 TransferDistributionMode.Fair =>
                     AllocateFair(sourcePosition, sourceRules, positionsByAddress),
@@ -83,21 +86,21 @@ public class TransferAllocationService : ITransferAllocationService
                 _ => AllocateFair(sourcePosition, sourceRules, positionsByAddress)
             };
 
-            allAllocations.AddRange(allocations);
+            allWorkflows.AddRange(Workflows);
         }
 
-        var created = new List<TransferExecution>();
+        var created = new List<TransferWorkflow>();
 
-        foreach (var allocation in allAllocations)
+        foreach (var Workflow in allWorkflows)
         {
-            var transfer = CreateTransferExecution(
-                allocation,
+            var workflow = CreateTransferWorkflow(
+                Workflow,
                 dayStartUtc,
                 TriggerType.Auto,
-                "Automatic allocation");
+                "Automatic planned transfer");
 
-            _db.TransferExecutions.Add(transfer);
-            created.Add(transfer);
+            _db.TransferWorkflows.Add(workflow);
+            created.Add(workflow);
         }
 
         if (created.Count > 0)
@@ -106,7 +109,7 @@ public class TransferAllocationService : ITransferAllocationService
         return created;
     }
 
-    public async Task<IReadOnlyList<TransferExecution>> RunAutomaticAllocationForSourceAsync(
+    public async Task<IReadOnlyList<TransferWorkflow>> RunAutomaticWorkflowForSourceAsync(
         int sourceAddressId,
         DateOnly day,
         CancellationToken ct = default)
@@ -114,14 +117,17 @@ public class TransferAllocationService : ITransferAllocationService
         var dayStartUtc = ToUtcStartOfDay(day);
         var dayEndUtc = dayStartUtc.AddDays(1);
 
+        // Refresh only this source's auto-planned rows for the day.
+        await DeleteExistingAutoPlannedRowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct);
+
         var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
         var positionsByAddress = positions.ToDictionary(x => x.AddressId);
 
         if (!positionsByAddress.TryGetValue(sourceAddressId, out var sourcePosition))
-            return Array.Empty<TransferExecution>();
+            return Array.Empty<TransferWorkflow>();
 
         if (sourcePosition.RemainingSurplusKwh <= 0.0001m)
-            return Array.Empty<TransferExecution>();
+            return Array.Empty<TransferWorkflow>();
 
         var rules = await _db.TransferRules
             .AsNoTracking()
@@ -130,7 +136,8 @@ public class TransferAllocationService : ITransferAllocationService
             .ToListAsync(ct);
 
         var mode = ResolveModeForSource(rules);
-        var allocations = mode switch
+
+        var Workflows = mode switch
         {
             TransferDistributionMode.Fair =>
                 AllocateFair(sourcePosition, rules, positionsByAddress),
@@ -144,18 +151,18 @@ public class TransferAllocationService : ITransferAllocationService
             _ => AllocateFair(sourcePosition, rules, positionsByAddress)
         };
 
-        var created = new List<TransferExecution>();
+        var created = new List<TransferWorkflow>();
 
-        foreach (var allocation in allocations)
+        foreach (var Workflow in Workflows)
         {
-            var transfer = CreateTransferExecution(
-                allocation,
+            var workflow = CreateTransferWorkflow(
+                Workflow,
                 dayStartUtc,
                 TriggerType.Auto,
-                $"Auto allocation for source {sourceAddressId}");
+                $"Automatic planned transfer for source {sourceAddressId}");
 
-            _db.TransferExecutions.Add(transfer);
-            created.Add(transfer);
+            _db.TransferWorkflows.Add(workflow);
+            created.Add(workflow);
         }
 
         if (created.Count > 0)
@@ -164,12 +171,12 @@ public class TransferAllocationService : ITransferAllocationService
         return created;
     }
 
-    public async Task<IReadOnlyList<TransferExecution>> ExecuteManualTransferAsync(
+    public async Task<IReadOnlyList<TransferWorkflow>> ExecuteManualTransferAsync(
         ManualTransferRequest request,
         CancellationToken ct = default)
     {
         if (request.Targets == null || request.Targets.Count == 0)
-            return Array.Empty<TransferExecution>();
+            return Array.Empty<TransferWorkflow>();
 
         var dayStartUtc = ToUtcStartOfDay(request.Day);
         var dayEndUtc = dayStartUtc.AddDays(1);
@@ -181,7 +188,7 @@ public class TransferAllocationService : ITransferAllocationService
             throw new InvalidOperationException(
                 $"Source address {request.SourceAddressId} has no balance position for {request.Day}.");
 
-        var created = new List<TransferExecution>();
+        var created = new List<TransferWorkflow>();
 
         foreach (var target in request.Targets)
         {
@@ -205,34 +212,35 @@ public class TransferAllocationService : ITransferAllocationService
             if (amount <= 0.0001m)
                 continue;
 
-            var allocation = new TransferAllocation
+            var Workflow = new TransferWorkflow
             {
                 SourceAddressId = request.SourceAddressId,
                 DestinationAddressId = target.DestinationAddressId,
                 RequestedKwh = decimal.Round(target.RequestedKwh, 4),
                 AllocatedKwh = amount,
                 TransferRuleId = null,
-                AppliedDistributionMode = TransferDistributionMode.Fair // manual exact transfer; mode is informational
+                AppliedDistributionModeEnum = TransferDistributionMode.Fair
             };
 
-            var transfer = CreateTransferExecution(
-                allocation,
+            var workflow = CreateTransferWorkflow(
+                Workflow,
                 dayStartUtc,
                 TriggerType.Manual,
                 request.Notes);
 
-            _db.TransferExecutions.Add(transfer);
-            created.Add(transfer);
+            _db.TransferWorkflows.Add(workflow);
+            created.Add(workflow);
 
+            // Prevent overbooking inside the SAME manual request.
             sourcePosition.AlreadyTransferredOutKwh += amount;
             destinationPosition.AlreadyTransferredInKwh += amount;
 
             _logger.LogInformation(
-                "Manual transfer created: {Source} -> {Destination}, requested={Requested}, allocated={Allocated}",
-                transfer.SourceAddressId,
-                transfer.DestinationAddressId,
-                transfer.RequestedKwh,
-                transfer.AllocatedKwh);
+                "Manual planned transfer created: {Source} -> {Destination}, requested={Requested}, planned={Allocated}",
+                workflow.SourceAddressId,
+                workflow.DestinationAddressId,
+                workflow.RequestedKwh,
+                workflow.AllocatedKwh);
         }
 
         if (created.Count > 0)
@@ -258,11 +266,18 @@ public class TransferAllocationService : ITransferAllocationService
             })
             .ToListAsync(ct);
 
-        var transferredOut = await _db.TransferExecutions
+        // Only REAL transfers reduce remaining.
+        var effectiveStatuses = new[]
+        {
+            (int)TransferStatus.Executed,
+            (int)TransferStatus.Settled
+        };
+
+        var transferredOut = await _db.TransferWorkflows
             .AsNoTracking()
             .Where(x => x.BalanceDayUtc >= dayStartUtc &&
                         x.BalanceDayUtc < dayEndUtc &&
-                        x.Status == (int)TransferStatus.Executed)
+                        effectiveStatuses.Contains(x.Status))
             .GroupBy(x => x.SourceAddressId)
             .Select(g => new
             {
@@ -271,11 +286,11 @@ public class TransferAllocationService : ITransferAllocationService
             })
             .ToListAsync(ct);
 
-        var transferredIn = await _db.TransferExecutions
+        var transferredIn = await _db.TransferWorkflows
             .AsNoTracking()
             .Where(x => x.BalanceDayUtc >= dayStartUtc &&
                         x.BalanceDayUtc < dayEndUtc &&
-                        x.Status == (int)TransferStatus.Executed)
+                        effectiveStatuses.Contains(x.Status))
             .GroupBy(x => x.DestinationAddressId)
             .Select(g => new
             {
@@ -299,12 +314,12 @@ public class TransferAllocationService : ITransferAllocationService
             .ToList();
     }
 
-    private List<TransferAllocation> AllocateFair(
+    private List<TransferWorkflow> AllocateFair(
         AddressTransferPosition sourcePosition,
         List<TransferRule> sourceRules,
         Dictionary<int, AddressTransferPosition> positionsByAddress)
     {
-        var result = new List<TransferAllocation>();
+        var result = new List<TransferWorkflow>();
 
         while (sourcePosition.RemainingSurplusKwh > 0.0001m)
         {
@@ -337,16 +352,17 @@ public class TransferAllocationService : ITransferAllocationService
                 if (amount <= 0.0001m)
                     continue;
 
-                result.Add(new TransferAllocation
+                result.Add(new TransferWorkflow
                 {
                     SourceAddressId = rule.SourceAddressId,
                     DestinationAddressId = rule.DestinationAddressId,
                     TransferRuleId = rule.Id,
                     RequestedKwh = amount,
                     AllocatedKwh = amount,
-                    AppliedDistributionMode = TransferDistributionMode.Fair
+                    AppliedDistributionModeEnum = TransferDistributionMode.Fair
                 });
 
+                // Prevent overbooking within THIS planning run only.
                 sourcePosition.AlreadyTransferredOutKwh += amount;
                 destination.AlreadyTransferredInKwh += amount;
                 allocatedThisRound += amount;
@@ -356,15 +372,15 @@ public class TransferAllocationService : ITransferAllocationService
                 break;
         }
 
-        return MergeAllocations(result);
+        return MergeWorkflows(result);
     }
 
-    private List<TransferAllocation> AllocatePriority(
+    private List<TransferWorkflow> AllocatePriority(
         AddressTransferPosition sourcePosition,
         List<TransferRule> sourceRules,
         Dictionary<int, AddressTransferPosition> positionsByAddress)
     {
-        var result = new List<TransferAllocation>();
+        var result = new List<TransferWorkflow>();
 
         foreach (var rule in sourceRules.OrderBy(x => x.Priority))
         {
@@ -387,13 +403,13 @@ public class TransferAllocationService : ITransferAllocationService
             if (amount <= 0.0001m)
                 continue;
 
-            result.Add(new TransferAllocation
+            result.Add(new TransferWorkflow
             {
                 SourceAddressId = rule.SourceAddressId,
                 DestinationAddressId = rule.DestinationAddressId,
                 RequestedKwh = amount,
                 AllocatedKwh = amount,
-                AppliedDistributionMode = TransferDistributionMode.Priority,
+                AppliedDistributionModeEnum = TransferDistributionMode.Priority,
                 TransferRuleId = rule.Id
             });
 
@@ -404,12 +420,12 @@ public class TransferAllocationService : ITransferAllocationService
         return result;
     }
 
-    private List<TransferAllocation> AllocateWeighted(
+    private List<TransferWorkflow> AllocateWeighted(
         AddressTransferPosition sourcePosition,
         List<TransferRule> sourceRules,
         Dictionary<int, AddressTransferPosition> positionsByAddress)
     {
-        var result = new List<TransferAllocation>();
+        var result = new List<TransferWorkflow>();
 
         while (sourcePosition.RemainingSurplusKwh > 0.0001m)
         {
@@ -447,13 +463,13 @@ public class TransferAllocationService : ITransferAllocationService
                 if (amount <= 0.0001m)
                     continue;
 
-                result.Add(new TransferAllocation
+                result.Add(new TransferWorkflow
                 {
                     SourceAddressId = rule.SourceAddressId,
                     DestinationAddressId = rule.DestinationAddressId,
                     RequestedKwh = targetAmount,
                     AllocatedKwh = amount,
-                    AppliedDistributionMode = TransferDistributionMode.Weighted,
+                    AppliedDistributionModeEnum = TransferDistributionMode.Weighted,
                     TransferRuleId = rule.Id
                 });
 
@@ -466,15 +482,14 @@ public class TransferAllocationService : ITransferAllocationService
                 break;
         }
 
-        return MergeAllocations(result);
+        return MergeWorkflows(result);
     }
 
-    private static List<TransferAllocation> MergeAllocations(
-        List<TransferAllocation> allocations)
+    private static List<TransferWorkflow> MergeWorkflows(List<TransferWorkflow> Workflows)
     {
-        return allocations
+        return Workflows
             .GroupBy(x => new { x.SourceAddressId, x.DestinationAddressId })
-            .Select(g => new TransferAllocation
+            .Select(g => new TransferWorkflow
             {
                 SourceAddressId = g.Key.SourceAddressId,
                 DestinationAddressId = g.Key.DestinationAddressId,
@@ -508,26 +523,59 @@ public class TransferAllocationService : ITransferAllocationService
     private static DateTime ToUtcStartOfDay(DateOnly day) =>
         DateTime.SpecifyKind(day.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
 
-    private static TransferExecution CreateTransferExecution(
-        TransferAllocation allocation,
+    private static TransferWorkflow CreateTransferWorkflow(
+        TransferWorkflow Workflow,
         DateTime balanceDayUtc,
         TriggerType triggerType,
         string? notes)
     {
-        return new TransferExecution
+        return new TransferWorkflow
         {
             BalanceDayUtc = balanceDayUtc,
             EffectiveAtUtc = DateTime.UtcNow,
-            SourceAddressId = allocation.SourceAddressId,
-            DestinationAddressId = allocation.DestinationAddressId,
-            RequestedKwh = allocation.RequestedKwh,
-            AllocatedKwh = allocation.AllocatedKwh,
-            TransferRuleId = allocation.TransferRuleId,
+            SourceAddressId = Workflow.SourceAddressId,
+            DestinationAddressId = Workflow.DestinationAddressId,
+            RequestedKwh = Workflow.RequestedKwh,
+            AllocatedKwh = Workflow.AllocatedKwh,
+            TransferRuleId = Workflow.TransferRuleId,
             TriggerTypeEnum = triggerType,
-            TransferStatusEnum = TransferStatus.Executed,
-            AppliedDistributionModeEnum = allocation.AppliedDistributionMode,
+            TransferStatusEnum = TransferStatus.Planned, // planner creates proposals, not executions
+            AppliedDistributionMode = Workflow.AppliedDistributionMode,
             Notes = notes,
             CreatedAtUtc = DateTime.UtcNow
         };
+    }
+
+    private async Task DeleteExistingAutoPlannedRowsAsync(
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        CancellationToken ct)
+    {
+        await _db.TransferWorkflows
+            .Where(x => x.BalanceDayUtc >= dayStartUtc &&
+                        x.BalanceDayUtc < dayEndUtc &&
+                        x.TriggerType == (int)TriggerType.Auto &&
+                        x.Status == (int)TransferStatus.Planned)
+            .ExecuteDeleteAsync(ct);
+    }
+
+    private async Task DeleteExistingAutoPlannedRowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        CancellationToken ct)
+    {
+        await _db.TransferWorkflows
+            .Where(x => x.SourceAddressId == sourceAddressId &&
+                        x.BalanceDayUtc >= dayStartUtc &&
+                        x.BalanceDayUtc < dayEndUtc &&
+                        x.TriggerType == (int)TriggerType.Auto &&
+                        x.Status == (int)TransferStatus.Planned)
+            .ExecuteDeleteAsync(ct);
+    }
+
+    Task<IReadOnlyList<TransferWorkflow>> ITransferWorkflowService.ExecuteManualTransferAsync(ManualTransferRequest request, CancellationToken ct)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -31,7 +31,7 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<ProviderSettlement> ProviderSettlements { get; set; }
 
-    public virtual DbSet<TransferExecution> TransferExecutions { get; set; }
+    public virtual DbSet<TransferWorkflow> TransferWorkflows { get; set; }
 
     public virtual DbSet<TransferRequest> TransferRequests { get; set; }
 
@@ -172,27 +172,29 @@ public partial class VnmDbContext : DbContext
                 .HasConstraintName("FK_ProviderSettlements_Addresses");
         });
 
-        modelBuilder.Entity<TransferExecution>(entity =>
+        modelBuilder.Entity<TransferWorkflow>(entity =>
         {
-            entity.HasIndex(e => e.DestinationAddressId, "IX_TransferExecutions_DestinationAddressId");
+            entity.ToTable("TransferWorkflow");
 
-            entity.HasIndex(e => e.SourceAddressId, "IX_TransferExecutions_SourceAddressId");
+            entity.HasIndex(e => e.DestinationAddressId, "IX_TransferWorkflow_DestinationAddressId");
 
-            entity.HasIndex(e => e.TransferRuleId, "IX_TransferExecutions_TransferRuleId");
+            entity.HasIndex(e => e.SourceAddressId, "IX_TransferWorkflow_SourceAddressId");
+
+            entity.HasIndex(e => e.TransferRuleId, "IX_TransferWorkflow_TransferRuleId");
 
             entity.Property(e => e.AllocatedKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.Notes).HasMaxLength(255);
             entity.Property(e => e.RequestedKwh).HasColumnType("decimal(18, 5)");
 
-            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferExecutionDestinationAddresses)
+            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferWorkflowDestinationAddresses)
                 .HasForeignKey(d => d.DestinationAddressId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
-            entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferExecutionSourceAddresses)
+            entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferWorkflowSourceAddresses)
                 .HasForeignKey(d => d.SourceAddressId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
-            entity.HasOne(d => d.TransferRule).WithMany(p => p.TransferExecutions)
+            entity.HasOne(d => d.TransferRule).WithMany(p => p.TransferWorkflows)
                 .HasForeignKey(d => d.TransferRuleId)
                 .OnDelete(DeleteBehavior.SetNull);
         });

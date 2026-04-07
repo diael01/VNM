@@ -1,18 +1,18 @@
-using Infrastructure.Options;
+﻿using Infrastructure.Options;
 using Microsoft.Extensions.Options;
 
 namespace EnergyManagement.Services.Transfers;
 
-public class TransferAllocationBackgroundService : BackgroundService
+public class TransferWorkflowBackgroundService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<TransferAllocationBackgroundService> _logger;
-    private readonly IOptionsMonitor<TransferAllocationOptions> _optionsMonitor;
+    private readonly ILogger<TransferWorkflowBackgroundService> _logger;
+    private readonly IOptionsMonitor<TransferWorkflowOptions> _optionsMonitor;
 
-    public TransferAllocationBackgroundService(
+    public TransferWorkflowBackgroundService(
         IServiceScopeFactory scopeFactory,
-        IOptionsMonitor<TransferAllocationOptions> optionsMonitor,
-        ILogger<TransferAllocationBackgroundService> logger)
+        IOptionsMonitor<TransferWorkflowOptions> optionsMonitor,
+        ILogger<TransferWorkflowBackgroundService> logger)
     {
         _scopeFactory = scopeFactory;
         _optionsMonitor = optionsMonitor;
@@ -41,13 +41,13 @@ public class TransferAllocationBackgroundService : BackgroundService
             using var scope = _scopeFactory.CreateScope();
 
             var service = scope.ServiceProvider
-                .GetRequiredService<ITransferAllocationService>();
+                .GetRequiredService<ITransferWorkflowService>();
 
             var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
 
             try
             {
-                var created = await service.RunAutomaticAllocationAsync(todayUtc, stoppingToken);
+                var created = await service.RunAutomaticWorkflowAsync(todayUtc, stoppingToken);
 
                 _logger.LogInformation(
                     "Automatic transfer allocation completed at {Time}. Created {Count} transfers. Mode={Mode}",
