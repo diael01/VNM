@@ -215,9 +215,8 @@ public class TransferWorkflowService : ITransferWorkflowService
             var Workflow = new TransferWorkflow
             {
                 SourceAddressId = request.SourceAddressId,
-                DestinationAddressId = target.DestinationAddressId,
-                RequestedKwh = decimal.Round(target.RequestedKwh, 4),
-                AllocatedKwh = amount,
+                DestinationAddressId = target.DestinationAddressId,                
+                AmountKwh = amount,
                 TransferRuleId = null,
                 AppliedDistributionModeEnum = TransferDistributionMode.Fair
             };
@@ -236,11 +235,10 @@ public class TransferWorkflowService : ITransferWorkflowService
             destinationPosition.AlreadyTransferredInKwh += amount;
 
             _logger.LogInformation(
-                "Manual planned transfer created: {Source} -> {Destination}, requested={Requested}, planned={Allocated}",
+                "Manual planned transfer created: {Source} -> {Destination}, planned={Amount}",
                 workflow.SourceAddressId,
-                workflow.DestinationAddressId,
-                workflow.RequestedKwh,
-                workflow.AllocatedKwh);
+                workflow.DestinationAddressId,                
+                workflow.AmountKwh);
         }
 
         if (created.Count > 0)
@@ -282,7 +280,7 @@ public class TransferWorkflowService : ITransferWorkflowService
             .Select(g => new
             {
                 AddressId = g.Key,
-                Amount = g.Sum(x => x.AllocatedKwh)
+                Amount = g.Sum(x => x.AmountKwh)
             })
             .ToListAsync(ct);
 
@@ -295,7 +293,7 @@ public class TransferWorkflowService : ITransferWorkflowService
             .Select(g => new
             {
                 AddressId = g.Key,
-                Amount = g.Sum(x => x.AllocatedKwh)
+                Amount = g.Sum(x => x.AmountKwh)
             })
             .ToListAsync(ct);
 
@@ -357,8 +355,7 @@ public class TransferWorkflowService : ITransferWorkflowService
                     SourceAddressId = rule.SourceAddressId,
                     DestinationAddressId = rule.DestinationAddressId,
                     TransferRuleId = rule.Id,
-                    RequestedKwh = amount,
-                    AllocatedKwh = amount,
+                    AmountKwh = amount,
                     AppliedDistributionModeEnum = TransferDistributionMode.Fair
                 });
 
@@ -407,8 +404,7 @@ public class TransferWorkflowService : ITransferWorkflowService
             {
                 SourceAddressId = rule.SourceAddressId,
                 DestinationAddressId = rule.DestinationAddressId,
-                RequestedKwh = amount,
-                AllocatedKwh = amount,
+                AmountKwh = amount,
                 AppliedDistributionModeEnum = TransferDistributionMode.Priority,
                 TransferRuleId = rule.Id
             });
@@ -467,8 +463,7 @@ public class TransferWorkflowService : ITransferWorkflowService
                 {
                     SourceAddressId = rule.SourceAddressId,
                     DestinationAddressId = rule.DestinationAddressId,
-                    RequestedKwh = targetAmount,
-                    AllocatedKwh = amount,
+                    AmountKwh = amount,
                     AppliedDistributionModeEnum = TransferDistributionMode.Weighted,
                     TransferRuleId = rule.Id
                 });
@@ -493,8 +488,7 @@ public class TransferWorkflowService : ITransferWorkflowService
             {
                 SourceAddressId = g.Key.SourceAddressId,
                 DestinationAddressId = g.Key.DestinationAddressId,
-                RequestedKwh = decimal.Round(g.Sum(x => x.RequestedKwh), 4),
-                AllocatedKwh = decimal.Round(g.Sum(x => x.AllocatedKwh), 4),
+                AmountKwh = decimal.Round(g.Sum(x => x.AmountKwh), 4),
                 TransferRuleId = g.First().TransferRuleId,
                 AppliedDistributionMode = g.First().AppliedDistributionMode
             })
@@ -535,8 +529,7 @@ public class TransferWorkflowService : ITransferWorkflowService
             EffectiveAtUtc = DateTime.UtcNow,
             SourceAddressId = Workflow.SourceAddressId,
             DestinationAddressId = Workflow.DestinationAddressId,
-            RequestedKwh = Workflow.RequestedKwh,
-            AllocatedKwh = Workflow.AllocatedKwh,
+            AmountKwh = Workflow.AmountKwh,
             TransferRuleId = Workflow.TransferRuleId,
             TriggerTypeEnum = triggerType,
             TransferStatusEnum = TransferStatus.Planned, // planner creates proposals, not executions

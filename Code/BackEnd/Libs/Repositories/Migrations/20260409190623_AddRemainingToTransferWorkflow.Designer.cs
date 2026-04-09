@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repositories.Models;
 
@@ -11,9 +12,11 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    partial class VnmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260409190623_AddRemainingToTransferWorkflow")]
+    partial class AddRemainingToTransferWorkflow
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -458,7 +461,7 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("AmountKwh")
+                    b.Property<decimal>("AllocatedKwh")
                         .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("AppliedDistributionMode")
@@ -473,9 +476,6 @@ namespace Repositories.Migrations
                     b.Property<int>("DestinationAddressId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("DestinationDeficitKwhAtWorkflow")
-                        .HasColumnType("decimal(18, 5)");
-
                     b.Property<DateTime>("EffectiveAtUtc")
                         .HasColumnType("datetime2");
 
@@ -486,14 +486,14 @@ namespace Repositories.Migrations
                     b.Property<int?>("Priority")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("RemainingSourceSurplusKwhAfterWorkflow")
+                    b.Property<decimal>("RemainingKwh")
+                        .HasColumnType("decimal(18, 5)");
+
+                    b.Property<decimal>("RequestedKwh")
                         .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("SourceAddressId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("SourceSurplusKwhAtWorkflow")
-                        .HasColumnType("decimal(18, 5)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");

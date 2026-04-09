@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Models;
-using Services.Inverter;
+using Repositories.CRUD.Repositories;
 
 namespace EnergyManagement.Controllers;
 
@@ -8,24 +8,24 @@ namespace EnergyManagement.Controllers;
 [Route("api/v1/[controller]")]
 public class InverterReadingsController : ControllerBase
 {
-    private readonly IInverterReadingService _inverterReadingService;
+    private readonly IInverterReadingRepository _inverterReadingRepository;
 
-    public InverterReadingsController(IInverterReadingService inverterReadingService)
+    public InverterReadingsController(IInverterReadingRepository inverterReadingRepository)
     {
-        _inverterReadingService = inverterReadingService;
+        _inverterReadingRepository = inverterReadingRepository;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var readings = await _inverterReadingService.GetAllAsync();
+        var readings = await _inverterReadingRepository.GetAllAsync();
         return Ok(readings);
     }
 
     [HttpGet("latest/{count}")]
     public async Task<IActionResult> GetLatest(int count)
     {
-        var readings = await _inverterReadingService.GetLatestAsync(count);
+        var readings = await _inverterReadingRepository.GetLatestReadingsAsync(count);
         return Ok(readings);
     }
 

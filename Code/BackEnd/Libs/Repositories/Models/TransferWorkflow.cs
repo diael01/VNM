@@ -15,14 +15,13 @@ public partial class TransferWorkflow
 
     public int DestinationAddressId { get; set; }
 
-    public decimal RequestedKwh { get; set; }
-
-    public decimal AllocatedKwh { get; set; }
+    public decimal SourceSurplusKwhAtWorkflow { get; set; }
+    public decimal AmountKwh { get; set; }
+    public int Status { get; set; }
+    public decimal DestinationDeficitKwhAtWorkflow { get; set; }
+    public decimal RemainingSourceSurplusKwhAfterWorkflow { get; set; }
 
     public int TriggerType { get; set; }
-
-    public int Status { get; set; }
-
     public string? Notes { get; set; }
 
     public int? Priority { get; set; }

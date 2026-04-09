@@ -182,9 +182,11 @@ public partial class VnmDbContext : DbContext
 
             entity.HasIndex(e => e.TransferRuleId, "IX_TransferWorkflow_TransferRuleId");
 
-            entity.Property(e => e.AllocatedKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.AmountKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.DestinationDeficitKwhAtWorkflow).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.Notes).HasMaxLength(255);
-            entity.Property(e => e.RequestedKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.RemainingSourceSurplusKwhAfterWorkflow).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.SourceSurplusKwhAtWorkflow).HasColumnType("decimal(18, 5)");
 
             entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferWorkflowDestinationAddresses)
                 .HasForeignKey(d => d.DestinationAddressId)

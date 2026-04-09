@@ -100,8 +100,8 @@ public class TransferWorkflowServiceTests
         var to2 = result.Single(x => x.DestinationAddressId == 2);
         var to3 = result.Single(x => x.DestinationAddressId == 3);
 
-        Assert.Equal(5m, to2.AllocatedKwh);
-        Assert.Equal(5m, to3.AllocatedKwh);
+        Assert.Equal(5m, to2.AmountKwh);
+        Assert.Equal(5m, to3.AmountKwh);
 
         Assert.All(result, x => Assert.Equal((int)TransferStatus.Executed, x.Status));
         Assert.All(result, x => Assert.Equal((int)TriggerType.Auto, x.TriggerType));
@@ -151,8 +151,8 @@ public class TransferWorkflowServiceTests
         var to2 = result.Single(x => x.DestinationAddressId == 2);
         var to3 = result.Single(x => x.DestinationAddressId == 3);
 
-        Assert.Equal(3m, to2.AllocatedKwh);
-        Assert.Equal(7m, to3.AllocatedKwh);
+        Assert.Equal(3m, to2.AmountKwh);
+        Assert.Equal(7m, to3.AmountKwh);
     }
 
     [Fact]
@@ -201,8 +201,8 @@ public class TransferWorkflowServiceTests
         var to2 = result.Single(x => x.DestinationAddressId == 2);
         var to3 = result.Single(x => x.DestinationAddressId == 3);
 
-        Assert.Equal(7m, to2.AllocatedKwh);
-        Assert.Equal(3m, to3.AllocatedKwh);
+        Assert.Equal(7m, to2.AmountKwh);
+        Assert.Equal(3m, to3.AmountKwh);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public class TransferWorkflowServiceTests
 
         var persisted = await db.TransferWorkflows.ToListAsync();
         Assert.Single(persisted);
-        Assert.Equal(5m, persisted[0].AllocatedKwh);
+        Assert.Equal(5m, persisted[0].AmountKwh);
     }
 
     [Fact]

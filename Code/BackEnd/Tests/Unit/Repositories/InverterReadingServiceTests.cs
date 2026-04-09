@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
-using Services.Inverter;
 using Repositories.Models;
 using Repositories.Models;
 using Xunit;
@@ -22,7 +21,7 @@ public class InverterReadingServiceTests
     {
         using var context = CreateContext("InverterReading_Service_CRUD");
         var repository = new InverterReadingRepository(context);
-        var service = new InverterReadingService(repository);
+        var repositoryUnderTest = repository;
 
         var reading = new InverterReading
         {
@@ -33,25 +32,25 @@ public class InverterReadingServiceTests
             Source = "service-test"
         };
 
-        var created = await service.CreateAsync(reading);
+        var created = await repositoryUnderTest.AddAsync(reading);
         Assert.NotNull(created);
         Assert.True(created.Id > 0);
 
-        var fetched = await service.GetByIdAsync(created.Id);
+        var fetched = await repositoryUnderTest.GetByIdAsync(created.Id);
         Assert.NotNull(fetched);
         Assert.Equal("service-test", fetched!.Source);
 
         created.Power = 999;
-        var updated = await service.UpdateAsync(created);
+        var updated = await repositoryUnderTest.UpdateAsync(created);
         Assert.Equal(999, updated.Power);
 
-        var all = (await service.GetAllAsync()).ToList();
+        var all = (await repositoryUnderTest.GetAllAsync()).ToList();
         Assert.Single(all);
 
-        var deleteResult = await service.DeleteAsync(created.Id);
+        var deleteResult = await repositoryUnderTest.DeleteAsync(created.Id);
         Assert.True(deleteResult);
 
-        var notFound = await service.GetByIdAsync(created.Id);
+        var notFound = await repositoryUnderTest.GetByIdAsync(created.Id);
         Assert.Null(notFound);
     }
 }

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Models;
-using Services.Meter;
+using Repositories.CRUD.Repositories;
 
 namespace EnergyManagement.Controllers;
 
@@ -8,24 +8,24 @@ namespace EnergyManagement.Controllers;
  [Route("api/v1/[controller]")]
 public class ConsumptionReadingsController : ControllerBase
 {
-    private readonly IConsumptionReadingService _consumptionReadingService;
+    private readonly IConsumptionReadingRepository _consumptionReadingRepository;
 
-    public ConsumptionReadingsController(IConsumptionReadingService consumptionReadingService)
+    public ConsumptionReadingsController(IConsumptionReadingRepository consumptionReadingRepository)
     {
-        _consumptionReadingService = consumptionReadingService;
+        _consumptionReadingRepository = consumptionReadingRepository;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var readings = await _consumptionReadingService.GetAllAsync();
+        var readings = await _consumptionReadingRepository.GetAllAsync();
         return Ok(readings);
     }
 
     [HttpGet("latest/{count}")]
     public async Task<IActionResult> GetLatest(int count)
     {
-        var readings = await _consumptionReadingService.GetLatestAsync(count);
+        var readings = await _consumptionReadingRepository.GetLatestReadingsAsync(count);
         return Ok(readings);
     }
 }
