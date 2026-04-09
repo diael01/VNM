@@ -12,7 +12,7 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    [Migration("20260406172125_InitialCreate")]
+    [Migration("20260409212322_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -378,62 +378,6 @@ namespace Repositories.Migrations
                     b.ToTable("ProviderSettlements");
                 });
 
-            modelBuilder.Entity("Repositories.Models.TransferExecution", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("AllocatedKwh")
-                        .HasColumnType("decimal(18, 5)");
-
-                    b.Property<int>("AppliedDistributionMode")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("BalanceDayUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DestinationAddressId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("EffectiveAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<decimal>("RequestedKwh")
-                        .HasColumnType("decimal(18, 5)");
-
-                    b.Property<int>("SourceAddressId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TransferRuleId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TriggerType")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "DestinationAddressId" }, "IX_TransferExecutions_DestinationAddressId");
-
-                    b.HasIndex(new[] { "SourceAddressId" }, "IX_TransferExecutions_SourceAddressId");
-
-                    b.HasIndex(new[] { "TransferRuleId" }, "IX_TransferExecutions_TransferRuleId");
-
-                    b.ToTable("TransferExecutions");
-                });
-
             modelBuilder.Entity("Repositories.Models.TransferRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -507,6 +451,74 @@ namespace Repositories.Migrations
                     b.HasIndex(new[] { "SourceAddressId" }, "IX_TransferRules_SourceAddressId");
 
                     b.ToTable("TransferRules");
+                });
+
+            modelBuilder.Entity("Repositories.Models.TransferWorkflow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AmountKwh")
+                        .HasColumnType("decimal(18, 5)");
+
+                    b.Property<int>("AppliedDistributionMode")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("BalanceDayUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DestinationAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DestinationDeficitKwhAtWorkflow")
+                        .HasColumnType("decimal(18, 5)");
+
+                    b.Property<DateTime>("EffectiveAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int?>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("RemainingSourceSurplusKwhAfterWorkflow")
+                        .HasColumnType("decimal(18, 5)");
+
+                    b.Property<int>("SourceAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SourceSurplusKwhAtWorkflow")
+                        .HasColumnType("decimal(18, 5)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TransferRuleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TriggerType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("WeightPercent")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "DestinationAddressId" }, "IX_TransferWorkflow_DestinationAddressId");
+
+                    b.HasIndex(new[] { "SourceAddressId" }, "IX_TransferWorkflow_SourceAddressId");
+
+                    b.HasIndex(new[] { "TransferRuleId" }, "IX_TransferWorkflow_TransferRuleId");
+
+                    b.ToTable("TransferWorkflow", (string)null);
                 });
 
             modelBuilder.Entity("AspNetUserRole", b =>
@@ -611,30 +623,6 @@ namespace Repositories.Migrations
                     b.Navigation("Address");
                 });
 
-            modelBuilder.Entity("Repositories.Models.TransferExecution", b =>
-                {
-                    b.HasOne("Repositories.Models.Address", "DestinationAddress")
-                        .WithMany("TransferExecutionDestinationAddresses")
-                        .HasForeignKey("DestinationAddressId")
-                        .IsRequired();
-
-                    b.HasOne("Repositories.Models.Address", "SourceAddress")
-                        .WithMany("TransferExecutionSourceAddresses")
-                        .HasForeignKey("SourceAddressId")
-                        .IsRequired();
-
-                    b.HasOne("Repositories.Models.TransferRule", "TransferRule")
-                        .WithMany("TransferExecutions")
-                        .HasForeignKey("TransferRuleId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("DestinationAddress");
-
-                    b.Navigation("SourceAddress");
-
-                    b.Navigation("TransferRule");
-                });
-
             modelBuilder.Entity("Repositories.Models.TransferRule", b =>
                 {
                     b.HasOne("Repositories.Models.Address", "DestinationAddress")
@@ -652,6 +640,30 @@ namespace Repositories.Migrations
                     b.Navigation("SourceAddress");
                 });
 
+            modelBuilder.Entity("Repositories.Models.TransferWorkflow", b =>
+                {
+                    b.HasOne("Repositories.Models.Address", "DestinationAddress")
+                        .WithMany("TransferWorkflowDestinationAddresses")
+                        .HasForeignKey("DestinationAddressId")
+                        .IsRequired();
+
+                    b.HasOne("Repositories.Models.Address", "SourceAddress")
+                        .WithMany("TransferWorkflowSourceAddresses")
+                        .HasForeignKey("SourceAddressId")
+                        .IsRequired();
+
+                    b.HasOne("Repositories.Models.TransferRule", "TransferRule")
+                        .WithMany("TransferWorkflows")
+                        .HasForeignKey("TransferRuleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DestinationAddress");
+
+                    b.Navigation("SourceAddress");
+
+                    b.Navigation("TransferRule");
+                });
+
             modelBuilder.Entity("Repositories.Models.Address", b =>
                 {
                     b.Navigation("ConsumptionReadings");
@@ -664,13 +676,13 @@ namespace Repositories.Migrations
 
                     b.Navigation("ProviderSettlements");
 
-                    b.Navigation("TransferExecutionDestinationAddresses");
-
-                    b.Navigation("TransferExecutionSourceAddresses");
-
                     b.Navigation("TransferRuleDestinationAddresses");
 
                     b.Navigation("TransferRuleSourceAddresses");
+
+                    b.Navigation("TransferWorkflowDestinationAddresses");
+
+                    b.Navigation("TransferWorkflowSourceAddresses");
                 });
 
             modelBuilder.Entity("Repositories.Models.AspNetRole", b =>
@@ -690,7 +702,7 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.TransferRule", b =>
                 {
-                    b.Navigation("TransferExecutions");
+                    b.Navigation("TransferWorkflows");
                 });
 #pragma warning restore 612, 618
         }

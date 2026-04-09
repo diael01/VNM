@@ -31,11 +31,11 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<ProviderSettlement> ProviderSettlements { get; set; }
 
-    public virtual DbSet<TransferWorkflow> TransferWorkflows { get; set; }
-
     public virtual DbSet<TransferRequest> TransferRequests { get; set; }
 
     public virtual DbSet<TransferRule> TransferRules { get; set; }
+
+    public virtual DbSet<TransferWorkflow> TransferWorkflows { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -172,35 +172,6 @@ public partial class VnmDbContext : DbContext
                 .HasConstraintName("FK_ProviderSettlements_Addresses");
         });
 
-        modelBuilder.Entity<TransferWorkflow>(entity =>
-        {
-            entity.ToTable("TransferWorkflow");
-
-            entity.HasIndex(e => e.DestinationAddressId, "IX_TransferWorkflow_DestinationAddressId");
-
-            entity.HasIndex(e => e.SourceAddressId, "IX_TransferWorkflow_SourceAddressId");
-
-            entity.HasIndex(e => e.TransferRuleId, "IX_TransferWorkflow_TransferRuleId");
-
-            entity.Property(e => e.AmountKwh).HasColumnType("decimal(18, 5)");
-            entity.Property(e => e.DestinationDeficitKwhAtWorkflow).HasColumnType("decimal(18, 5)");
-            entity.Property(e => e.Notes).HasMaxLength(255);
-            entity.Property(e => e.RemainingSourceSurplusKwhAfterWorkflow).HasColumnType("decimal(18, 5)");
-            entity.Property(e => e.SourceSurplusKwhAtWorkflow).HasColumnType("decimal(18, 5)");
-
-            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferWorkflowDestinationAddresses)
-                .HasForeignKey(d => d.DestinationAddressId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferWorkflowSourceAddresses)
-                .HasForeignKey(d => d.SourceAddressId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(d => d.TransferRule).WithMany(p => p.TransferWorkflows)
-                .HasForeignKey(d => d.TransferRuleId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
-
         modelBuilder.Entity<TransferRequest>(entity =>
         {
             entity.Property(e => e.ActualAmount).HasColumnType("decimal(18, 5)");
@@ -223,6 +194,36 @@ public partial class VnmDbContext : DbContext
             entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferRuleSourceAddresses)
                 .HasForeignKey(d => d.SourceAddressId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<TransferWorkflow>(entity =>
+        {
+            entity.ToTable("TransferWorkflow");
+
+            entity.HasIndex(e => e.DestinationAddressId, "IX_TransferWorkflow_DestinationAddressId");
+
+            entity.HasIndex(e => e.SourceAddressId, "IX_TransferWorkflow_SourceAddressId");
+
+            entity.HasIndex(e => e.TransferRuleId, "IX_TransferWorkflow_TransferRuleId");
+
+            entity.Property(e => e.AmountKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.DestinationDeficitKwhAtWorkflow).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.Notes).HasMaxLength(255);
+            entity.Property(e => e.RemainingSourceSurplusKwhAfterWorkflow).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.SourceSurplusKwhAtWorkflow).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.WeightPercent).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferWorkflowDestinationAddresses)
+                .HasForeignKey(d => d.DestinationAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferWorkflowSourceAddresses)
+                .HasForeignKey(d => d.SourceAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.TransferRule).WithMany(p => p.TransferWorkflows)
+                .HasForeignKey(d => d.TransferRuleId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         OnModelCreatingPartial(modelBuilder);

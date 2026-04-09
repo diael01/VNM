@@ -29,11 +29,11 @@ public partial class Address
 
     public virtual ICollection<ProviderSettlement> ProviderSettlements { get; set; } = new List<ProviderSettlement>();
 
-    public virtual ICollection<TransferWorkflow> TransferWorkflowDestinationAddresses { get; set; } = new List<TransferWorkflow>();
-
-    public virtual ICollection<TransferWorkflow> TransferWorkflowSourceAddresses { get; set; } = new List<TransferWorkflow>();
-
     public virtual ICollection<TransferRule> TransferRuleDestinationAddresses { get; set; } = new List<TransferRule>();
 
     public virtual ICollection<TransferRule> TransferRuleSourceAddresses { get; set; } = new List<TransferRule>();
+
+    public virtual ICollection<TransferWorkflow> TransferWorkflowDestinationAddresses { get; set; } = new List<TransferWorkflow>();
+
+    public virtual ICollection<TransferWorkflow> TransferWorkflowSourceAddresses { get; set; } = new List<TransferWorkflow>();
 }

@@ -505,7 +505,7 @@ namespace Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal?>("WeightPercent")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id");
 

@@ -302,7 +302,7 @@ namespace Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TransferExecutions",
+                name: "TransferWorkflow",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -311,30 +311,34 @@ namespace Repositories.Migrations
                     BalanceDayUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     SourceAddressId = table.Column<int>(type: "int", nullable: false),
                     DestinationAddressId = table.Column<int>(type: "int", nullable: false),
-                    RequestedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
-                    AllocatedKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    SourceSurplusKwhAtWorkflow = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    DestinationDeficitKwhAtWorkflow = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     TriggerType = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     AppliedDistributionMode = table.Column<int>(type: "int", nullable: false),
-                    TransferRuleId = table.Column<int>(type: "int", nullable: true)
+                    TransferRuleId = table.Column<int>(type: "int", nullable: true),
+                    Priority = table.Column<int>(type: "int", nullable: true),
+                    WeightPercent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    RemainingSourceSurplusKwhAfterWorkflow = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    AmountKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TransferExecutions", x => x.Id);
+                    table.PrimaryKey("PK_TransferWorkflow", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TransferExecutions_Addresses_DestinationAddressId",
+                        name: "FK_TransferWorkflow_Addresses_DestinationAddressId",
                         column: x => x.DestinationAddressId,
                         principalTable: "Addresses",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_TransferExecutions_Addresses_SourceAddressId",
+                        name: "FK_TransferWorkflow_Addresses_SourceAddressId",
                         column: x => x.SourceAddressId,
                         principalTable: "Addresses",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_TransferExecutions_TransferRules_TransferRuleId",
+                        name: "FK_TransferWorkflow_TransferRules_TransferRuleId",
                         column: x => x.TransferRuleId,
                         principalTable: "TransferRules",
                         principalColumn: "Id",
@@ -392,21 +396,6 @@ namespace Repositories.Migrations
                 column: "AddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransferExecutions_DestinationAddressId",
-                table: "TransferExecutions",
-                column: "DestinationAddressId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransferExecutions_SourceAddressId",
-                table: "TransferExecutions",
-                column: "SourceAddressId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransferExecutions_TransferRuleId",
-                table: "TransferExecutions",
-                column: "TransferRuleId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_TransferRules_DestinationAddressId",
                 table: "TransferRules",
                 column: "DestinationAddressId");
@@ -415,6 +404,21 @@ namespace Repositories.Migrations
                 name: "IX_TransferRules_SourceAddressId",
                 table: "TransferRules",
                 column: "SourceAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferWorkflow_DestinationAddressId",
+                table: "TransferWorkflow",
+                column: "DestinationAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferWorkflow_SourceAddressId",
+                table: "TransferWorkflow",
+                column: "SourceAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransferWorkflow_TransferRuleId",
+                table: "TransferWorkflow",
+                column: "TransferRuleId");
         }
 
         /// <inheritdoc />
@@ -442,10 +446,10 @@ namespace Repositories.Migrations
                 name: "ProviderSettlements");
 
             migrationBuilder.DropTable(
-                name: "TransferExecutions");
+                name: "TransferRequests");
 
             migrationBuilder.DropTable(
-                name: "TransferRequests");
+                name: "TransferWorkflow");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
