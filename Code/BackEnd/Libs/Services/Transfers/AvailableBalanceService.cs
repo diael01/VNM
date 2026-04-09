@@ -7,9 +7,6 @@ using Repositories.Models;
 
 namespace EnergyManagement.Services.Transfers
 {
-  
-
-
     public class AvailableBalanceService : IAvailableBalanceService
     {
         private readonly VnmDbContext _dbContext;

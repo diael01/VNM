@@ -19,6 +19,10 @@ public partial class TransferWorkflow
 
     public decimal DestinationDeficitKwhAtWorkflow { get; set; }
 
+    public decimal RemainingSourceSurplusKwhAfterWorkflow { get; set; }
+
+    public decimal AmountKwh { get; set; }
+
     public int TriggerType { get; set; }
 
     public int Status { get; set; }
@@ -34,10 +38,6 @@ public partial class TransferWorkflow
     public int? Priority { get; set; }
 
     public decimal? WeightPercent { get; set; }
-
-    public decimal RemainingSourceSurplusKwhAfterWorkflow { get; set; }
-
-    public decimal AmountKwh { get; set; }
 
     public virtual Address DestinationAddress { get; set; } = null!;
 
