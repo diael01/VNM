@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInverterInfoService, InverterInfoService>();
          services.AddScoped<IDailyBalanceCalculationService, DailyBalanceCalculationService>();
         services.AddScoped<ITransferRuleService, TransferRuleService>();
+        services.AddScoped<ITransferWorkflowCrudService, TransferWorkflowCrudService>();
 
         // Register BFF redirect services
         services.AddScoped<IDashboardAddressRedirectService, DashboardAddressRedirectService>();
@@ -28,6 +29,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardConsumptionRedirectService, DashboardConsumptionRedirectService>();
          services.AddScoped<IDashboardDailyBalanceRedirectService, DashboardDailyBalanceRedirectService>();
         services.AddScoped<IDashboardTransferRuleRedirectService, DashboardTransferRuleRedirectService>();
+        services.AddScoped<IDashboardTransferWorkflowRedirectService, DashboardTransferWorkflowRedirectService>();
 
         services.AddScoped<IProviderSettlementService, ProviderSettlementService>();
         services.AddScoped<IAvailableBalanceService, AvailableBalanceService>();

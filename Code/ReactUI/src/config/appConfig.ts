@@ -48,6 +48,7 @@ const invertersPath = import.meta.env.VITE_INVERTERS_PATH || "/api/v1/dashboard/
 const consumptionPath = import.meta.env.VITE_CONSUMPTION_PATH || "/api/v1/dashboard/consumptionReadings"
 const dailyBalancePath = import.meta.env.VITE_DAILY_BALANCE_PATH || "/api/v1/dashboard/analytics/dailybalance"
 const transferRulesPath = import.meta.env.VITE_TRANSFER_RULE_PATH || "/api/v1/dashboard/transferRules"
+const transferWorkflowsPath = import.meta.env.VITE_TRANSFER_WORKFLOW_PATH || "/api/v1/dashboard/transferWorkflows"
 
 export const appConfig = {
   apiBaseUrl,
@@ -63,6 +64,7 @@ export const appConfig = {
     consumption: consumptionPath,
     dailyBalance: dailyBalancePath,
     transferRules: transferRulesPath,
+    transferWorkflows: transferWorkflowsPath,
   },
   urls: {
     authMe: combine(apiBaseUrl, authMePath),
@@ -76,6 +78,7 @@ export const appConfig = {
     consumptionReadings: combine(apiBaseUrl, consumptionPath),
     dailyBalance: combine(apiBaseUrl, dailyBalancePath),
     transferRules: combine(apiBaseUrl, transferRulesPath),
+    transferWorkflows: combine(apiBaseUrl, transferWorkflowsPath),
   },
 }
 

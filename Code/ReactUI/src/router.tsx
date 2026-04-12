@@ -4,6 +4,7 @@ import InverterReadingsPage from "./pages/InverterReadingsPage";
 import Inverters from "./pages/Inverters";
 import AdrMgmt from "./pages/AdrMgmt";
 import TransferRules from "./pages/TransferRules";
+import NewTransfer from "./pages/NewTransfer";
 import { MainMenuRouter } from "./pages/MainMenuRouter";
 import AppLayoutRoute from "./AppLayoutRoute";
 
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
           { path: "assets/addresses", element: <AdrMgmt /> },
           { path: "assets/inverters", element: <Inverters /> },       
           { path: "transfers/rules", element: <TransferRules /> },
+          { path: "transfers/new", element: <NewTransfer /> },
           { path: "data/inverterreadings", element: <InverterReadingsPage permissions={[]}/> },
            { path: "data/consumptionreadings", element: <ConsumptionPage permissions={[]}/> },
           { path: "analytics", element: <div>Analytics (placeholder)</div> },
