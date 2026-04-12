@@ -3,6 +3,7 @@ using Services.Authorization;
 using Services.Inverter;
 using Services.Identity;
 using Services.Redirect;
+using Services.Transfers;
 using EnergyManagement.Services.Analytics;
 using EnergyManagement.Services.Providers;
 using EnergyManagement.Services.Transfers;
@@ -19,12 +20,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAddressService, AddressService>();
         services.AddScoped<IInverterInfoService, InverterInfoService>();
          services.AddScoped<IDailyBalanceCalculationService, DailyBalanceCalculationService>();
+        services.AddScoped<ITransferRuleService, TransferRuleService>();
 
         // Register BFF redirect services
         services.AddScoped<IDashboardAddressRedirectService, DashboardAddressRedirectService>();
         services.AddScoped<IDashboardInverterRedirectService, DashboardInverterRedirectService>();
         services.AddScoped<IDashboardConsumptionRedirectService, DashboardConsumptionRedirectService>();
          services.AddScoped<IDashboardDailyBalanceRedirectService, DashboardDailyBalanceRedirectService>();
+        services.AddScoped<IDashboardTransferRuleRedirectService, DashboardTransferRuleRedirectService>();
 
         services.AddScoped<IProviderSettlementService, ProviderSettlementService>();
         services.AddScoped<IAvailableBalanceService, AvailableBalanceService>();

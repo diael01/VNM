@@ -302,86 +302,103 @@ public class TransferWorkflowService : ITransferWorkflowService
             .ToList();
     }
 
-    private List<TransferWorkflow> AllocateFair(
-        AddressTransferPosition sourcePosition,
-        List<TransferRule> sourceRules,
-        Dictionary<int, AddressTransferPosition> positionsByAddress)
-    {
-        var sourceAvailableAtStart = decimal.Round(sourcePosition.RemainingSurplusKwh, 4);
-        var remainingSource = sourceAvailableAtStart;
-        var allocations = new Dictionary<int, decimal>();
-        var destinationNeedsAtStart = new Dictionary<int, decimal>();
+private List<TransferWorkflow> AllocateFair(
+    AddressTransferPosition sourcePosition,
+    List<TransferRule> sourceRules,
+    Dictionary<int, AddressTransferPosition> positionsByAddress)
+{
+    var sourceAvailableAtStart = decimal.Round(sourcePosition.RemainingSurplusKwh, 4);
+    var remainingSource = sourceAvailableAtStart;
 
-        var candidates = sourceRules
-            .Where(rule => positionsByAddress.TryGetValue(rule.DestinationAddressId, out _))
-            .Select(rule =>
+    var allocationsByRuleId = new Dictionary<int, decimal>();
+    var destinationNeedsAtStart = new Dictionary<int, decimal>();
+
+    // Build initial candidates and capture starting needs ONCE
+    var candidates = sourceRules
+        .Where(rule => positionsByAddress.TryGetValue(rule.DestinationAddressId, out _))
+        .Select(rule =>
+        {
+            var destination = positionsByAddress[rule.DestinationAddressId];
+
+            var destinationNeedAtStart = decimal.Round(destination.RemainingDeficitKwh, 4);
+            var maxForRule = rule.MaxDailyKwh ?? decimal.MaxValue;
+
+            var capacity = decimal.Round(Math.Min(destinationNeedAtStart, maxForRule), 4);
+
+            if (!destinationNeedsAtStart.ContainsKey(rule.DestinationAddressId))
+                destinationNeedsAtStart[rule.DestinationAddressId] = destinationNeedAtStart;
+
+            return new FairCandidate
             {
-                var destination = positionsByAddress[rule.DestinationAddressId];
-                var destinationNeedAtStart = decimal.Round(destination.RemainingDeficitKwh, 4);
-                var maxForRule = decimal.Round(rule.MaxDailyKwh ?? decimal.MaxValue, 4);
-                var capacity = decimal.Round(Math.Min(destinationNeedAtStart, maxForRule), 4);
+                Rule = rule,
+                RemainingCapacity = capacity
+            };
+        })
+        .Where(x => x.RemainingCapacity > Epsilon)
+        .ToList();
 
-                if (!destinationNeedsAtStart.ContainsKey(rule.DestinationAddressId))
-                    destinationNeedsAtStart[rule.DestinationAddressId] = destinationNeedAtStart;
-
-                return new FairCandidate
-                {
-                    Rule = rule,
-                    Destination = destination,
-                    RemainingCapacity = capacity
-                };
-            })
+    // Progressive equal-share distribution
+    while (remainingSource > Epsilon)
+    {
+        var active = candidates
             .Where(x => x.RemainingCapacity > Epsilon)
             .ToList();
 
-        while (remainingSource > Epsilon)
+        if (active.Count == 0)
+            break;
+
+        var equalShare = decimal.Round(remainingSource / active.Count, 4);
+        if (equalShare <= Epsilon)
+            break;
+
+        var allocatedThisRound = 0m;
+
+        foreach (var candidate in active)
         {
-            var active = candidates.Where(x => x.RemainingCapacity > Epsilon).ToList();
-            if (active.Count == 0)
-                break;
+            var transferKwh = decimal.Round(
+                Math.Min(equalShare, candidate.RemainingCapacity), 4);
 
-            var equalShare = decimal.Round(remainingSource / active.Count, 4);
-            if (equalShare <= Epsilon)
-                break;
+            if (transferKwh <= Epsilon)
+                continue;
 
-            var allocatedThisRound = 0m;
-
-            foreach (var candidate in active)
-            {
-                var transferKwh = decimal.Round(Math.Min(equalShare, candidate.RemainingCapacity), 4);
-                if (transferKwh <= Epsilon)
-                    continue;
-
-                allocations[candidate.Rule.Id] = allocations.TryGetValue(candidate.Rule.Id, out var current)
+            allocationsByRuleId[candidate.Rule.Id] =
+                allocationsByRuleId.TryGetValue(candidate.Rule.Id, out var current)
                     ? decimal.Round(current + transferKwh, 4)
                     : transferKwh;
 
-                candidate.RemainingCapacity = decimal.Round(candidate.RemainingCapacity - transferKwh, 4);
-                remainingSource = decimal.Round(remainingSource - transferKwh, 4);
-                allocatedThisRound += transferKwh;
-            }
+            candidate.RemainingCapacity =
+                decimal.Round(candidate.RemainingCapacity - transferKwh, 4);
 
-            if (allocatedThisRound <= Epsilon)
-                break;
+            remainingSource =
+                decimal.Round(remainingSource - transferKwh, 4);
+
+            allocatedThisRound += transferKwh;
         }
 
-        var result = BuildWorkflowRowsFromAllocations(
-            sourceRules,
-            positionsByAddress,
-            allocations,
-            destinationNeedsAtStart,
-            sourceAvailableAtStart,
-            TransferDistributionMode.Fair);
-
-        foreach (var workflow in result)
-        {
-            sourcePosition.AlreadyTransferredOutKwh += workflow.AmountKwh;
-            if (positionsByAddress.TryGetValue(workflow.DestinationAddressId, out var destination))
-                destination.AlreadyTransferredInKwh += workflow.AmountKwh;
-        }
-
-        return result;
+        if (allocatedThisRound <= Epsilon)
+            break;
     }
+
+    // Build workflow rows using snapshots
+    var result = BuildWorkflowRowsFromAllocations(
+        sourceRules,
+        positionsByAddress,
+        allocationsByRuleId,
+        destinationNeedsAtStart,
+        sourceAvailableAtStart,
+        TransferDistributionMode.Fair);
+
+    // Only now mutate positions
+    foreach (var workflow in result)
+    {
+        sourcePosition.AlreadyTransferredOutKwh += workflow.AmountKwh;
+
+        if (positionsByAddress.TryGetValue(workflow.DestinationAddressId, out var dest))
+            dest.AlreadyTransferredInKwh += workflow.AmountKwh;
+    }
+
+    return result;
+}
 
     private List<TransferWorkflow> AllocatePriority(
         AddressTransferPosition sourcePosition,
@@ -507,49 +524,51 @@ public class TransferWorkflowService : ITransferWorkflowService
         return result;
     }
 
-    private List<TransferWorkflow> BuildWorkflowRowsFromAllocations(
-        List<TransferRule> sourceRules,
-        Dictionary<int, AddressTransferPosition> positionsByAddress,
-        Dictionary<int, decimal> allocationsByRuleId,
-        Dictionary<int, decimal> destinationNeedsAtStart,
-        decimal sourceAvailableAtStart,
-        TransferDistributionMode mode)
+  private List<TransferWorkflow> BuildWorkflowRowsFromAllocations(
+    List<TransferRule> sourceRules,
+    Dictionary<int, AddressTransferPosition> positionsByAddress,
+    Dictionary<int, decimal> allocationsByRuleId,
+    Dictionary<int, decimal> destinationNeedsAtStart,
+    decimal sourceAvailableAtStart,
+    TransferDistributionMode mode)
+{
+    var result = new List<TransferWorkflow>();
+    var runningRemainingSource = sourceAvailableAtStart;
+
+    foreach (var rule in sourceRules.OrderBy(x => x.Priority))
     {
-        var result = new List<TransferWorkflow>();
-        var runningRemainingSource = sourceAvailableAtStart;
+        if (!allocationsByRuleId.TryGetValue(rule.Id, out var transferKwh))
+            continue;
 
-        foreach (var rule in sourceRules.OrderBy(x => x.Priority))
+        transferKwh = decimal.Round(transferKwh, 4);
+        if (transferKwh <= Epsilon)
+            continue;
+
+        var sourceAvailableBefore = runningRemainingSource;
+        runningRemainingSource =
+            decimal.Round(runningRemainingSource - transferKwh, 4);
+
+        result.Add(new TransferWorkflow
         {
-            if (!allocationsByRuleId.TryGetValue(rule.Id, out var transferKwh))
-                continue;
+            SourceAddressId = rule.SourceAddressId,
+            DestinationAddressId = rule.DestinationAddressId,
 
-            transferKwh = decimal.Round(transferKwh, 4);
-            if (transferKwh <= Epsilon)
-                continue;
+            SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
+            DestinationDeficitKwhAtWorkflow =
+                destinationNeedsAtStart[rule.DestinationAddressId],
 
-            if (!positionsByAddress.ContainsKey(rule.DestinationAddressId))
-                continue;
+            AmountKwh = transferKwh,
+            RemainingSourceSurplusKwhAfterWorkflow = runningRemainingSource,
 
-            var sourceAvailableBefore = runningRemainingSource;
-            runningRemainingSource = decimal.Round(runningRemainingSource - transferKwh, 4);
-
-            result.Add(new TransferWorkflow
-            {
-                SourceAddressId = rule.SourceAddressId,
-                DestinationAddressId = rule.DestinationAddressId,
-                SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
-                DestinationDeficitKwhAtWorkflow = destinationNeedsAtStart[rule.DestinationAddressId],
-                AmountKwh = transferKwh,
-                RemainingSourceSurplusKwhAfterWorkflow = runningRemainingSource,
-                AppliedDistributionModeEnum = mode,
-                TransferRuleId = rule.Id,
-                Priority = rule.Priority,
-                WeightPercent = rule.WeightPercent
-            });
-        }
-
-        return result;
+            AppliedDistributionModeEnum = mode,
+            TransferRuleId = rule.Id,
+            Priority = rule.Priority,
+            WeightPercent = rule.WeightPercent
+        });
     }
+
+    return result;
+}
 
     private TransferDistributionMode ResolveModeForSource(List<TransferRule> sourceRules)
     {
@@ -628,10 +647,9 @@ public class TransferWorkflowService : ITransferWorkflowService
             .ExecuteDeleteAsync(ct);
     }
 
-    private sealed class FairCandidate
-    {
-        public required TransferRule Rule { get; init; }
-        public required AddressTransferPosition Destination { get; init; }
-        public decimal RemainingCapacity { get; set; }
-    }
+ private sealed class FairCandidate
+{
+    public required TransferRule Rule { get; init; }
+    public decimal RemainingCapacity { get; set; }
+}
 }

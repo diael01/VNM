@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 
 namespace Infrastructure.Utils
 {
-    public static class MeterApiClientHelper
+    public static class EnergyManagementApiClientHelper
     {
         public static HttpClient CreateAuthorizedMeterClient(IHttpClientFactory httpClientFactory, string accessToken)
         {

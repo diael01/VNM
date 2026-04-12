@@ -22,7 +22,7 @@ public sealed class DashboardDailyBalanceRedirectService : IDashboardDailyBalanc
 		string accessToken,
 		CancellationToken cancellationToken = default)
 	{
-		var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+		var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
 		var response = await meterClient.GetAsync("api/v1/Analytics/DailyBalance", cancellationToken);
 		if (!response.IsSuccessStatusCode)
 		{

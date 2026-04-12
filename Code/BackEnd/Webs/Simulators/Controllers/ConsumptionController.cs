@@ -1,11 +1,9 @@
+using System.Threading;
+using Infrastructure.Options;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Simulators.Models;
-using Microsoft.AspNetCore.Authorization;
-using Infrastructure.Options;
 using Repositories.Models;
-
-namespace Simulators.Controllers;
 
 [ApiController]
 [Route("api/v1/consumption")]
@@ -13,7 +11,7 @@ namespace Simulators.Controllers;
 public class ConsumptionController : ControllerBase
 {
     private readonly ConsumptionSimulatorOptions _options;
-
+    private static int _counter = -1;
 
     public ConsumptionController(IOptions<ConsumptionSimulatorOptions> options)
     {
@@ -23,12 +21,14 @@ public class ConsumptionController : ControllerBase
     [HttpGet("data")]
     public ActionResult<ConsumptionReading> GetData()
     {
-        var addressIds = new[] { 2, 1002 };      
+        var addressIds = new[] { 2, 1002 };
+        var index = Interlocked.Increment(ref _counter) % addressIds.Length;
+
         var data = new ConsumptionReading
         {
-            Power = new decimal(33333.3333), // _rand.Next(_options.MinConsumption, _options.MaxConsumption + 1),
+            Power = 33333.3333m,
             Timestamp = DateTime.UtcNow,
-            AddressId = addressIds[Random.Shared.Next(addressIds.Length)],  //consumers are addresses 1 and 2
+            AddressId = addressIds[index],
             Source = "simulator"
         };
 

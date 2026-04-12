@@ -28,7 +28,7 @@ public sealed class DashboardAddressRedirectService : IDashboardAddressRedirectS
 
     public async Task<List<Address>> GetAddressesAsync(string accessToken, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.GetAsync("api/v1/address", cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
@@ -38,7 +38,7 @@ public sealed class DashboardAddressRedirectService : IDashboardAddressRedirectS
 
     public async Task<Address?> GetAddressByIdAsync(string accessToken, int id, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.GetAsync($"api/v1/address/{id}", cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
         if (!response.IsSuccessStatusCode)
@@ -48,7 +48,7 @@ public sealed class DashboardAddressRedirectService : IDashboardAddressRedirectS
 
     public async Task<Address> CreateAddressAsync(string accessToken, AddressDto addressDto, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var address = _mapper.Map<Address>(addressDto);
         address.Id = 0;
         var response = await meterClient.PostAsJsonAsync("api/v1/address", address, cancellationToken);
@@ -59,7 +59,7 @@ public sealed class DashboardAddressRedirectService : IDashboardAddressRedirectS
 
     public async Task<Address> UpdateAddressAsync(string accessToken, int id, AddressDto addressDto, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var address = _mapper.Map<Address>(addressDto);
         address.Id = id;
         var response = await meterClient.PutAsJsonAsync($"api/v1/address/{id}", address, cancellationToken);
@@ -70,7 +70,7 @@ public sealed class DashboardAddressRedirectService : IDashboardAddressRedirectS
 
     public async Task<bool> DeleteAddressAsync(string accessToken, int id, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.DeleteAsync($"api/v1/address/{id}", cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return false;
         if (!response.IsSuccessStatusCode)

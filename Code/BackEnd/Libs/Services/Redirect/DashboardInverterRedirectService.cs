@@ -31,7 +31,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
         string accessToken,
         CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
 
         var response = await meterClient.GetAsync("api/v1/InverterReadings", cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -45,7 +45,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
     }
     public async Task<List<InverterInfoDto>> GetAllInverterInfoAsync(string accessToken, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.GetAsync("api/v1/InverterInfo", cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
@@ -55,7 +55,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
 
     public async Task<InverterInfoDto?> GetInverterInfoByIdAsync(string accessToken, int id, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.GetAsync($"api/v1/InverterInfo/{id}", cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
         if (!response.IsSuccessStatusCode)
@@ -65,7 +65,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
 
     public async Task<InverterInfoDto> CreateInverterInfoAsync(string accessToken, InverterInfoDto info, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         info.Id = 0;
         var response = await meterClient.PostAsJsonAsync("api/v1/InverterInfo", info, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -75,7 +75,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
 
     public async Task<InverterInfoDto> UpdateInverterInfoAsync(string accessToken, int id, InverterInfoDto info, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         info.Id = id;
         var response = await meterClient.PutAsJsonAsync($"api/v1/InverterInfo/{id}", info, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -85,7 +85,7 @@ public sealed class DashboardInverterRedirectService : IDashboardInverterRedirec
 
     public async Task<bool> DeleteInverterInfoAsync(string accessToken, int id, CancellationToken cancellationToken = default)
     {
-        var meterClient = MeterApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await meterClient.DeleteAsync($"api/v1/InverterInfo/{id}", cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return false;
         if (!response.IsSuccessStatusCode)

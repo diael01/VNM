@@ -43,6 +43,7 @@ const menuItems: MenuItem[] = [
     key: "transfers",
     label: "Transfers",
     children: [
+      { key: "transfers-rules", label: "Rules" },
       { key: "transfers-available", label: "Available Energy" },
       { key: "transfers-new", label: "New Transfer" },
       { key: "transfers-history", label: "History" },

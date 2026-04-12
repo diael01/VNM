@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import InverterReadingsPage from "./pages/InverterReadingsPage";
 import Inverters from "./pages/Inverters";
 import AdrMgmt from "./pages/AdrMgmt";
+import TransferRules from "./pages/TransferRules";
 import { MainMenuRouter } from "./pages/MainMenuRouter";
 import AppLayoutRoute from "./AppLayoutRoute";
 
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
           { index: true, element: <div>Home (placeholder)</div> },
           { path: "assets/addresses", element: <AdrMgmt /> },
           { path: "assets/inverters", element: <Inverters /> },       
+          { path: "transfers/rules", element: <TransferRules /> },
           { path: "data/inverterreadings", element: <InverterReadingsPage permissions={[]}/> },
            { path: "data/consumptionreadings", element: <ConsumptionPage permissions={[]}/> },
           { path: "analytics", element: <div>Analytics (placeholder)</div> },
