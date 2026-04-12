@@ -24,7 +24,7 @@ function labelAddress(address: Address): string {
   return `${address.id} - ${address.city}, ${address.street} ${address.streetNumber}`;
 }
 
-function sanitizeByMode(rule: TransferRule): TransferRule {
+export function sanitizeByMode(rule: TransferRule): TransferRule {
   if (rule.distributionMode === 1) {
     return { ...rule, weightPercent: null, priority: rule.priority || 1 };
   }
@@ -36,11 +36,21 @@ function sanitizeByMode(rule: TransferRule): TransferRule {
   return { ...rule, weightPercent: null, priority: 1 };
 }
 
-function getSourceMode(rules: TransferRule[], sourceAddressId: number, excludeId?: number): number | null {
+export function getSourceMode(rules: TransferRule[], sourceAddressId: number, excludeId?: number): number | null {
   const found = rules.find(
     (r) => r.sourceAddressId === sourceAddressId && (excludeId === undefined || r.id !== excludeId),
   );
   return found ? found.distributionMode : null;
+}
+
+export function coerceTransferRuleNumbers(updatedRow: TransferRule): TransferRule {
+  return {
+    ...updatedRow,
+    sourceAddressId: Number(updatedRow.sourceAddressId),
+    destinationAddressId: Number(updatedRow.destinationAddressId),
+    distributionMode: Number(updatedRow.distributionMode),
+    priority: Number(updatedRow.priority),
+  };
 }
 
 export default function TransferRules() {
@@ -128,13 +138,7 @@ export default function TransferRules() {
   };
 
   const processRowUpdate = async (updatedRow: TransferRule) => {
-    const coerced: TransferRule = {
-      ...updatedRow,
-      sourceAddressId: Number(updatedRow.sourceAddressId),
-      destinationAddressId: Number(updatedRow.destinationAddressId),
-      distributionMode: Number(updatedRow.distributionMode),
-      priority: Number(updatedRow.priority),
-    };
+    const coerced = coerceTransferRuleNumbers(updatedRow);
     const normalized = sanitizeByMode(coerced);
     const message = validateRule(normalized, coerced.id);
     if (message) {

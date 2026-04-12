@@ -10,9 +10,9 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.IO;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Hosting;
 using Repositories.Models;
 using System.Diagnostics;
-using Repositories.Models;
 
 namespace EnergyManagementWeb.IntegrationTests;
 
@@ -56,8 +56,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddDbContextFactory<VnmDbContext>(options =>
                 options.UseSqlServer(csb.ConnectionString, x => x.MigrationsAssembly("Repositories")));
-            services.AddDbContext<VnmDbContext>(options =>
-                options.UseSqlServer(csb.ConnectionString, x => x.MigrationsAssembly("Repositories")));
+            services.AddScoped<VnmDbContext>(sp => sp.GetRequiredService<IDbContextFactory<VnmDbContext>>().CreateDbContext());
 
             // Mock poller
             var pollerMock = new Mock<IInverterPoller>();
@@ -72,7 +71,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 });
 
             services.AddSingleton(pollerMock.Object);
-            services.AddHostedService<InverterPollingService>();
         });
     }
 

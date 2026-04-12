@@ -48,11 +48,12 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     await EnsureTestDatabaseCreated(testDbConnString, Factory.TestDbName);
 
     // Apply EF Core migrations to ensure all tables exist
-        using (var scope = Factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<Repositories.Models.VnmDbContext>();
-            db.Database.Migrate();
-        }
+    using (var scope = Factory.Services.CreateScope())
+    {
+        var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<Repositories.Models.VnmDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        await db.Database.MigrateAsync();
+    }
 
     // Now that schema exists, reset test data
     await ResetTestDatabase(testDbConnString);
