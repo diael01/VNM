@@ -33,10 +33,11 @@ import {
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { DataGrid, GridActionsCellItem, GridRowEditStopReasons, GridRowModes } from "@mui/x-data-grid";
-import type { GridColDef, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
+import type { GridColDef, GridRenderEditCellParams, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -186,7 +187,29 @@ function PolicyFormDialog({ open, initial, addresses, title, onClose, onSave, sa
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={() => onSave(draft)} disabled={saving}>Save</Button>
+        <Button
+          variant="contained"
+          onClick={() => {
+            const scheduleType = Number(draft.scheduleType ?? 1);
+            const repeatEveryValue = draft.repeatEveryValue;
+            const repeatEveryUnit = draft.repeatEveryUnit;
+
+            if (scheduleType === 4) {
+              const hasRepeatValue = repeatEveryValue !== null && repeatEveryValue !== undefined && Number(repeatEveryValue) > 0;
+              const hasRepeatUnit = repeatEveryUnit !== null && repeatEveryUnit !== undefined;
+
+              if (!hasRepeatValue || !hasRepeatUnit) {
+                alert("For Interval schedules, Repeat Every and Repeat Unit are required.");
+                return;
+              }
+            }
+
+            onSave(draft);
+          }}
+          disabled={saving}
+        >
+          Save
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -486,6 +509,41 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["policySchedules", policy.id] }); qc.invalidateQueries({ queryKey: ["policies"] }); },
   });
 
+  const renderTimeEditCell = (params: GridRenderEditCellParams) => (
+    <Tooltip title="Format: HH:mm (UTC)" placement="top" arrow>
+      <TextField
+        size="small"
+        fullWidth
+        placeholder="HH:mm"
+        value={(params.value as string) ?? ""}
+        onChange={(e) => {
+          params.api.setEditCellValue(
+            { id: params.id, field: params.field, value: e.target.value || null },
+            e,
+          );
+        }}
+        slotProps={{ input: { inputProps: { maxLength: 5 } } }}
+      />
+    </Tooltip>
+  );
+
+  const renderUtcDateTimeEditCell = (params: GridRenderEditCellParams) => (
+    <Tooltip title="Format: yyyy-MM-ddTHH:mm:ssZ (UTC)" placement="top" arrow>
+      <TextField
+        size="small"
+        fullWidth
+        placeholder="2026-04-18T08:30:00Z"
+        value={(params.value as string) ?? ""}
+        onChange={(e) => {
+          params.api.setEditCellValue(
+            { id: params.id, field: params.field, value: e.target.value || null },
+            e,
+          );
+        }}
+      />
+    </Tooltip>
+  );
+
   const columns: GridColDef[] = [
     { field: "isEnabled", headerName: "Enabled", width: 80, type: "boolean", editable: true },
     { field: "scheduleType", headerName: "Type", width: 100,
@@ -493,14 +551,11 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
       type: "singleSelect",
       valueOptions: Object.entries(SCHEDULE_TYPE_LABELS).map(([value, label]) => ({ value: Number(value), label })),
       renderCell: (p) => SCHEDULE_TYPE_LABELS[p.value as number] ?? p.value },
-    { field: "executionMode", headerName: "Exec Mode", width: 140,
+    { field: "executionMode", headerName: "Exec Mode", width: 125,
       editable: true,
       type: "singleSelect",
       valueOptions: Object.entries(EXEC_MODE_LABELS).map(([value, label]) => ({ value: Number(value), label })),
       renderCell: (p) => EXEC_MODE_LABELS[p.value as number] ?? p.value },
-    { field: "startDateUtc", headerName: "Start", width: 155, editable: true, renderCell: (p) => fmtDate(p.value as string) },
-    { field: "endDateUtc", headerName: "End", width: 155, editable: true, renderCell: (p) => fmtDate(p.value as string) },
-    { field: "timeOfDayUtc", headerName: "Time", width: 90, editable: true, renderCell: (p) => (p.value as string) ?? "—" },
     {
       field: "repeatEveryValue",
       headerName: "Repeat Every",
@@ -523,8 +578,36 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
         ? "—"
         : (REPEAT_EVERY_UNIT_LABELS[p.value as number] ?? p.value),
     },
-    { field: "nextRunUtc", headerName: "Next Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
-    { field: "lastRunUtc", headerName: "Last Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
+    { field: "nextRunUtc", headerName: "Next Run", width: 140, renderCell: (p) => fmtDate(p.value as string) },
+    { field: "lastRunUtc", headerName: "Last Run", width: 140, renderCell: (p) => fmtDate(p.value as string) },
+    {
+      field: "startDateUtc",
+      headerName: "Start",
+      width: 140,
+      editable: true,
+      description: "Format: yyyy-MM-ddTHH:mm:ssZ (UTC)",
+      renderCell: (p) => fmtDate(p.value as string),
+      renderEditCell: renderUtcDateTimeEditCell,
+    },
+    {
+      field: "endDateUtc",
+      headerName: "End",
+      width: 140,
+      editable: true,
+      description: "Format: yyyy-MM-ddTHH:mm:ssZ (UTC)",
+      renderCell: (p) => fmtDate(p.value as string),
+      renderEditCell: renderUtcDateTimeEditCell,
+    },
+      {
+        field: "timeOfDayUtc",
+        headerName: "Time",
+        width: 64,
+        minWidth: 50,
+        editable: true,
+        description: "Format: HH:mm (UTC)",
+        renderCell: (p) => (p.value as string) ?? "—",
+        renderEditCell: renderTimeEditCell,
+      },
     {
       field: "actions",
       type: "actions",
@@ -553,16 +636,39 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
   ];
 
   const processRowUpdate = async (row: SourceTransferSchedule) => {
+    const scheduleType = Number((row as unknown as Record<string, unknown>).scheduleType);
+    const repeatEveryValue = row.repeatEveryValue === null || row.repeatEveryValue === undefined
+      ? null
+      : Number((row as unknown as Record<string, unknown>).repeatEveryValue);
+    const repeatEveryUnit = row.repeatEveryUnit === null || row.repeatEveryUnit === undefined
+      ? null
+      : Number((row as unknown as Record<string, unknown>).repeatEveryUnit);
+
+    if (scheduleType === 4) {
+      const hasRepeatValue = repeatEveryValue !== null && Number.isFinite(repeatEveryValue) && repeatEveryValue > 0;
+      const hasRepeatUnit = repeatEveryUnit !== null && Number.isFinite(repeatEveryUnit);
+
+      if (!hasRepeatValue || !hasRepeatUnit) {
+        alert("For Interval schedules, Repeat Every and Repeat Unit are required.");
+        throw new Error("Repeat Every and Repeat Unit are required for Interval schedules.");
+      }
+    }
+
+    const rawTime = (row.timeOfDayUtc ?? "").trim();
+    const timeOfDayUtc = rawTime === "" ? null : rawTime;
+
+    if (timeOfDayUtc && !/^([01]\d|2[0-3]):[0-5]\d$/.test(timeOfDayUtc)) {
+      alert("Time format must be HH:mm (UTC), for example 08:30.");
+      throw new Error("Invalid time format. Use HH:mm.");
+    }
+
     const updated: SourceTransferSchedule = {
       ...row,
-      scheduleType: Number((row as unknown as Record<string, unknown>).scheduleType),
+      scheduleType,
       executionMode: Number((row as unknown as Record<string, unknown>).executionMode),
-      repeatEveryValue: row.repeatEveryValue === null || row.repeatEveryValue === undefined
-        ? null
-        : Number((row as unknown as Record<string, unknown>).repeatEveryValue),
-      repeatEveryUnit: row.repeatEveryUnit === null || row.repeatEveryUnit === undefined
-        ? null
-        : Number((row as unknown as Record<string, unknown>).repeatEveryUnit),
+      timeOfDayUtc,
+      repeatEveryValue,
+      repeatEveryUnit,
     };
     await updateMutation.mutateAsync(updated);
     return updated;
