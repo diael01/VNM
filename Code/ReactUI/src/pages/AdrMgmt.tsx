@@ -76,26 +76,36 @@ export default function AdrMgmt() {
   ];
 
   return (
-    <Box sx={{ height: 500, width: "100%" }}>
+    <Box sx={{ p: 3, width: "100%", maxWidth: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
         <Button startIcon={<AddIcon />} variant="contained" onClick={() => setAddDialogOpen(true)}>
           Add Address
         </Button>
       </Box>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        editMode="row"
-        rowModesModel={rowModesModel}
-        processRowUpdate={processRowUpdate}
-        getRowId={(row) => row.id}
-        onRowModesModelChange={setRowModesModel}
-        onProcessRowUpdateError={(error) => alert(error.message)}
-        loading={isLoading}
-        slots={{
-          noRowsOverlay: () => <Box sx={{ p: 2 }}>No addresses found.</Box>,
-        }}
-      />
+      <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+        <Box sx={{ minWidth: 1500 }}>
+          <DataGrid
+            autoHeight
+            rows={rows}
+            columns={columns}
+            editMode="row"
+            rowModesModel={rowModesModel}
+            processRowUpdate={processRowUpdate}
+            getRowId={(row) => row.id}
+            onRowModesModelChange={setRowModesModel}
+            onProcessRowUpdateError={(error) => alert(error.message)}
+            loading={isLoading}
+            sx={{
+              minWidth: 1500,
+              "& .MuiDataGrid-virtualScroller": { overflowX: "auto !important" },
+              "& .MuiDataGrid-scrollbar--horizontal": { display: "block !important" },
+            }}
+            slots={{
+              noRowsOverlay: () => <Box sx={{ p: 2 }}>No addresses found.</Box>,
+            }}
+          />
+        </Box>
+      </Box>
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
         <DialogTitle>Add Address</DialogTitle>
         <DialogContent>

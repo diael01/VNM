@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAllPolicies,
@@ -280,13 +280,15 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
           Add destination
         </Button>
       </Stack>
-      <DataGrid autoHeight rows={rules} columns={columns} editMode="row"
-        rowModesModel={rowModesModel} onRowModesModelChange={setRowModesModel}
-        processRowUpdate={processRowUpdate} onProcessRowUpdateError={(e) => alert(e.message)}
-        loading={isLoading} getRowId={(r) => r.id}
-        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-        pageSizeOptions={[5, 10]} disableRowSelectionOnClick
-        sx={{ "& .cell-disabled": { color: "#bbb", pointerEvents: "none" } }} />
+      <Box sx={{ overflowX: "auto" }}>
+        <DataGrid autoHeight rows={rules} columns={columns} editMode="row"
+          rowModesModel={rowModesModel} onRowModesModelChange={setRowModesModel}
+          processRowUpdate={processRowUpdate} onProcessRowUpdateError={(e) => alert(e.message)}
+          loading={isLoading} getRowId={(r) => r.id}
+          initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+          pageSizeOptions={[5, 10]} disableRowSelectionOnClick
+          sx={{ minWidth: 900, "& .cell-disabled": { color: "#bbb", pointerEvents: "none" } }} />
+      </Box>
 
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Add Destination Rule</DialogTitle>
@@ -388,10 +390,13 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
           Add schedule
         </Button>
       </Stack>
-      <DataGrid autoHeight rows={schedules} columns={columns} loading={isLoading}
-        getRowId={(r) => r.id}
-        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-        pageSizeOptions={[5, 10]} disableRowSelectionOnClick />
+      <Box sx={{ overflowX: "auto" }}>
+        <DataGrid autoHeight rows={schedules} columns={columns} loading={isLoading}
+          getRowId={(r) => r.id}
+          initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+          pageSizeOptions={[5, 10]} disableRowSelectionOnClick
+          sx={{ minWidth: 1100 }} />
+      </Box>
 
       <ScheduleFormDialog open={addOpen} initial={blank} policyId={policy.id}
         title="Add Schedule" onClose={() => setAddOpen(false)}
@@ -504,11 +509,17 @@ function PolicyPanel({ policy, addresses, onDeleted }: PolicyPanelProps) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function TransferRules() {
+  const minLeftPanelWidth = 360;
+  const minRightPanelWidth = 420;
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [addPolicyOpen, setAddPolicyOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filterEnabled, setFilterEnabled] = useState<"all" | "enabled" | "disabled">("all");
   const [filterMode, setFilterMode] = useState<number | "all">("all");
+  const [leftPanelWidth, setLeftPanelWidth] = useState(minLeftPanelWidth);
+  const [isResizing, setIsResizing] = useState(false);
+  const [hasUserResized, setHasUserResized] = useState(false);
+  const splitContainerRef = useRef<HTMLDivElement | null>(null);
 
   const qc = useQueryClient();
 
@@ -540,6 +551,50 @@ export default function TransferRules() {
   }, [policies, addresses, search, filterEnabled, filterMode]);
 
   const selectedPolicy = policies.find((p) => p.id === selectedId) ?? null;
+
+  useEffect(() => {
+    if (hasUserResized) return;
+
+    const container = splitContainerRef.current;
+    if (!container) return;
+
+    const recenter = () => {
+      const width = container.getBoundingClientRect().width;
+      const maxLeft = Math.max(minLeftPanelWidth, width - minRightPanelWidth);
+      const centered = Math.min(Math.max(width / 2, minLeftPanelWidth), maxLeft);
+      setLeftPanelWidth(centered);
+    };
+
+    recenter();
+    const observer = new ResizeObserver(recenter);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [hasUserResized]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const container = splitContainerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const maxLeft = Math.max(minLeftPanelWidth, rect.width - minRightPanelWidth);
+      const nextWidth = Math.min(Math.max(event.clientX - rect.left, minLeftPanelWidth), maxLeft);
+      setLeftPanelWidth(nextWidth);
+    };
+
+    const handleMouseUp = () => setIsResizing(false);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
 
   const listColumns: GridColDef[] = [
     {
@@ -588,19 +643,38 @@ export default function TransferRules() {
       </Stack>
 
       {/* Master-detail */}
-      <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+      <Box ref={splitContainerRef} sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         {/* Left list */}
-        <Box sx={{ width: 430, flexShrink: 0, borderRight: 1, borderColor: "divider", overflow: "auto" }}>
-          <DataGrid rows={filtered} columns={listColumns} loading={policiesLoading}
-            getRowId={(r) => r.id}
-            onRowClick={(params) => setSelectedId(params.id as number)}
-            rowSelectionModel={selectedId !== null ? { type: "include", ids: new Set([selectedId]) } : { type: "include", ids: new Set() }}
-            initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
-            pageSizeOptions={[20, 50]} disableColumnMenu
-            sx={{ border: "none",
-              "& .MuiDataGrid-row": { cursor: "pointer" },
-              "& .MuiDataGrid-row.Mui-selected": { bgcolor: "action.selected" } }} />
+        <Box sx={{ width: leftPanelWidth, minWidth: 360, flexShrink: 0, borderRight: 1, borderColor: "divider", overflow: "auto" }}>
+          <Box sx={{ overflowX: "auto" }}>
+            <DataGrid rows={filtered} columns={listColumns} loading={policiesLoading}
+              getRowId={(r) => r.id}
+              onRowClick={(params) => setSelectedId(params.id as number)}
+              rowSelectionModel={selectedId !== null ? { type: "include", ids: new Set([selectedId]) } : { type: "include", ids: new Set() }}
+              initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
+              pageSizeOptions={[20, 50]} disableColumnMenu
+              sx={{ minWidth: 680, border: "none",
+                "& .MuiDataGrid-row": { cursor: "pointer" },
+                "& .MuiDataGrid-row.Mui-selected": { bgcolor: "action.selected" } }} />
+          </Box>
         </Box>
+
+        <Box
+          role="separator"
+          aria-label="Resize policy list"
+          aria-orientation="vertical"
+          onMouseDown={() => {
+            setHasUserResized(true);
+            setIsResizing(true);
+          }}
+          sx={{
+            width: 8,
+            cursor: "col-resize",
+            flexShrink: 0,
+            bgcolor: isResizing ? "action.selected" : "transparent",
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+        />
 
         {/* Right detail */}
         <Box sx={{ flex: 1, overflow: "auto" }}>

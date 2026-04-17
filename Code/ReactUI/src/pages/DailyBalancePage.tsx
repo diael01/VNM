@@ -37,27 +37,34 @@ export default function DailyBalancePage({ permissions: _permissions }: DailyBal
   if (!balances.length) return <p>No daily balance data available.</p>;
 
   const columns: GridColDef[] = [
-    { field: 'addressId', headerName: 'Address ID', flex: 1, sortable: true, filterable: true },
-    { field: 'day', headerName: 'Day', flex: 1, sortable: true, filterable: true },
-    { field: 'producedKwh', headerName: 'Produced(kWh)', flex: 1, sortable: true, filterable: true },
-    { field: 'consumedKwh', headerName: 'Consumed(kWh)', flex: 1, sortable: true, filterable: true },
-    { field: 'netKwh', headerName: 'Net(kWh)', flex: 1, sortable: true, filterable: true },
-    { field: 'netPerAddressKwh', headerName: 'Net/Adr(kWh)', flex: 1, sortable: true, filterable: true },
-    { field: 'surplusKwh', headerName: 'Surplus(kWh)', flex: 1, sortable: true, filterable: true },
-    { field: 'deficitKwh', headerName: 'Deficit(kWh)', flex: 1, sortable: true, filterable: true },
+    { field: 'addressId', headerName: 'Address ID', width: 180, sortable: true, filterable: true },
+    { field: 'day', headerName: 'Day', width: 190, sortable: true, filterable: true },
+    { field: 'producedKwh', headerName: 'Produced(kWh)', width: 190, sortable: true, filterable: true },
+    { field: 'consumedKwh', headerName: 'Consumed(kWh)', width: 190, sortable: true, filterable: true },
+    { field: 'netKwh', headerName: 'Net(kWh)', width: 190, sortable: true, filterable: true },
+    { field: 'netPerAddressKwh', headerName: 'Net/Adr(kWh)', width: 220, sortable: true, filterable: true },
+    { field: 'surplusKwh', headerName: 'Surplus(kWh)', width: 190, sortable: true, filterable: true },
+    { field: 'deficitKwh', headerName: 'Deficit(kWh)', width: 190, sortable: true, filterable: true },
   ];
 
   return (
     <Box sx={{ p: 3 }}>
-      <DataGrid
-        autoHeight
-        rows={balances}
-        columns={columns}
-        initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-        pageSizeOptions={[10, 20, 50]}
-        disableRowSelectionOnClick
-        getRowId={row => row.id}
-      />
+      <Box sx={{ overflowX: "auto" }}>
+        <DataGrid
+          autoHeight
+          rows={balances}
+          columns={columns}
+          initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+          pageSizeOptions={[10, 20, 50]}
+          disableRowSelectionOnClick
+          getRowId={row => row.id}
+          sx={{
+            minWidth: 1560,
+            "& .MuiDataGrid-virtualScroller": { overflowX: "auto !important" },
+            "& .MuiDataGrid-scrollbar--horizontal": { display: "block !important" },
+          }}
+        />
+      </Box>
     </Box>
   );
 }

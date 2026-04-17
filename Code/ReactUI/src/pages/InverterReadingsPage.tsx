@@ -36,26 +36,33 @@ export default function InverterReadingsPage({ permissions: _permissions }: Inve
   if (!readings.length) return <p>No inverter readings available.</p>;
 
   const columns: GridColDef[] = [
-    { field: 'addressId', headerName: 'Address ID', flex: 1, sortable: true, filterable: true },
-    { field: 'inverterInfoId', headerName: 'Inverter ID', flex: 1, sortable: true, filterable: true },
-    { field: 'power', headerName: 'Power(W)', flex: 1, sortable: true, filterable: true },
-    { field: 'voltage', headerName: 'Voltage(V)', flex: 1, sortable: true, filterable: true },
-    { field: 'current', headerName: 'Current(A)', flex: 1, sortable: true, filterable: true },
-    { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true },
-    { field: 'source', headerName: 'Source', flex: 1, sortable: true, filterable: true },
+    { field: 'addressId', headerName: 'Address ID', width: 170, sortable: true, filterable: true },
+    { field: 'inverterInfoId', headerName: 'Inverter ID', width: 170, sortable: true, filterable: true },
+    { field: 'power', headerName: 'Power(W)', width: 170, sortable: true, filterable: true },
+    { field: 'voltage', headerName: 'Voltage(V)', width: 170, sortable: true, filterable: true },
+    { field: 'current', headerName: 'Current(A)', width: 170, sortable: true, filterable: true },
+    { field: 'timestamp', headerName: 'Timestamp', width: 320, sortable: true, filterable: true },
+    { field: 'source', headerName: 'Source', width: 220, sortable: true, filterable: true },
   ];
 
   return (
     <Box sx={{ p: 3 }}>
-      <DataGrid
-        autoHeight
-        rows={readings}
-        columns={columns}
-        initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-        pageSizeOptions={[10, 20, 50]}
-        disableRowSelectionOnClick
-        getRowId={(row) => row.id}
-      />
+      <Box sx={{ overflowX: "auto" }}>
+        <DataGrid
+          autoHeight
+          rows={readings}
+          columns={columns}
+          initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+          pageSizeOptions={[10, 20, 50]}
+          disableRowSelectionOnClick
+          getRowId={(row) => row.id}
+          sx={{
+            minWidth: 1460,
+            "& .MuiDataGrid-virtualScroller": { overflowX: "auto !important" },
+            "& .MuiDataGrid-scrollbar--horizontal": { display: "block !important" },
+          }}
+        />
+      </Box>
     </Box>
   );
 }

@@ -31,10 +31,10 @@ export default function ConsumptionPage({ permissions: _permissions }: Consumpti
   }, []);
 
   const columns: GridColDef[] = [
-    { field: 'addressId', headerName: 'Address ID', flex: 1, sortable: true, filterable: true },
-    { field: 'power', headerName: 'Power(W)', flex: 1, sortable: true, filterable: true },
-    { field: 'timestamp', headerName: 'Timestamp', flex: 1.5, sortable: true, filterable: true },
-    { field: 'source', headerName: 'Source', flex: 1, sortable: true, filterable: true },
+    { field: 'addressId', headerName: 'Address ID', width: 220, sortable: true, filterable: true },
+    { field: 'power', headerName: 'Power(W)', width: 220, sortable: true, filterable: true },
+    { field: 'timestamp', headerName: 'Timestamp', width: 320, sortable: true, filterable: true },
+    { field: 'source', headerName: 'Source', width: 260, sortable: true, filterable: true },
   ];
 
   if (loading) return <p>Loading consumption readings...</p>;
@@ -43,15 +43,22 @@ export default function ConsumptionPage({ permissions: _permissions }: Consumpti
 
   return (
     <Box sx={{ p: 3 }}>
-      <DataGrid
-        autoHeight
-        rows={readings}
-        columns={columns}
-        initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-        pageSizeOptions={[10, 20, 50]}
-        disableRowSelectionOnClick
-        getRowId={row => row.id}
-      />
+      <Box sx={{ overflowX: "auto" }}>
+        <DataGrid
+          autoHeight
+          rows={readings}
+          columns={columns}
+          initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+          pageSizeOptions={[10, 20, 50]}
+          disableRowSelectionOnClick
+          getRowId={row => row.id}
+          sx={{
+            minWidth: 1200,
+            "& .MuiDataGrid-virtualScroller": { overflowX: "auto !important" },
+            "& .MuiDataGrid-scrollbar--horizontal": { display: "block !important" },
+          }}
+        />
+      </Box>
     </Box>
   );
 }

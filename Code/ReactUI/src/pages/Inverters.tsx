@@ -6,7 +6,7 @@ import { getAllInverters, createInverter, updateInverter, deleteInverter } from 
 import type { InverterInfo } from "../types/inverter";
 import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
 import type { GridColDef, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
-import { Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -85,45 +85,56 @@ export default function Inverters() {
   ];
 
   return (
-    <Box sx={{ height: 500, width: "100%" }}>
+    <Box sx={{ p: 3, width: "100%", maxWidth: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
         <Button startIcon={<AddIcon />} variant="contained" onClick={() => setAddDialogOpen(true)}>
           Add Inverter
         </Button>
       </Box>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        editMode="row"
-        rowModesModel={rowModesModel}
-        processRowUpdate={processRowUpdate}
-        getRowId={(row) => row.id}
-        onRowModesModelChange={setRowModesModel}
-        onProcessRowUpdateError={(error) => alert(error.message)}
-        loading={isLoading}
-        slots={{
-          noRowsOverlay: () => <Box sx={{ p: 2 }}>No inverters found.</Box>,
-        }}
-      />
+      <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+        <Box sx={{ minWidth: 1500 }}>
+          <DataGrid
+            autoHeight
+            rows={rows}
+            columns={columns}
+            editMode="row"
+            rowModesModel={rowModesModel}
+            processRowUpdate={processRowUpdate}
+            getRowId={(row) => row.id}
+            onRowModesModelChange={setRowModesModel}
+            onProcessRowUpdateError={(error) => alert(error.message)}
+            loading={isLoading}
+            sx={{
+              minWidth: 1500,
+              "& .MuiDataGrid-virtualScroller": { overflowX: "auto !important" },
+              "& .MuiDataGrid-scrollbar--horizontal": { display: "block !important" },
+            }}
+            slots={{
+              noRowsOverlay: () => <Box sx={{ p: 2 }}>No inverters found.</Box>,
+            }}
+          />
+        </Box>
+      </Box>
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Inverter</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1, minWidth: 400 }}>          
-            <TextField label="Serial Number" value={newInverter.serialNumber || ""} onChange={e => setNewInverter(a => ({ ...a, serialNumber: e.target.value }))} />
-            <TextField label="Model" value={newInverter.model || ""} onChange={e => setNewInverter(a => ({ ...a, model: e.target.value }))} />
-            <TextField label="Manufacturer" value={newInverter.manufacturer || ""} onChange={e => setNewInverter(a => ({ ...a, manufacturer: e.target.value }))} />
+            <TextField fullWidth size="small" label="Serial Number" value={newInverter.serialNumber || ""} onChange={e => setNewInverter(a => ({ ...a, serialNumber: e.target.value }))} />
+            <TextField fullWidth size="small" label="Model" value={newInverter.model || ""} onChange={e => setNewInverter(a => ({ ...a, model: e.target.value }))} />
+            <TextField fullWidth size="small" label="Manufacturer" value={newInverter.manufacturer || ""} onChange={e => setNewInverter(a => ({ ...a, manufacturer: e.target.value }))} />
             <TextField
               select
+              fullWidth
+              size="small"
               label="Address"
               value={newInverter.addressId || ""}
               onChange={e => setNewInverter(a => ({ ...a, addressId: Number(e.target.value) }))}
-              SelectProps={{ native: true }}
             >
-              <option value="" disabled>Select Address</option>
+              <MenuItem value="" disabled>Select Address</MenuItem>
               {addresses.map(addr => (
-                <option key={addr.id} value={addr.id}>
+                <MenuItem key={addr.id} value={addr.id}>
                   {addr.city}, {addr.street} {addr.streetNumber}
-                </option>
+                </MenuItem>
               ))}
             </TextField>
           </Box>
