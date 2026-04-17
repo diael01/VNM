@@ -3,9 +3,9 @@ using Repositories.Models;
 
 namespace Repositories.CRUD.Repositories;
 
-public interface ITransferRuleRepository : IRepository<TransferRule> { }
+public interface ITransferRuleRepository : IRepository<DestinationTransferRule> { }
 
-public class TransferRuleRepository : Repository<TransferRule>, ITransferRuleRepository
+public class TransferRuleRepository : Repository<DestinationTransferRule>, ITransferRuleRepository
 {
     public TransferRuleRepository(VnmDbContext context) : base(context) { }
 }

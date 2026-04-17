@@ -9,7 +9,7 @@ public class TransferRuleDtoValidatorTests
     private static TransferRuleDto ValidBaseDto() => new()
     {
         Id = 0,
-        SourceAddressId = 1,
+        SourceTransferPolicyId = 1,
         DestinationAddressId = 2,
         IsEnabled = true,
         Priority = 1,

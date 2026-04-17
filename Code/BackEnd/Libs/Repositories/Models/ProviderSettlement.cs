@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class ProviderSettlement
+public partial class ProviderSettlement : AuditableEntity
 {
     public int Id { get; set; }
 

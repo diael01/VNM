@@ -37,16 +37,17 @@ public class TransferWorkflowService : ITransferWorkflowService
         var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
         var positionsByAddress = positions.ToDictionary(x => x.AddressId);
 
-        var rules = await _db.TransferRules
+        var rules = await _db.DestinationTransferRules
             .AsNoTracking()
+            .Include(x => x.SourceTransferPolicy)
             .Where(x => x.IsEnabled)
-            .OrderBy(x => x.SourceAddressId)
+            .OrderBy(x => x.SourceTransferPolicy.SourceAddressId)
             .ThenBy(x => x.Priority)
             .ToListAsync(ct);
 
         var allWorkflows = new List<TransferWorkflow>();
 
-        foreach (var sourceGroup in rules.GroupBy(x => x.SourceAddressId))
+        foreach (var sourceGroup in rules.GroupBy(x => x.SourceTransferPolicy.SourceAddressId))
         {
             if (!positionsByAddress.TryGetValue(sourceGroup.Key, out var sourcePosition))
             {
@@ -123,9 +124,10 @@ public class TransferWorkflowService : ITransferWorkflowService
         if (sourcePosition.RemainingSurplusKwh <= Epsilon)
             return Array.Empty<TransferWorkflow>();
 
-        var rules = await _db.TransferRules
+        var rules = await _db.DestinationTransferRules
             .AsNoTracking()
-            .Where(x => x.IsEnabled && x.SourceAddressId == sourceAddressId)
+            .Include(x => x.SourceTransferPolicy)
+            .Where(x => x.IsEnabled && x.SourceTransferPolicy.SourceAddressId == sourceAddressId)
             .OrderBy(x => x.Priority)
             .ToListAsync(ct);
 
@@ -211,7 +213,7 @@ public class TransferWorkflowService : ITransferWorkflowService
                 DestinationDeficitKwhAtWorkflow = destinationNeededBefore,
                 AmountKwh = transferKwh,
                 RemainingSourceSurplusKwhAfterWorkflow = decimal.Round(sourceAvailableBefore - transferKwh, 4),
-                TransferRuleId = null,
+                DestinationTransferRuleId = null,
                 Priority = null,
                 WeightPercent = null,
                 AppliedDistributionModeEnum = TransferDistributionMode.Fair
@@ -304,7 +306,7 @@ public class TransferWorkflowService : ITransferWorkflowService
 
 private List<TransferWorkflow> AllocateFair(
     AddressTransferPosition sourcePosition,
-    List<TransferRule> sourceRules,
+    List<DestinationTransferRule> sourceRules,
     Dictionary<int, AddressTransferPosition> positionsByAddress)
 {
     var sourceAvailableAtStart = decimal.Round(sourcePosition.RemainingSurplusKwh, 4);
@@ -402,7 +404,7 @@ private List<TransferWorkflow> AllocateFair(
 
     private List<TransferWorkflow> AllocatePriority(
         AddressTransferPosition sourcePosition,
-        List<TransferRule> sourceRules,
+        List<DestinationTransferRule> sourceRules,
         Dictionary<int, AddressTransferPosition> positionsByAddress)
     {
         var result = new List<TransferWorkflow>();
@@ -434,16 +436,16 @@ private List<TransferWorkflow> AllocateFair(
             sourcePosition.AlreadyTransferredOutKwh += transferKwh;
             destination.AlreadyTransferredInKwh += transferKwh;
 
-            result.Add(new TransferWorkflow
+                result.Add(new TransferWorkflow
             {
-                SourceAddressId = rule.SourceAddressId,
+                SourceAddressId = rule.SourceTransferPolicy.SourceAddressId,
                 DestinationAddressId = rule.DestinationAddressId,
                 SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
                 DestinationDeficitKwhAtWorkflow = destinationNeedBefore,
                 AmountKwh = transferKwh,
                 RemainingSourceSurplusKwhAfterWorkflow = remainingSource,
                 AppliedDistributionModeEnum = TransferDistributionMode.Priority,
-                TransferRuleId = rule.Id,
+                DestinationTransferRuleId = rule.Id,
                 Priority = rule.Priority,
                 WeightPercent = rule.WeightPercent
             });
@@ -454,7 +456,7 @@ private List<TransferWorkflow> AllocateFair(
 
     private List<TransferWorkflow> AllocateWeighted(
         AddressTransferPosition sourcePosition,
-        List<TransferRule> sourceRules,
+        List<DestinationTransferRule> sourceRules,
         Dictionary<int, AddressTransferPosition> positionsByAddress)
     {
         var result = new List<TransferWorkflow>();
@@ -504,14 +506,14 @@ private List<TransferWorkflow> AllocateFair(
 
                 result.Add(new TransferWorkflow
                 {
-                    SourceAddressId = rule.SourceAddressId,
+                    SourceAddressId = rule.SourceTransferPolicy.SourceAddressId,
                     DestinationAddressId = rule.DestinationAddressId,
                     SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
                     DestinationDeficitKwhAtWorkflow = destinationNeedBefore,
                     AmountKwh = transferKwh,
                     RemainingSourceSurplusKwhAfterWorkflow = remainingSource,
                     AppliedDistributionModeEnum = TransferDistributionMode.Weighted,
-                    TransferRuleId = rule.Id,
+                    DestinationTransferRuleId = rule.Id,
                     Priority = rule.Priority,
                     WeightPercent = rule.WeightPercent
                 });
@@ -525,7 +527,7 @@ private List<TransferWorkflow> AllocateFair(
     }
 
   private List<TransferWorkflow> BuildWorkflowRowsFromAllocations(
-    List<TransferRule> sourceRules,
+    List<DestinationTransferRule> sourceRules,
     Dictionary<int, AddressTransferPosition> positionsByAddress,
     Dictionary<int, decimal> allocationsByRuleId,
     Dictionary<int, decimal> destinationNeedsAtStart,
@@ -550,7 +552,7 @@ private List<TransferWorkflow> AllocateFair(
 
         result.Add(new TransferWorkflow
         {
-            SourceAddressId = rule.SourceAddressId,
+            SourceAddressId = rule.SourceTransferPolicy.SourceAddressId,
             DestinationAddressId = rule.DestinationAddressId,
 
             SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
@@ -561,7 +563,7 @@ private List<TransferWorkflow> AllocateFair(
             RemainingSourceSurplusKwhAfterWorkflow = runningRemainingSource,
 
             AppliedDistributionModeEnum = mode,
-            TransferRuleId = rule.Id,
+            DestinationTransferRuleId = rule.Id,
             Priority = rule.Priority,
             WeightPercent = rule.WeightPercent
         });
@@ -570,7 +572,7 @@ private List<TransferWorkflow> AllocateFair(
     return result;
 }
 
-    private TransferDistributionMode ResolveModeForSource(List<TransferRule> sourceRules)
+    private TransferDistributionMode ResolveModeForSource(List<DestinationTransferRule> sourceRules)
     {
         var modeFromRule = sourceRules
             .Select(x => x.DistributionMode)
@@ -580,7 +582,7 @@ private List<TransferWorkflow> AllocateFair(
         if (modeFromRule.Count > 1)
         {
             throw new InvalidOperationException(
-                $"Source address {sourceRules.First().SourceAddressId} has conflicting distribution modes.");
+                $"Source address {sourceRules.First().SourceTransferPolicy.SourceAddressId} has conflicting distribution modes.");
         }
 
         if (modeFromRule.Count == 1)
@@ -610,7 +612,7 @@ private List<TransferWorkflow> AllocateFair(
             RemainingSourceSurplusKwhAfterWorkflow = workflow.RemainingSourceSurplusKwhAfterWorkflow,
             Priority = workflow.Priority,
             WeightPercent = workflow.WeightPercent,
-            TransferRuleId = workflow.TransferRuleId,
+            DestinationTransferRuleId = workflow.DestinationTransferRuleId,
             TriggerTypeEnum = triggerType,
             TransferStatusEnum = TransferStatus.Planned,
             AppliedDistributionMode = workflow.AppliedDistributionMode,
@@ -649,7 +651,7 @@ private List<TransferWorkflow> AllocateFair(
 
  private sealed class FairCandidate
 {
-    public required TransferRule Rule { get; init; }
+    public required DestinationTransferRule Rule { get; init; }
     public decimal RemainingCapacity { get; set; }
 }
 }

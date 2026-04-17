@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class DailyEnergyBalance
+public partial class DailyEnergyBalance : AuditableEntity
 {
     public int Id { get; set; }
 

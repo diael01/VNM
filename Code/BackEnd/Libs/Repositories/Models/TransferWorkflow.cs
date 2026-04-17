@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class TransferWorkflow
+public partial class TransferWorkflow : AuditableEntity
 {
     public int Id { get; set; }
 
@@ -29,11 +29,9 @@ public partial class TransferWorkflow
 
     public string? Notes { get; set; }
 
-    public DateTime CreatedAtUtc { get; set; }
-
     public int AppliedDistributionMode { get; set; }
 
-    public int? TransferRuleId { get; set; }
+    public int? DestinationTransferRuleId { get; set; }
 
     public int? Priority { get; set; }
 
@@ -43,5 +41,5 @@ public partial class TransferWorkflow
 
     public virtual Address SourceAddress { get; set; } = null!;
 
-    public virtual TransferRule? TransferRule { get; set; }
+    public virtual DestinationTransferRule? DestinationTransferRule { get; set; }
 }

@@ -1,5 +1,8 @@
 using System.Net.Http.Json;
 using Infrastructure.DTOs;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Repositories.Models;
 using Xunit;
 
 namespace EnergyManagementWeb.IntegrationTests;
@@ -45,10 +48,28 @@ public class TransferRuleControllerIntegrationTests : IntegrationTestBase
         var destination = await destinationCreate.Content.ReadFromJsonAsync<AddressDto>();
         Assert.NotNull(destination);
 
+        int sourceTransferPolicyId;
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<VnmDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+
+            var sourcePolicy = new SourceTransferPolicy
+            {
+                SourceAddressId = source!.Id,
+                DistributionMode = 0,
+                IsEnabled = true,
+            };
+
+            db.SourceTransferPolicies.Add(sourcePolicy);
+            await db.SaveChangesAsync();
+            sourceTransferPolicyId = sourcePolicy.Id;
+        }
+
         var createRequest = new TransferRuleDto
         {
             Id = 0,
-            SourceAddressId = source!.Id,
+            SourceTransferPolicyId = sourceTransferPolicyId,
             DestinationAddressId = destination!.Id,
             IsEnabled = true,
             Priority = 1,
@@ -72,7 +93,7 @@ public class TransferRuleControllerIntegrationTests : IntegrationTestBase
 
         Assert.NotNull(fetched);
         Assert.Equal(created.Id, fetched!.Id);
-        Assert.Equal(createRequest.SourceAddressId, fetched.SourceAddressId);
+        Assert.Equal(createRequest.SourceTransferPolicyId, fetched.SourceTransferPolicyId);
         Assert.Equal(createRequest.DestinationAddressId, fetched.DestinationAddressId);
         Assert.Equal(createRequest.DistributionMode, fetched.DistributionMode);
     }

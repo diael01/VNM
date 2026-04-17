@@ -16,6 +16,15 @@ export async function fetchInverterReadingsList(): Promise<InverterReading[]> {
   return response.json()
 }
 
+export async function fetchInverterData(): Promise<InverterReading> {
+  const readings = await fetchInverterReadingsList()
+  if (readings.length === 0) {
+    throw new Error("No inverter data available")
+  }
+
+  return readings[0]
+}
+
 export async function getAllInverters(): Promise<InverterInfo[]> {
   const resp = await fetch(API_URL, { credentials: 'include' });
   if (!resp.ok) throw new Error('Failed to fetch inverters');

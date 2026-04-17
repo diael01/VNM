@@ -20,7 +20,7 @@ public class TransferWorkflowDto
     public string? Notes { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public int AppliedDistributionMode { get; set; }
-    public int? TransferRuleId { get; set; }
+    public int? DestinationTransferRuleId { get; set; }
     public int? Priority { get; set; }
     public decimal? WeightPercent { get; set; }
 }

@@ -7,7 +7,7 @@ namespace Infrastructure.DTOs
     {
         [BindNever]
         public int Id { get; set; }
-        public int SourceAddressId { get; set; }
+        public int SourceTransferPolicyId { get; set; }
         public int DestinationAddressId { get; set; }
         public bool IsEnabled { get; set; }
         public int Priority { get; set; }

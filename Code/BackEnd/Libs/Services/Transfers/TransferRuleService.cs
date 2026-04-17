@@ -39,7 +39,7 @@ namespace Services.Transfers
 
         public async Task<TransferRuleDto> CreateAsync(TransferRuleDto transferRuleDto)
         {
-            var rule = _mapper.Map<TransferRule>(transferRuleDto);
+            var rule = _mapper.Map<DestinationTransferRule>(transferRuleDto);
             rule.Id = 0;
             var created = await _transferRuleRepository.AddAsync(rule);
             return _mapper.Map<TransferRuleDto>(created);
@@ -47,7 +47,7 @@ namespace Services.Transfers
 
         public async Task<TransferRuleDto> UpdateAsync(int id, TransferRuleDto transferRuleDto)
         {
-            var rule = _mapper.Map<TransferRule>(transferRuleDto);
+            var rule = _mapper.Map<DestinationTransferRule>(transferRuleDto);
             rule.Id = id;
             var updated = await _transferRuleRepository.UpdateAsync(rule);
             return _mapper.Map<TransferRuleDto>(updated);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class TransferRequest
+public partial class TransferRequest : AuditableEntity
 {
     public int Id { get; set; }
 
@@ -20,6 +20,4 @@ public partial class TransferRequest
     public int SettlementMode { get; set; }
 
     public int Status { get; set; }
-
-    public DateTime CreatedAtUtc { get; set; }
 }

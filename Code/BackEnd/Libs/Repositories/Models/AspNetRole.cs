@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class AspNetRole
+public partial class AspNetRole : AuditableEntity
 {
     public string Id { get; set; } = null!;
 

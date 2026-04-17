@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repositories.Models;
 
@@ -11,9 +12,11 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    partial class VnmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417121301_AddTransferPoliciesAndAuditInfo")]
+    partial class AddTransferPoliciesAndAuditInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -369,9 +372,6 @@ namespace Repositories.Migrations
                     b.Property<int>("DestinationAddressId")
                         .HasColumnType("int");
 
-                    b.Property<int>("DistributionMode")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
 
@@ -593,70 +593,6 @@ namespace Repositories.Migrations
                     b.ToTable("SourceTransferPolicies");
                 });
 
-            modelBuilder.Entity("Repositories.Models.SourceTransferSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("DayOfMonth")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("EndDateUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ExecutionMode")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("IntervalMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastRunUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("NextRunUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ScheduleType")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SourceTransferPolicyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDateUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<TimeSpan?>("TimeOfDayUtc")
-                        .HasColumnType("time");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "SourceTransferPolicyId" }, "IX_SourceTransferSchedules_SourceTransferPolicyId");
-
-                    b.ToTable("SourceTransferSchedules");
-                });
-
             modelBuilder.Entity("Repositories.Models.TransferRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -704,6 +640,57 @@ namespace Repositories.Migrations
                     b.ToTable("TransferRequests");
                 });
 
+            modelBuilder.Entity("Repositories.Models.TransferRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DestinationAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DistributionMode")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaxDailyKwh")
+                        .HasColumnType("decimal(18, 5)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SourceAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("WeightPercent")
+                        .HasColumnType("decimal(18, 5)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "DestinationAddressId" }, "IX_TransferRules_DestinationAddressId");
+
+                    b.HasIndex(new[] { "SourceAddressId" }, "IX_TransferRules_SourceAddressId");
+
+                    b.ToTable("TransferRules");
+                });
+
             modelBuilder.Entity("Repositories.Models.TransferWorkflow", b =>
                 {
                     b.Property<int>("Id")
@@ -734,9 +721,6 @@ namespace Repositories.Migrations
                     b.Property<decimal>("DestinationDeficitKwhAtWorkflow")
                         .HasColumnType("decimal(18, 5)");
 
-                    b.Property<int?>("DestinationTransferRuleId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("EffectiveAtUtc")
                         .HasColumnType("datetime2");
 
@@ -759,6 +743,9 @@ namespace Repositories.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TransferRuleId")
+                        .HasColumnType("int");
+
                     b.Property<int>("TriggerType")
                         .HasColumnType("int");
 
@@ -775,9 +762,9 @@ namespace Repositories.Migrations
 
                     b.HasIndex(new[] { "DestinationAddressId" }, "IX_TransferWorkflow_DestinationAddressId");
 
-                    b.HasIndex(new[] { "DestinationTransferRuleId" }, "IX_TransferWorkflow_DestinationTransferRuleId");
-
                     b.HasIndex(new[] { "SourceAddressId" }, "IX_TransferWorkflow_SourceAddressId");
+
+                    b.HasIndex(new[] { "TransferRuleId" }, "IX_TransferWorkflow_TransferRuleId");
 
                     b.ToTable("TransferWorkflow", (string)null);
                 });
@@ -911,14 +898,21 @@ namespace Repositories.Migrations
                     b.Navigation("SourceAddress");
                 });
 
-            modelBuilder.Entity("Repositories.Models.SourceTransferSchedule", b =>
+            modelBuilder.Entity("Repositories.Models.TransferRule", b =>
                 {
-                    b.HasOne("Repositories.Models.SourceTransferPolicy", "SourceTransferPolicy")
-                        .WithMany("SourceTransferSchedules")
-                        .HasForeignKey("SourceTransferPolicyId")
+                    b.HasOne("Repositories.Models.Address", "DestinationAddress")
+                        .WithMany("TransferRuleDestinationAddresses")
+                        .HasForeignKey("DestinationAddressId")
                         .IsRequired();
 
-                    b.Navigation("SourceTransferPolicy");
+                    b.HasOne("Repositories.Models.Address", "SourceAddress")
+                        .WithMany("TransferRuleSourceAddresses")
+                        .HasForeignKey("SourceAddressId")
+                        .IsRequired();
+
+                    b.Navigation("DestinationAddress");
+
+                    b.Navigation("SourceAddress");
                 });
 
             modelBuilder.Entity("Repositories.Models.TransferWorkflow", b =>
@@ -928,21 +922,21 @@ namespace Repositories.Migrations
                         .HasForeignKey("DestinationAddressId")
                         .IsRequired();
 
-                    b.HasOne("Repositories.Models.DestinationTransferRule", "DestinationTransferRule")
-                        .WithMany()
-                        .HasForeignKey("DestinationTransferRuleId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Repositories.Models.Address", "SourceAddress")
                         .WithMany("TransferWorkflowSourceAddresses")
                         .HasForeignKey("SourceAddressId")
                         .IsRequired();
 
+                    b.HasOne("Repositories.Models.TransferRule", "TransferRule")
+                        .WithMany("TransferWorkflows")
+                        .HasForeignKey("TransferRuleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("DestinationAddress");
 
-                    b.Navigation("DestinationTransferRule");
-
                     b.Navigation("SourceAddress");
+
+                    b.Navigation("TransferRule");
                 });
 
             modelBuilder.Entity("Repositories.Models.Address", b =>
@@ -960,6 +954,10 @@ namespace Repositories.Migrations
                     b.Navigation("ProviderSettlements");
 
                     b.Navigation("SourceTransferPolicies");
+
+                    b.Navigation("TransferRuleDestinationAddresses");
+
+                    b.Navigation("TransferRuleSourceAddresses");
 
                     b.Navigation("TransferWorkflowDestinationAddresses");
 
@@ -984,8 +982,11 @@ namespace Repositories.Migrations
             modelBuilder.Entity("Repositories.Models.SourceTransferPolicy", b =>
                 {
                     b.Navigation("DestinationTransferRules");
+                });
 
-                    b.Navigation("SourceTransferSchedules");
+            modelBuilder.Entity("Repositories.Models.TransferRule", b =>
+                {
+                    b.Navigation("TransferWorkflows");
                 });
 #pragma warning restore 612, 618
         }

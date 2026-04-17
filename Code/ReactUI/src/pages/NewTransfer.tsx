@@ -69,7 +69,7 @@ export default function NewTransfer() {
     notes: null,
     createdAtUtc: new Date().toISOString(),
     appliedDistributionMode: 0,
-    transferRuleId: null,
+    destinationTransferRuleId: null,
     priority: null,
     weightPercent: null,
   });
@@ -135,7 +135,8 @@ export default function NewTransfer() {
       triggerType: Number(updatedRow.triggerType),
       status: Number(updatedRow.status),
       appliedDistributionMode: Number(updatedRow.appliedDistributionMode),
-      transferRuleId: updatedRow.transferRuleId === null ? null : Number(updatedRow.transferRuleId),
+      destinationTransferRuleId:
+        updatedRow.destinationTransferRuleId === null ? null : Number(updatedRow.destinationTransferRuleId),
       priority: updatedRow.priority === null ? null : Number(updatedRow.priority),
       weightPercent: updatedRow.weightPercent === null ? null : Number(updatedRow.weightPercent),
     };
@@ -169,9 +170,11 @@ export default function NewTransfer() {
       notes: newWorkflow.notes || null,
       createdAtUtc: new Date().toISOString(),
       appliedDistributionMode: Number(newWorkflow.appliedDistributionMode || 0),
-      transferRuleId: newWorkflow.transferRuleId == null || newWorkflow.transferRuleId === ("" as unknown as number)
+      destinationTransferRuleId:
+        newWorkflow.destinationTransferRuleId == null ||
+        newWorkflow.destinationTransferRuleId === ("" as unknown as number)
         ? null
-        : Number(newWorkflow.transferRuleId),
+        : Number(newWorkflow.destinationTransferRuleId),
       priority: newWorkflow.priority == null || newWorkflow.priority === ("" as unknown as number)
         ? null
         : Number(newWorkflow.priority),
@@ -208,7 +211,7 @@ export default function NewTransfer() {
     {
       field: "sourceAddressId",
       headerName: "Source Address",
-      width: 180,
+      width: 220,
       editable: true,
       type: "singleSelect",
       valueOptions: addressOptions,
@@ -216,10 +219,31 @@ export default function NewTransfer() {
     {
       field: "destinationAddressId",
       headerName: "Destination Address",
-      width: 200,
+      width: 230,
       editable: true,
       type: "singleSelect",
       valueOptions: addressOptions,
+    },
+    {
+      field: "sourceSurplusKwhAtWorkflow",
+      headerName: "Source Surplus kWh At Workflow",
+      width: 180,
+      editable: true,
+      type: "number",
+    },
+    {
+      field: "destinationDeficitKwhAtWorkflow",
+      headerName: "Destination Deficit kWh At Workflow",
+      width: 200,
+      editable: true,
+      type: "number",
+    },
+    {
+      field: "remainingSourceSurplusKwhAfterWorkflow",
+      headerName: "Remaining Source Surplus After Workflow",
+      width: 220,
+      editable: true,
+      type: "number",
     },
     { field: "amountKwh", headerName: "Amount kWh", width: 120, editable: true, type: "number" },
     {
@@ -240,13 +264,41 @@ export default function NewTransfer() {
     },
     {
       field: "appliedDistributionMode",
-      headerName: "Mode",
+      headerName: "Applied Distribution Mode",
       width: 120,
       editable: true,
       type: "singleSelect",
       valueOptions: MODE_OPTIONS,
     },
+    {
+      field: "destinationTransferRuleId",
+      headerName: "Transfer Rule ID",
+      width: 130,
+      editable: true,
+      type: "number",
+    },
+    {
+      field: "priority",
+      headerName: "Priority",
+      width: 110,
+      editable: true,
+      type: "number",
+    },
+    {
+      field: "weightPercent",
+      headerName: "Weight Percent",
+      width: 120,
+      editable: true,
+      type: "number",
+    },
     { field: "notes", headerName: "Notes", width: 180, editable: true },
+    {
+      field: "createdAtUtc",
+      headerName: "Created At (UTC)",
+      width: 180,
+      editable: true,
+      valueFormatter: (value) => (value ? new Date(value as string).toLocaleString() : ""),
+    },
     {
       field: "actions",
       type: "actions",
@@ -271,9 +323,19 @@ export default function NewTransfer() {
   ];
 
   return (
-    <Box sx={{ height: 650, width: "100%" }}>
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "calc(100svh - 180px)",
+        px: 2,
+        pb: 2,
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Typography variant="h5" sx={{ mb: 2 }}>
-        New Transfer Workflows
+        Planned Transfer Workflows
       </Typography>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
@@ -282,20 +344,37 @@ export default function NewTransfer() {
         </Button>
       </Box>
 
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        editMode="row"
-        processRowUpdate={processRowUpdate}
-        getRowId={(row) => row.id}
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={setRowModesModel}
-        onProcessRowUpdateError={(e) => alert((e as Error).message)}
-        loading={isLoading}
-        slots={{
-          noRowsOverlay: () => <Box sx={{ p: 2 }}>No transfer workflows found.</Box>,
-        }}
-      />
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          editMode="row"
+          processRowUpdate={processRowUpdate}
+          getRowId={(row) => row.id}
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={setRowModesModel}
+          onProcessRowUpdateError={(e) => alert((e as Error).message)}
+          loading={isLoading}
+          columnHeaderHeight={64}
+          sx={{
+            height: "100%",
+            "& .MuiDataGrid-columnHeaderTitle": {
+              whiteSpace: "normal",
+              lineHeight: 1.15,
+              textAlign: "center",
+            },
+            "& .MuiDataGrid-columnHeaderTitleContainer": {
+              justifyContent: "center",
+            },
+            "& .MuiDataGrid-cell": {
+              alignItems: "center",
+            },
+          }}
+          slots={{
+            noRowsOverlay: () => <Box sx={{ p: 2 }}>No transfer workflows found.</Box>,
+          }}
+        />
+      </Box>
 
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Transfer Workflow</DialogTitle>

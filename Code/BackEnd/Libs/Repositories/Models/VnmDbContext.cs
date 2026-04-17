@@ -25,15 +25,19 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<DailyEnergyBalance> DailyEnergyBalances { get; set; }
 
+    public virtual DbSet<DestinationTransferRule> DestinationTransferRules { get; set; }
+
     public virtual DbSet<InverterInfo> InverterInfos { get; set; }
 
     public virtual DbSet<InverterReading> InverterReadings { get; set; }
 
     public virtual DbSet<ProviderSettlement> ProviderSettlements { get; set; }
 
-    public virtual DbSet<TransferRequest> TransferRequests { get; set; }
+    public virtual DbSet<SourceTransferPolicy> SourceTransferPolicies { get; set; }
 
-    public virtual DbSet<TransferRule> TransferRules { get; set; }
+    public virtual DbSet<SourceTransferSchedule> SourceTransferSchedules { get; set; }
+
+    public virtual DbSet<TransferRequest> TransferRequests { get; set; }
 
     public virtual DbSet<TransferWorkflow> TransferWorkflows { get; set; }
 
@@ -126,6 +130,24 @@ public partial class VnmDbContext : DbContext
                 .HasConstraintName("FK_DailyEnergyBalances_Addresses");
         });
 
+        modelBuilder.Entity<DestinationTransferRule>(entity =>
+        {
+            entity.HasIndex(e => e.DestinationAddressId, "IX_DestinationTransferRules_DestinationAddressId");
+
+            entity.HasIndex(e => e.SourceTransferPolicyId, "IX_DestinationTransferRules_SourceTransferPolicyId");
+
+            entity.Property(e => e.MaxDailyKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.WeightPercent).HasColumnType("decimal(18, 5)");
+
+            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.DestinationTransferRules)
+                .HasForeignKey(d => d.DestinationAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.SourceTransferPolicy).WithMany(p => p.DestinationTransferRules)
+                .HasForeignKey(d => d.SourceTransferPolicyId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
         modelBuilder.Entity<InverterInfo>(entity =>
         {
             entity.HasIndex(e => e.AddressId, "IX_InverterInfos_AddressId");
@@ -172,28 +194,30 @@ public partial class VnmDbContext : DbContext
                 .HasConstraintName("FK_ProviderSettlements_Addresses");
         });
 
+        modelBuilder.Entity<SourceTransferPolicy>(entity =>
+        {
+            entity.HasIndex(e => e.SourceAddressId, "IX_SourceTransferPolicies_SourceAddressId");
+
+            entity.HasOne(d => d.SourceAddress).WithMany(p => p.SourceTransferPolicies)
+                .HasForeignKey(d => d.SourceAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<SourceTransferSchedule>(entity =>
+        {
+            entity.HasIndex(e => e.SourceTransferPolicyId, "IX_SourceTransferSchedules_SourceTransferPolicyId");
+
+            entity.Property(e => e.TimeOfDayUtc).HasColumnType("time");
+
+            entity.HasOne(d => d.SourceTransferPolicy).WithMany(p => p.SourceTransferSchedules)
+                .HasForeignKey(d => d.SourceTransferPolicyId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
         modelBuilder.Entity<TransferRequest>(entity =>
         {
             entity.Property(e => e.ActualAmount).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.RequestedAmount).HasColumnType("decimal(18, 5)");
-        });
-
-        modelBuilder.Entity<TransferRule>(entity =>
-        {
-            entity.HasIndex(e => e.DestinationAddressId, "IX_TransferRules_DestinationAddressId");
-
-            entity.HasIndex(e => e.SourceAddressId, "IX_TransferRules_SourceAddressId");
-
-            entity.Property(e => e.MaxDailyKwh).HasColumnType("decimal(18, 5)");
-            entity.Property(e => e.WeightPercent).HasColumnType("decimal(18, 5)");
-
-            entity.HasOne(d => d.DestinationAddress).WithMany(p => p.TransferRuleDestinationAddresses)
-                .HasForeignKey(d => d.DestinationAddressId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(d => d.SourceAddress).WithMany(p => p.TransferRuleSourceAddresses)
-                .HasForeignKey(d => d.SourceAddressId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<TransferWorkflow>(entity =>
@@ -204,7 +228,7 @@ public partial class VnmDbContext : DbContext
 
             entity.HasIndex(e => e.SourceAddressId, "IX_TransferWorkflow_SourceAddressId");
 
-            entity.HasIndex(e => e.TransferRuleId, "IX_TransferWorkflow_TransferRuleId");
+            entity.HasIndex(e => e.DestinationTransferRuleId, "IX_TransferWorkflow_DestinationTransferRuleId");
 
             entity.Property(e => e.AmountKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.DestinationDeficitKwhAtWorkflow).HasColumnType("decimal(18, 5)");
@@ -221,8 +245,8 @@ public partial class VnmDbContext : DbContext
                 .HasForeignKey(d => d.SourceAddressId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
-            entity.HasOne(d => d.TransferRule).WithMany(p => p.TransferWorkflows)
-                .HasForeignKey(d => d.TransferRuleId)
+            entity.HasOne(d => d.DestinationTransferRule).WithMany()
+                .HasForeignKey(d => d.DestinationTransferRuleId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -230,4 +254,36 @@ public partial class VnmDbContext : DbContext
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
+    public override int SaveChanges()
+    {
+        ApplyAuditInfo();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ApplyAuditInfo();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void ApplyAuditInfo()
+    {
+        var utcNow = DateTime.UtcNow;
+        var currentUser = "system";
+
+        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAtUtc = utcNow;
+                entry.Entity.CreatedBy = currentUser;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAtUtc = utcNow;
+                entry.Entity.UpdatedBy = currentUser;
+            }
+        }
+    }
 }

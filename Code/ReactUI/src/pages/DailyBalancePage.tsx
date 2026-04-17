@@ -10,7 +10,7 @@ interface DailyBalancePageProps {
   permissions: string[];
 }
 
-export default function DailyBalancePage({ permissions }: DailyBalancePageProps) {
+export default function DailyBalancePage({ permissions: _permissions }: DailyBalancePageProps) {
   const [balances, setBalances] = useState<DailyBalance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,9 +53,9 @@ export default function DailyBalancePage({ permissions }: DailyBalancePageProps)
         autoHeight
         rows={balances}
         columns={columns}
-        pageSize={10}
-        rowsPerPageOptions={[10, 20, 50]}
-        disableSelectionOnClick
+        initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+        pageSizeOptions={[10, 20, 50]}
+        disableRowSelectionOnClick
         getRowId={row => row.id}
       />
     </Box>

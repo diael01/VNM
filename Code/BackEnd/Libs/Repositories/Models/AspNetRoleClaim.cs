@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class AspNetRoleClaim
+public partial class AspNetRoleClaim : AuditableEntity
 {
     public int Id { get; set; }
 

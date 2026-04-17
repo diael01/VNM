@@ -1,5 +1,3 @@
-import type { fetchConsumptionReadingsList } from "../api/consumptionApi"
-
 const DEFAULT_API_BASE_URL = "https://localhost:7144"
 
 function trimTrailingSlash(value: string): string {

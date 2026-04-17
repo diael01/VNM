@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class InverterReading
+public partial class InverterReading : AuditableEntity
 {
     public int Id { get; set; }
 

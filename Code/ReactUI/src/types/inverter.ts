@@ -15,3 +15,5 @@ export type InverterInfo = {
   manufacturer: string
   addressId: number
 }
+
+export type InverterData = InverterReading

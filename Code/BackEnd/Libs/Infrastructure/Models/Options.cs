@@ -74,4 +74,12 @@ namespace Infrastructure.Options;
         public int ReadingIntervalMinutes { get; set; } = 1;
     }
 
+    public class ExecutionPolicyOptions
+    {
+        public int ManualReviewRequired {get; set;}
+        public int AutoExecute {get; set;}
+        public int AutoExecuteAutoSettle {get; set;}
+
+    }
+
 

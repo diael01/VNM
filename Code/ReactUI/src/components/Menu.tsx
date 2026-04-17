@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import MuiMenu from "@mui/material/Menu";
@@ -44,7 +43,6 @@ const menuItems: MenuItem[] = [
     label: "Transfers",
     children: [
       { key: "transfers-rules", label: "Rules" },
-      { key: "transfers-available", label: "Available Energy" },
       { key: "transfers-new", label: "New Transfer" },
       { key: "transfers-history", label: "History" },
     ],

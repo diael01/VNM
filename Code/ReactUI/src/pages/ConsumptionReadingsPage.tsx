@@ -8,7 +8,7 @@ interface ConsumptionPageProps {
   permissions: string[];
 }
 
-export default function ConsumptionPage({ permissions }: ConsumptionPageProps) {
+export default function ConsumptionPage({ permissions: _permissions }: ConsumptionPageProps) {
   const [readings, setReadings] = useState<ConsumptionReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +47,9 @@ export default function ConsumptionPage({ permissions }: ConsumptionPageProps) {
         autoHeight
         rows={readings}
         columns={columns}
-        pageSize={10}
-        rowsPerPageOptions={[10, 20, 50]}
-        disableSelectionOnClick
+        initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+        pageSizeOptions={[10, 20, 50]}
+        disableRowSelectionOnClick
         getRowId={row => row.id}
       />
     </Box>

@@ -1,6 +1,6 @@
 export type TransferRule = {
   id: number;
-  sourceAddressId: number;
+  sourceTransferPolicyId: number;
   destinationAddressId: number;
   isEnabled: boolean;
   priority: number;

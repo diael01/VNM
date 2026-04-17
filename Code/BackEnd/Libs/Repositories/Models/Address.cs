@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class Address
+public partial class Address : AuditableEntity
 {
     public int Id { get; set; }
 
@@ -23,15 +23,15 @@ public partial class Address
 
     public virtual ICollection<DailyEnergyBalance> DailyEnergyBalances { get; set; } = new List<DailyEnergyBalance>();
 
+    public virtual ICollection<DestinationTransferRule> DestinationTransferRules { get; set; } = new List<DestinationTransferRule>();
+
     public virtual ICollection<InverterInfo> InverterInfos { get; set; } = new List<InverterInfo>();
 
     public virtual ICollection<InverterReading> InverterReadings { get; set; } = new List<InverterReading>();
 
     public virtual ICollection<ProviderSettlement> ProviderSettlements { get; set; } = new List<ProviderSettlement>();
 
-    public virtual ICollection<TransferRule> TransferRuleDestinationAddresses { get; set; } = new List<TransferRule>();
-
-    public virtual ICollection<TransferRule> TransferRuleSourceAddresses { get; set; } = new List<TransferRule>();
+    public virtual ICollection<SourceTransferPolicy> SourceTransferPolicies { get; set; } = new List<SourceTransferPolicy>();
 
     public virtual ICollection<TransferWorkflow> TransferWorkflowDestinationAddresses { get; set; } = new List<TransferWorkflow>();
 

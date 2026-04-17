@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Repositories.Models;
 
-public partial class ConsumptionReading
+public partial class ConsumptionReading : AuditableEntity
 {
     public int Id { get; set; }
 

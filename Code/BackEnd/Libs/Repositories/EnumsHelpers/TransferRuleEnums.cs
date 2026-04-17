@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repositories.Models
 {
-    public partial class TransferRule
+    public partial class DestinationTransferRule
     {
         [NotMapped]
         public TransferDistributionMode DistributionModeEnum

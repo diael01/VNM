@@ -13,7 +13,7 @@ export type TransferWorkflow = {
   notes: string | null;
   createdAtUtc: string;
   appliedDistributionMode: number;
-  transferRuleId: number | null;
+  destinationTransferRuleId: number | null;
   priority: number | null;
   weightPercent: number | null;
 };

@@ -19,7 +19,7 @@ public class TransferRuleServiceTests
         var dto = new TransferRuleDto
         {
             Id = 999,
-            SourceAddressId = 1,
+            SourceTransferPolicyId = 1,
             DestinationAddressId = 2,
             IsEnabled = true,
             Priority = 1,
@@ -28,10 +28,10 @@ public class TransferRuleServiceTests
             WeightPercent = null,
         };
 
-        var mappedEntity = new TransferRule
+        var mappedEntity = new DestinationTransferRule
         {
             Id = 999,
-            SourceAddressId = 1,
+            SourceTransferPolicyId = 1,
             DestinationAddressId = 2,
             IsEnabled = true,
             Priority = 1,
@@ -40,17 +40,17 @@ public class TransferRuleServiceTests
             WeightPercent = null,
         };
 
-        TransferRule? addedEntity = null;
+        DestinationTransferRule? addedEntity = null;
 
-        _mapper.Setup(m => m.Map<TransferRule>(dto)).Returns(mappedEntity);
-        _repo.Setup(r => r.AddAsync(It.IsAny<TransferRule>(), default))
-            .Callback<TransferRule, CancellationToken>((e, _) => addedEntity = e)
-            .ReturnsAsync((TransferRule e, CancellationToken _) => e);
-        _mapper.Setup(m => m.Map<TransferRuleDto>(It.IsAny<TransferRule>()))
-            .Returns((TransferRule src) => new TransferRuleDto
+        _mapper.Setup(m => m.Map<DestinationTransferRule>(dto)).Returns(mappedEntity);
+        _repo.Setup(r => r.AddAsync(It.IsAny<DestinationTransferRule>(), default))
+            .Callback<DestinationTransferRule, CancellationToken>((e, _) => addedEntity = e)
+            .ReturnsAsync((DestinationTransferRule e, CancellationToken _) => e);
+        _mapper.Setup(m => m.Map<TransferRuleDto>(It.IsAny<DestinationTransferRule>()))
+            .Returns((DestinationTransferRule src) => new TransferRuleDto
             {
                 Id = src.Id,
-                SourceAddressId = src.SourceAddressId,
+                SourceTransferPolicyId = src.SourceTransferPolicyId,
                 DestinationAddressId = src.DestinationAddressId,
                 IsEnabled = src.IsEnabled,
                 Priority = src.Priority,
@@ -75,7 +75,7 @@ public class TransferRuleServiceTests
         var dto = new TransferRuleDto
         {
             Id = 10,
-            SourceAddressId = 1,
+            SourceTransferPolicyId = 1,
             DestinationAddressId = 2,
             IsEnabled = true,
             Priority = 1,
@@ -84,10 +84,10 @@ public class TransferRuleServiceTests
             WeightPercent = null,
         };
 
-        var mappedEntity = new TransferRule
+        var mappedEntity = new DestinationTransferRule
         {
             Id = dto.Id,
-            SourceAddressId = dto.SourceAddressId,
+            SourceTransferPolicyId = dto.SourceTransferPolicyId,
             DestinationAddressId = dto.DestinationAddressId,
             IsEnabled = dto.IsEnabled,
             Priority = dto.Priority,
@@ -96,17 +96,17 @@ public class TransferRuleServiceTests
             WeightPercent = dto.WeightPercent,
         };
 
-        TransferRule? updatedEntity = null;
+        DestinationTransferRule? updatedEntity = null;
 
-        _mapper.Setup(m => m.Map<TransferRule>(dto)).Returns(mappedEntity);
-        _repo.Setup(r => r.UpdateAsync(It.IsAny<TransferRule>(), default))
-            .Callback<TransferRule, CancellationToken>((e, _) => updatedEntity = e)
-            .ReturnsAsync((TransferRule e, CancellationToken _) => e);
-        _mapper.Setup(m => m.Map<TransferRuleDto>(It.IsAny<TransferRule>()))
-            .Returns((TransferRule src) => new TransferRuleDto
+        _mapper.Setup(m => m.Map<DestinationTransferRule>(dto)).Returns(mappedEntity);
+        _repo.Setup(r => r.UpdateAsync(It.IsAny<DestinationTransferRule>(), default))
+            .Callback<DestinationTransferRule, CancellationToken>((e, _) => updatedEntity = e)
+            .ReturnsAsync((DestinationTransferRule e, CancellationToken _) => e);
+        _mapper.Setup(m => m.Map<TransferRuleDto>(It.IsAny<DestinationTransferRule>()))
+            .Returns((DestinationTransferRule src) => new TransferRuleDto
             {
                 Id = src.Id,
-                SourceAddressId = src.SourceAddressId,
+                SourceTransferPolicyId = src.SourceTransferPolicyId,
                 DestinationAddressId = src.DestinationAddressId,
                 IsEnabled = src.IsEnabled,
                 Priority = src.Priority,

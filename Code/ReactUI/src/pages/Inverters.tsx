@@ -4,8 +4,8 @@ import { getAllAddresses } from "../api/addressApi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllInverters, createInverter, updateInverter, deleteInverter } from "../api/inverterApi";
 import type { InverterInfo } from "../types/inverter";
-import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
-import type { GridColDef, GridRowModesModel, GridRowModes } from "@mui/x-data-grid/models";
+import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
+import type { GridColDef, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
 import { Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -51,13 +51,18 @@ export default function Inverters() {
   });
 
   // Handlers
-  const processRowUpdate = async (updatedRow: Inverter) => {
+  const processRowUpdate = async (updatedRow: InverterInfo) => {
     await updateMutation.mutateAsync(updatedRow);
     return updatedRow;
   };
   const handleDelete = async (id: number) => {
     await deleteMutation.mutateAsync(id);
   };
+
+  const handleEditClick = (id: GridRowId) => () => {
+    setRowModesModel(prev => ({ ...prev, [id]: { mode: GridRowModes.Edit } }));
+  };
+
   const handleAdd = async () => {
     await addMutation.mutateAsync(newInverter);
   };
@@ -73,8 +78,8 @@ export default function Inverters() {
       type: "actions",
       width: 100,
       getActions: (params) => [
-        <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => params.api.setRowMode(params.id, GridRowModes.Edit)} />,
-        <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => params.api.updateRows([{ id: params.id, _action: 'delete' }])} />,
+        <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={handleEditClick(params.id)} />,
+        <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(Number(params.id))} />,
       ],
     },
   ];
@@ -90,22 +95,14 @@ export default function Inverters() {
         rows={rows}
         columns={columns}
         editMode="row"
+        rowModesModel={rowModesModel}
         processRowUpdate={processRowUpdate}
-        onRowEditStop={(params, event) => {
-          if ((event as any).reason === 'escapeKeyDown') setRowModesModel({ ...rowModesModel, [params.id]: { mode: GridRowModes.View } });
-        }}
-        experimentalFeatures={{ newEditingApi: true }}
         getRowId={(row) => row.id}
         onRowModesModelChange={setRowModesModel}
         onProcessRowUpdateError={(error) => alert(error.message)}
         loading={isLoading}
         slots={{
           noRowsOverlay: () => <Box sx={{ p: 2 }}>No inverters found.</Box>,
-        }}
-        slotProps={{
-          row: {
-            onDelete: handleDelete,
-          },
         }}
       />
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>

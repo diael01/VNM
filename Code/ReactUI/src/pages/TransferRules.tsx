@@ -36,9 +36,9 @@ export function sanitizeByMode(rule: TransferRule): TransferRule {
   return { ...rule, weightPercent: null, priority: 1 };
 }
 
-export function getSourceMode(rules: TransferRule[], sourceAddressId: number, excludeId?: number): number | null {
+export function getSourceMode(rules: TransferRule[], sourceTransferPolicyId: number, excludeId?: number): number | null {
   const found = rules.find(
-    (r) => r.sourceAddressId === sourceAddressId && (excludeId === undefined || r.id !== excludeId),
+    (r) => r.sourceTransferPolicyId === sourceTransferPolicyId && (excludeId === undefined || r.id !== excludeId),
   );
   return found ? found.distributionMode : null;
 }
@@ -46,7 +46,7 @@ export function getSourceMode(rules: TransferRule[], sourceAddressId: number, ex
 export function coerceTransferRuleNumbers(updatedRow: TransferRule): TransferRule {
   return {
     ...updatedRow,
-    sourceAddressId: Number(updatedRow.sourceAddressId),
+    sourceTransferPolicyId: Number(updatedRow.sourceTransferPolicyId),
     destinationAddressId: Number(updatedRow.destinationAddressId),
     distributionMode: Number(updatedRow.distributionMode),
     priority: Number(updatedRow.priority),
@@ -58,7 +58,7 @@ export default function TransferRules() {
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newRule, setNewRule] = useState<Partial<TransferRule>>({
-    sourceAddressId: 0,
+    sourceTransferPolicyId: 0,
     destinationAddressId: 0,
     isEnabled: true,
     priority: 1,
@@ -88,7 +88,7 @@ export default function TransferRules() {
       queryClient.invalidateQueries({ queryKey: ["transferRules"] });
       setAddDialogOpen(false);
       setNewRule({
-        sourceAddressId: 0,
+        sourceTransferPolicyId: 0,
         destinationAddressId: 0,
         isEnabled: true,
         priority: 1,
@@ -110,14 +110,11 @@ export default function TransferRules() {
   });
 
   const validateRule = (rule: TransferRule, excludeId?: number): string | null => {
-    if (!rule.sourceAddressId || !rule.destinationAddressId) {
-      return "Source and destination are required.";
-    }
-    if (rule.sourceAddressId === rule.destinationAddressId) {
-      return "Source and destination cannot be the same address.";
+    if (!rule.sourceTransferPolicyId || !rule.destinationAddressId) {
+      return "Source transfer policy and destination are required.";
     }
 
-    const sourceMode = getSourceMode(rows, rule.sourceAddressId, excludeId);
+    const sourceMode = getSourceMode(rows, rule.sourceTransferPolicyId, excludeId);
     if (sourceMode !== null && sourceMode !== rule.distributionMode) {
       return "All rules for the same source must use the same Distribution Mode.";
     }
@@ -156,7 +153,7 @@ export default function TransferRules() {
   const handleAdd = async () => {
     const draft: TransferRule = {
       id: 0,
-      sourceAddressId: Number(newRule.sourceAddressId || 0),
+      sourceTransferPolicyId: Number(newRule.sourceTransferPolicyId || 0),
       destinationAddressId: Number(newRule.destinationAddressId || 0),
       isEnabled: Boolean(newRule.isEnabled ?? true),
       priority: Number(newRule.priority || 1),
@@ -181,11 +178,11 @@ export default function TransferRules() {
     await addMutation.mutateAsync(normalized);
   };
 
-  const onSourceChanged = (sourceAddressId: number) => {
-    const sourceMode = getSourceMode(rows, sourceAddressId);
+  const onSourceChanged = (sourceTransferPolicyId: number) => {
+    const sourceMode = getSourceMode(rows, sourceTransferPolicyId);
     setNewRule((prev) => ({
       ...prev,
-      sourceAddressId,
+      sourceTransferPolicyId,
       distributionMode: sourceMode ?? (prev.distributionMode ?? 0),
       weightPercent: (sourceMode ?? prev.distributionMode) === 2 ? prev.weightPercent : null,
     }));
@@ -194,12 +191,11 @@ export default function TransferRules() {
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 80 },
     {
-      field: "sourceAddressId",
-      headerName: "Source Address",
+      field: "sourceTransferPolicyId",
+      headerName: "Source Policy",
       width: 180,
       editable: true,
-      type: "singleSelect",
-      valueOptions: addressOptions,
+      type: "number",
     },
     {
       field: "destinationAddressId",
@@ -320,20 +316,11 @@ export default function TransferRules() {
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <TextField
-              select
-              label="Source Address"
-              value={newRule.sourceAddressId || ""}
+              type="number"
+              label="Source Transfer Policy ID"
+              value={newRule.sourceTransferPolicyId || ""}
               onChange={(e) => onSourceChanged(Number(e.target.value))}
-            >
-              <MenuItem value="" disabled>
-                Select source
-              </MenuItem>
-              {addresses.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {labelAddress(a)}
-                </MenuItem>
-              ))}
-            </TextField>
+            />
 
             <TextField
               select
@@ -364,7 +351,7 @@ export default function TransferRules() {
               value={newRule.distributionMode ?? 0}
               onChange={(e) => {
                 const mode = Number(e.target.value);
-                const sourceMode = getSourceMode(rows, Number(newRule.sourceAddressId || 0));
+                const sourceMode = getSourceMode(rows, Number(newRule.sourceTransferPolicyId || 0));
                 if (sourceMode !== null && sourceMode !== mode) {
                   alert("All rules for the same source must use the same Distribution Mode.");
                   return;

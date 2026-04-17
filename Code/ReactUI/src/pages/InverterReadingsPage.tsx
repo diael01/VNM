@@ -1,42 +1,18 @@
 import { useEffect, useState } from "react";
 import { fetchInverterReadingsList } from "../api/inverterApi";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
-
-export type InverterReading = {
-  id: number
-  timestamp: string
-  power: number
-  voltage: number
-  current: number
-  source: string
-  inverterInfoId: number
-}
+import type { InverterReading } from "../types/inverter";
 
 interface InverterReadingsPageProps {
   permissions: string[]
 }
 
-export default function InverterReadingsPage({ permissions }: InverterReadingsPageProps) {
-  const canRetry = permissions.some(p => p.toLowerCase() === "dashboard:retry")
+export default function InverterReadingsPage({ permissions: _permissions }: InverterReadingsPageProps) {
   const [readings, setReadings] = useState<InverterReading[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fetchInverterReadingsList();
-      setReadings(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load inverter readings");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -75,9 +51,9 @@ export default function InverterReadingsPage({ permissions }: InverterReadingsPa
         autoHeight
         rows={readings}
         columns={columns}
-        pageSize={10}
-        rowsPerPageOptions={[10, 20, 50]}
-        disableSelectionOnClick
+        initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+        pageSizeOptions={[10, 20, 50]}
+        disableRowSelectionOnClick
         getRowId={(row) => row.id}
       />
     </Box>

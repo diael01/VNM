@@ -69,18 +69,27 @@ public class TransferWorkflowServiceTests
                 Status = "Computed"
             });
 
-        db.TransferRules.AddRange(
-            new TransferRule
+        var fairPolicy = new SourceTransferPolicy
+        {
+            Id = 1,
+            SourceAddressId = 1,
+            DistributionMode = (int)TransferDistributionMode.Fair,
+            IsEnabled = true,
+        };
+
+        db.SourceTransferPolicies.Add(fairPolicy);
+        db.DestinationTransferRules.AddRange(
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = fairPolicy.Id,
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
                 DistributionMode = (int)TransferDistributionMode.Fair
             },
-            new TransferRule
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = fairPolicy.Id,
                 DestinationAddressId = 3,
                 IsEnabled = true,
                 Priority = 2,
@@ -120,18 +129,27 @@ public class TransferWorkflowServiceTests
             Balance(2, 2, "2026-04-05", surplus: 0m, deficit: 3m),
             Balance(3, 3, "2026-04-05", surplus: 0m, deficit: 10m));
 
-        db.TransferRules.AddRange(
-            new TransferRule
+        var priorityPolicy = new SourceTransferPolicy
+        {
+            Id = 1,
+            SourceAddressId = 1,
+            DistributionMode = (int)TransferDistributionMode.Priority,
+            IsEnabled = true,
+        };
+
+        db.SourceTransferPolicies.Add(priorityPolicy);
+        db.DestinationTransferRules.AddRange(
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = priorityPolicy.Id,
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
                 DistributionMode = (int)TransferDistributionMode.Priority
             },
-            new TransferRule
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = priorityPolicy.Id,
                 DestinationAddressId = 3,
                 IsEnabled = true,
                 Priority = 2,
@@ -168,19 +186,28 @@ public class TransferWorkflowServiceTests
             Balance(2, 2, "2026-04-05", surplus: 0m, deficit: 10m),
             Balance(3, 3, "2026-04-05", surplus: 0m, deficit: 10m));
 
-        db.TransferRules.AddRange(
-            new TransferRule
+        var weightedPolicy = new SourceTransferPolicy
+        {
+            Id = 1,
+            SourceAddressId = 1,
+            DistributionMode = (int)TransferDistributionMode.Weighted,
+            IsEnabled = true,
+        };
+
+        db.SourceTransferPolicies.Add(weightedPolicy);
+        db.DestinationTransferRules.AddRange(
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = weightedPolicy.Id,
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
                 WeightPercent = 70m,
                 DistributionMode = (int)TransferDistributionMode.Weighted
             },
-            new TransferRule
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = weightedPolicy.Id,
                 DestinationAddressId = 3,
                 IsEnabled = true,
                 Priority = 2,
@@ -217,10 +244,19 @@ public class TransferWorkflowServiceTests
             Balance(1, 1, "2026-04-05", surplus: 5m, deficit: 0m),
             Balance(2, 2, "2026-04-05", surplus: 0m, deficit: 5m));
 
-        db.TransferRules.Add(
-            new TransferRule
+        var dedupePolicy = new SourceTransferPolicy
+        {
+            Id = 1,
+            SourceAddressId = 1,
+            DistributionMode = (int)TransferDistributionMode.Fair,
+            IsEnabled = true,
+        };
+
+        db.SourceTransferPolicies.Add(dedupePolicy);
+        db.DestinationTransferRules.Add(
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = dedupePolicy.Id,
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
@@ -259,10 +295,19 @@ public class TransferWorkflowServiceTests
             Balance(1, 1, "2026-04-05", surplus: 2m, deficit: 0m),
             Balance(2, 2, "2026-04-05", surplus: 0m, deficit: 2m));
 
-        db.TransferRules.Add(
-            new TransferRule
+        var sqlitePolicy = new SourceTransferPolicy
+        {
+            Id = 1,
+            SourceAddressId = 1,
+            DistributionMode = (int)TransferDistributionMode.Fair,
+            IsEnabled = true,
+        };
+
+        db.SourceTransferPolicies.Add(sqlitePolicy);
+        db.DestinationTransferRules.Add(
+            new DestinationTransferRule
             {
-                SourceAddressId = 1,
+                SourceTransferPolicyId = sqlitePolicy.Id,
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,

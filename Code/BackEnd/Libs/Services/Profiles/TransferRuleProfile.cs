@@ -9,9 +9,9 @@ namespace Services.Profiles
         public TransferRuleProfile()
         {
             // Entity -> DTO (for API responses)
-            CreateMap<TransferRule, TransferRuleDto>()
+            CreateMap<DestinationTransferRule, TransferRuleDto>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.SourceAddressId, opt => opt.MapFrom(src => src.SourceAddressId))
+                .ForMember(dest => dest.SourceTransferPolicyId, opt => opt.MapFrom(src => src.SourceTransferPolicyId))
                 .ForMember(dest => dest.DestinationAddressId, opt => opt.MapFrom(src => src.DestinationAddressId))
                 .ForMember(dest => dest.IsEnabled, opt => opt.MapFrom(src => src.IsEnabled))
                 .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
@@ -20,9 +20,9 @@ namespace Services.Profiles
                 .ForMember(dest => dest.WeightPercent, opt => opt.MapFrom(src => src.WeightPercent));
 
             // DTO -> Entity (for create/update)
-            CreateMap<TransferRuleDto, TransferRule>()
+            CreateMap<TransferRuleDto, DestinationTransferRule>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.SourceAddressId, opt => opt.MapFrom(src => src.SourceAddressId))
+                .ForMember(dest => dest.SourceTransferPolicyId, opt => opt.MapFrom(src => src.SourceTransferPolicyId))
                 .ForMember(dest => dest.DestinationAddressId, opt => opt.MapFrom(src => src.DestinationAddressId))
                 .ForMember(dest => dest.IsEnabled, opt => opt.MapFrom(src => src.IsEnabled))
                 .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))

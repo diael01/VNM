@@ -7,6 +7,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      chunkSizeWarningLimit: 650,
+    },
     server: {
       port: Number(env.VITE_DEV_SERVER_PORT || 5173),
       strictPort: true,

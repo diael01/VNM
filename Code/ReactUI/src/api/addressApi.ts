@@ -11,7 +11,6 @@ export async function getAllAddresses(): Promise<Address[]> {
 }
 
 export async function createAddress(address: Partial<Address>): Promise<Address> {
-  address.inverterId = 1; //todo: temporary => until liaise with inverters  
   const resp = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

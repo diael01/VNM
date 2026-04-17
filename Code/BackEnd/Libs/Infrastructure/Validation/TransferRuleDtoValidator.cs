@@ -7,17 +7,13 @@ namespace Infrastructure.Validation
     {
         public TransferRuleDtoValidator()
         {
-            RuleFor(x => x.SourceAddressId)
+            RuleFor(x => x.SourceTransferPolicyId)
                 .GreaterThan(0)
-                .WithMessage("Source address ID must be greater than 0.");
+                .WithMessage("Source transfer policy ID must be greater than 0.");
 
             RuleFor(x => x.DestinationAddressId)
                 .GreaterThan(0)
                 .WithMessage("Destination address ID must be greater than 0.");
-
-            RuleFor(x => x)
-                .Must(x => x.SourceAddressId != x.DestinationAddressId)
-                .WithMessage("Source and destination addresses must be different.");
 
             RuleFor(x => x.DistributionMode)
                 .InclusiveBetween(0, 2)
