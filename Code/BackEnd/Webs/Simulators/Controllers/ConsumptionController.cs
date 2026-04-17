@@ -21,7 +21,7 @@ public class ConsumptionController : ControllerBase
     [HttpGet("data")]
     public ActionResult<ConsumptionReading> GetData()
     {
-        var addressIds = new[] { 2, 1002 };
+        var addressIds = new[] { 2, 3, 4 };
         var index = Interlocked.Increment(ref _counter) % addressIds.Length;
 
         var data = new ConsumptionReading

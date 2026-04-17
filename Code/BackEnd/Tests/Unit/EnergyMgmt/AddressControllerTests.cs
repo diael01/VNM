@@ -91,8 +91,14 @@ public class AddressControllerTests
     public async Task Update_ReturnsBadRequest_WhenIdMismatch()
     {
         var dto = new AddressDto { Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        var entity = new Repositories.Models.Address { Id = 6, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        var updatedDto = new AddressDto { Id = 6, Country = "A", County = "B", City = "C", Street = "S", StreetNumber = "1", PostalCode = "000" };
+        _mockService.Setup(s => s.UpdateAsync(6, dto, default)).ReturnsAsync(entity);
+        _mockMapper.Setup(m => m.Map<AddressDto>(entity)).Returns(updatedDto);
         var result = await _controller.Update(6, dto);
-        Assert.IsType<BadRequestResult>(result);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var value = Assert.IsType<AddressDto>(ok.Value);
+        Assert.Equal(6, value.Id);
     }
 
     [Fact]

@@ -60,9 +60,15 @@ namespace Services.Transfers
 
         public async Task<SourceTransferPolicyDto> UpdateAsync(int id, SourceTransferPolicyDto dto, CancellationToken cancellationToken = default)
         {
-            var entity = _mapper.Map<SourceTransferPolicy>(dto);
-            entity.Id = id;
-            var updated = await _policyRepository.UpdateAsync(entity, cancellationToken);
+            var existing = await _policyRepository.GetByIdAsync(id, cancellationToken)
+                ?? throw new KeyNotFoundException($"SourceTransferPolicy {id} was not found.");
+
+            // Update only mutable business fields and preserve audit fields/relationships.
+            existing.SourceAddressId = dto.SourceAddressId;
+            existing.DistributionMode = dto.DistributionMode;
+            existing.IsEnabled = dto.IsEnabled;
+
+            var updated = await _policyRepository.UpdateAsync(existing, cancellationToken);
             return _mapper.Map<SourceTransferPolicyDto>(updated);
         }
 

@@ -17,7 +17,9 @@ namespace Infrastructure.DTOs
         public int? DayOfWeek { get; set; }
         public int? DayOfMonth { get; set; }
         public DateTime? LastRunUtc { get; set; }
-        public DateTime? NextRunUtc { get; set; }
+        public DateTime? NextRunUtc { get; set; }          
+        public int? RepeatEveryValue { get; set; } //the number of units between runs, e.g. every 2 minutes
+        public int? RepeatEveryUnit { get; set; } //the unit of time for the interval, e.g. minutes, hours
         public DateTime? UpdatedAtUtc { get; set; }
     }
 }

@@ -17,7 +17,8 @@ namespace Services.Profiles
                 .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
                 .ForMember(dest => dest.DistributionMode, opt => opt.MapFrom(src => src.DistributionMode))
                 .ForMember(dest => dest.MaxDailyKwh, opt => opt.MapFrom(src => src.MaxDailyKwh))
-                .ForMember(dest => dest.WeightPercent, opt => opt.MapFrom(src => src.WeightPercent));
+                .ForMember(dest => dest.WeightPercent, opt => opt.MapFrom(src => src.WeightPercent))
+                .ForMember(dest => dest.UpdatedAtUtc, opt => opt.MapFrom(src => src.UpdatedAtUtc));
 
             // DTO -> Entity (for create/update)
             CreateMap<TransferRuleDto, DestinationTransferRule>()

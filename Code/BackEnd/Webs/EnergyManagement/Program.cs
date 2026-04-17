@@ -95,7 +95,6 @@ builder.Services.AddDailyBalanceComputation(builder.Configuration);
 builder.Services.Configure<TransferWorkflowOptions>(
     builder.Configuration.GetSection("TransferWorkflow"));
 
-builder.Services.AddScoped<ITransferWorkflowService, TransferWorkflowService>();
 builder.Services.AddHostedService<TransferWorkflowBackgroundService>();
 // ---------------------
 // Build the app

@@ -29,8 +29,8 @@ namespace Infrastructure.Options;
     public class TransferWorkflowOptions
     {
         public bool Enabled { get; set; } = true;
-        public int IntervalMinutes { get; set; } = 1;
-        public TransferDistributionMode DistributionMode { get; set; } = TransferDistributionMode.Fair; // Fair / Priority / Weighted
+        public int PollIntervalSeconds { get; set; } = 30;
+
     }
 
 

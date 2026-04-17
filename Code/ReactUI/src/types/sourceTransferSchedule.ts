@@ -8,6 +8,8 @@ export type SourceTransferSchedule = {
   endDateUtc: string | null;
   timeOfDayUtc: string | null;
   intervalMinutes: number | null;
+  repeatEveryValue: number | null;
+  repeatEveryUnit: number | null;
   dayOfWeek: number | null;
   dayOfMonth: number | null;
   lastRunUtc: string | null;

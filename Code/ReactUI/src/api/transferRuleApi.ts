@@ -27,7 +27,10 @@ export async function updateTransferRule(rule: TransferRule): Promise<TransferRu
     body: JSON.stringify(rule),
     credentials: "include",
   });
-  if (!resp.ok) throw new Error("Failed to update transfer rule");
+  if (!resp.ok) {
+    const details = await resp.text();
+    throw new Error(`Failed to update transfer rule${details ? `: ${details}` : ""}`);
+  }
   return resp.json();
 }
 

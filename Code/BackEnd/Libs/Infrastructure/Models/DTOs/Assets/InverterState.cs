@@ -1,3 +1,5 @@
+using Infrastructure.Enums;
+
 namespace Simulators.Models;
 
 public class InverterState

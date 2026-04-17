@@ -7,4 +7,5 @@ export type TransferRule = {
   distributionMode: number;
   maxDailyKwh: number | null;
   weightPercent: number | null;
+  updatedAtUtc?: string | null;
 };

@@ -5,6 +5,14 @@ import type { SourceTransferSchedule } from "../types/sourceTransferSchedule";
 
 const BASE = appConfig.urls.sourcePolicies;
 
+function toPolicyWritePayload(policy: Partial<SourceTransferPolicy>) {
+  return {
+    sourceAddressId: Number(policy.sourceAddressId ?? 0),
+    distributionMode: Number(policy.distributionMode ?? 0),
+    isEnabled: Boolean(policy.isEnabled),
+  };
+}
+
 // ---- Policies ----
 
 export async function getAllPolicies(): Promise<SourceTransferPolicy[]> {
@@ -17,10 +25,13 @@ export async function createPolicy(policy: Partial<SourceTransferPolicy>): Promi
   const resp = await fetch(BASE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(policy),
+    body: JSON.stringify(toPolicyWritePayload(policy)),
     credentials: "include",
   });
-  if (!resp.ok) throw new Error("Failed to create policy");
+  if (!resp.ok) {
+    const details = await resp.text();
+    throw new Error(`Failed to create policy${details ? `: ${details}` : ""}`);
+  }
   return resp.json();
 }
 
@@ -28,10 +39,13 @@ export async function updatePolicy(policy: SourceTransferPolicy): Promise<Source
   const resp = await fetch(`${BASE}/${policy.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(policy),
+    body: JSON.stringify(toPolicyWritePayload(policy)),
     credentials: "include",
   });
-  if (!resp.ok) throw new Error("Failed to update policy");
+  if (!resp.ok) {
+    const details = await resp.text();
+    throw new Error(`Failed to update policy${details ? `: ${details}` : ""}`);
+  }
   return resp.json();
 }
 
@@ -80,7 +94,10 @@ export async function updateSchedule(
     body: JSON.stringify(schedule),
     credentials: "include",
   });
-  if (!resp.ok) throw new Error("Failed to update schedule");
+  if (!resp.ok) {
+    const details = await resp.text();
+    throw new Error(`Failed to update schedule${details ? `: ${details}` : ""}`);
+  }
   return resp.json();
 }
 

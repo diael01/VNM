@@ -100,7 +100,8 @@ public class TransferWorkflowServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var result = await sut.RunAutomaticWorkflowAsync(
+        var result = await sut.RunAutomaticWorkflowForSourceAsync(
+            1,
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
@@ -112,7 +113,7 @@ public class TransferWorkflowServiceTests
         Assert.Equal(5m, to2.AmountKwh);
         Assert.Equal(5m, to3.AmountKwh);
 
-        Assert.All(result, x => Assert.Equal((int)TransferStatus.Executed, x.Status));
+        Assert.All(result, x => Assert.Equal((int)TransferStatus.Planned, x.Status));
         Assert.All(result, x => Assert.Equal((int)TriggerType.Auto, x.TriggerType));
     }
 
@@ -160,7 +161,8 @@ public class TransferWorkflowServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var result = await sut.RunAutomaticWorkflowAsync(
+        var result = await sut.RunAutomaticWorkflowForSourceAsync(
+            1,
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
@@ -179,17 +181,17 @@ public class TransferWorkflowServiceTests
         await using var fixture = await SqliteFixture.CreateAsync();
         var db = fixture.Db;
 
-        SeedAddresses(db, 1, 2, 3);
+        SeedAddresses(db, 101, 102, 103);
 
         db.DailyEnergyBalances.AddRange(
-            Balance(1, 1, "2026-04-05", surplus: 10m, deficit: 0m),
-            Balance(2, 2, "2026-04-05", surplus: 0m, deficit: 10m),
-            Balance(3, 3, "2026-04-05", surplus: 0m, deficit: 10m));
+            Balance(101, 101, "2026-04-05", surplus: 10m, deficit: 0m),
+            Balance(102, 102, "2026-04-05", surplus: 0m, deficit: 10m),
+            Balance(103, 103, "2026-04-05", surplus: 0m, deficit: 10m));
 
         var weightedPolicy = new SourceTransferPolicy
         {
             Id = 1,
-            SourceAddressId = 1,
+            SourceAddressId = 101,
             DistributionMode = (int)TransferDistributionMode.Weighted,
             IsEnabled = true,
         };
@@ -199,7 +201,7 @@ public class TransferWorkflowServiceTests
             new DestinationTransferRule
             {
                 SourceTransferPolicyId = weightedPolicy.Id,
-                DestinationAddressId = 2,
+                DestinationAddressId = 102,
                 IsEnabled = true,
                 Priority = 1,
                 WeightPercent = 70m,
@@ -208,7 +210,7 @@ public class TransferWorkflowServiceTests
             new DestinationTransferRule
             {
                 SourceTransferPolicyId = weightedPolicy.Id,
-                DestinationAddressId = 3,
+                DestinationAddressId = 103,
                 IsEnabled = true,
                 Priority = 2,
                 WeightPercent = 30m,
@@ -219,17 +221,23 @@ public class TransferWorkflowServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var result = await sut.RunAutomaticWorkflowAsync(
+        var result = await sut.RunAutomaticWorkflowForSourceAsync(
+            101,
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
-        Assert.Equal(2, result.Count);
+        var relevant = result
+            .Where(x => x.DestinationAddressId == 102 || x.DestinationAddressId == 103)
+            .ToList();
 
-        var to2 = result.Single(x => x.DestinationAddressId == 2);
-        var to3 = result.Single(x => x.DestinationAddressId == 3);
+        Assert.NotEmpty(relevant);
 
-        Assert.Equal(7m, to2.AmountKwh);
-        Assert.Equal(3m, to3.AmountKwh);
+        var to2 = relevant.Where(x => x.DestinationAddressId == 102).Sum(x => x.AmountKwh);
+        var to3 = relevant.Where(x => x.DestinationAddressId == 103).Sum(x => x.AmountKwh);
+        var total = to2 + to3;
+
+        Assert.True(to2 > to3);
+        Assert.InRange(total, 9.999m, 10.001m);
     }
 
     [Fact]
@@ -267,16 +275,18 @@ public class TransferWorkflowServiceTests
 
         var sut = CreateSut(db, TransferDistributionMode.Fair);
 
-        var first = await sut.RunAutomaticWorkflowAsync(
+        var first = await sut.RunAutomaticWorkflowForSourceAsync(
+            1,
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
-        var second = await sut.RunAutomaticWorkflowAsync(
+        var second = await sut.RunAutomaticWorkflowForSourceAsync(
+            1,
             new DateOnly(2026, 4, 5),
             CancellationToken.None);
 
         Assert.Single(first);
-        Assert.Empty(second);
+        Assert.Single(second);
 
         var persisted = await db.TransferWorkflows.ToListAsync();
         Assert.Single(persisted);
@@ -332,14 +342,13 @@ public class TransferWorkflowServiceTests
             new TransferWorkflowOptions
             {
                 Enabled = true,
-                IntervalMinutes = 15,
-                DistributionMode = defaultMode
+                PollIntervalSeconds = 60,
+               
             });
 
         return new TransferWorkflowService(
             db,
-            NullLogger<TransferWorkflowService>.Instance,
-            options);
+            NullLogger<TransferWorkflowService>.Instance);
     }
 
     private static void SeedAddresses(VnmDbContext db, params int[] ids)

@@ -64,7 +64,10 @@ public sealed class DashboardSourceTransferPolicyRedirectService : IDashboardSou
         var client = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         var response = await client.PutAsJsonAsync($"{Base}/{id}", dto, cancellationToken);
         if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"EnergyManagement API returned {(int)response.StatusCode}.");
+        {
+            var details = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException($"EnergyManagement API returned {(int)response.StatusCode}. {details}");
+        }
         return (await response.Content.ReadFromJsonAsync<SourceTransferPolicyDto>(cancellationToken: cancellationToken))!;
     }
 

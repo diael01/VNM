@@ -35,7 +35,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
+import { DataGrid, GridActionsCellItem, GridRowEditStopReasons, GridRowModes } from "@mui/x-data-grid";
 import type { GridColDef, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -73,10 +73,14 @@ const MODE_OPTIONS = [
   { value: 2, label: "Weighted" },
 ];
 const SCHEDULE_TYPE_LABELS: Record<number, string> = {
-  0: "Once", 1: "Daily", 2: "Weekly", 3: "Monthly", 4: "Custom",
+  0: "Once", 1: "Daily", 2: "Weekly", 3: "Monthly", 4: "Interval",
 };
 const EXEC_MODE_LABELS: Record<number, string> = {
   0: "Plan Only", 1: "Plan & Approve", 2: "Plan & Execute",
+};
+const REPEAT_EVERY_UNIT_LABELS: Record<number, string> = {
+  0: "Minutes",
+  1: "Hours",
 };
 
 function labelAddress(a: Address) {
@@ -86,6 +90,21 @@ function labelAddress(a: Address) {
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString();
+}
+
+function asNumberValue(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Number(value);
+  if (value && typeof value === "object" && "value" in (value as Record<string, unknown>)) {
+    return Number((value as { value: unknown }).value);
+  }
+  return Number.NaN;
+}
+
+function asBooleanValue(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.toLowerCase() === "true";
+  return Boolean(value);
 }
 
 type ConfirmDeleteDialogProps = {
@@ -160,7 +179,7 @@ function PolicyFormDialog({ open, initial, addresses, title, onClose, onSave, sa
             </Select>
           </FormControl>
           <FormControlLabel
-            control={<Switch checked={draft.isEnabled ?? true}
+            control={<Switch checked={draft.isEnabled ?? false}
               onChange={(e) => setDraft((d) => ({ ...d, isEnabled: e.target.checked }))} />}
             label="Enabled" />
         </Stack>
@@ -187,6 +206,7 @@ type ScheduleFormDialogProps = {
 function ScheduleFormDialog({ open, initial, title, onClose, onSave, saving }: ScheduleFormDialogProps) {
   const [draft, setDraft] = useState<Partial<SourceTransferSchedule>>(initial);
   const [prevOpen, setPrevOpen] = useState(false);
+  const isInterval = draft.scheduleType === 4;
   if (open && !prevOpen) { setDraft(initial); setPrevOpen(true); }
   if (!open && prevOpen) setPrevOpen(false);
 
@@ -196,7 +216,7 @@ function ScheduleFormDialog({ open, initial, title, onClose, onSave, saving }: S
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <FormControlLabel
-            control={<Switch checked={draft.isEnabled ?? true}
+            control={<Switch checked={draft.isEnabled ?? false}
               onChange={(e) => setDraft((d) => ({ ...d, isEnabled: e.target.checked }))} />}
             label="Enabled" />
           <FormControl fullWidth size="small">
@@ -226,6 +246,34 @@ function ScheduleFormDialog({ open, initial, title, onClose, onSave, saving }: S
           <TextField label="Time of Day UTC (HH:MM)" size="small" placeholder="08:00"
             value={draft.timeOfDayUtc ?? ""}
             onChange={(e) => setDraft((d) => ({ ...d, timeOfDayUtc: e.target.value || null }))} />
+          <TextField
+            label="Repeat Every"
+            type="number"
+            size="small"
+            disabled={!isInterval}
+            value={draft.repeatEveryValue ?? ""}
+            onChange={(e) => setDraft((d) => ({
+              ...d,
+              repeatEveryValue: e.target.value ? Number(e.target.value) : null,
+            }))}
+          />
+          <FormControl fullWidth size="small" disabled={!isInterval}>
+            <InputLabel>Repeat Unit</InputLabel>
+            <Select
+              label="Repeat Unit"
+              value={draft.repeatEveryUnit ?? ""}
+              onChange={(e) => setDraft((d) => ({ ...d, repeatEveryUnit: Number(e.target.value) }))}
+            >
+              {Object.entries(REPEAT_EVERY_UNIT_LABELS).map(([v, l]) => (
+                <MenuItem key={v} value={Number(v)}>{l}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {!isInterval && (
+            <Typography variant="caption" color="text.secondary">
+              Repeat Every and Repeat Unit are enabled when Schedule Type is set to Interval.
+            </Typography>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -316,6 +364,11 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
   ];
 
   const processRowUpdate = async (row: TransferRule) => {
+    if (Number(row.destinationAddressId) === Number(policy.sourceAddressId)) {
+      alert("Destination address cannot be the same as the source address.");
+      throw new Error("Destination address cannot be the same as the source address.");
+    }
+
     const n: TransferRule = { ...row, distributionMode: mode,
       priority: isPriority ? Number(row.priority) : 1,
       weightPercent: isWeighted ? row.weightPercent : null };
@@ -331,7 +384,8 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
           Add destination
         </Button>
       </Stack>
-      <Box sx={{ overflowX: "auto" }}>
+      <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+        <Box sx={{ minWidth: 900 }}>
         <DataGrid autoHeight rows={rules} columns={columns} editMode="row"
           rowModesModel={rowModesModel} onRowModesModelChange={setRowModesModel}
           processRowUpdate={processRowUpdate} onProcessRowUpdateError={(e) => alert(e.message)}
@@ -339,6 +393,7 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
           initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
           pageSizeOptions={[5, 10]} disableRowSelectionOnClick
           sx={{ minWidth: 900, "& .cell-disabled": { color: "#bbb", pointerEvents: "none" } }} />
+        </Box>
       </Box>
 
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="xs" fullWidth>
@@ -353,7 +408,7 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
               </Select>
             </FormControl>
             <FormControlLabel
-              control={<Switch checked={newRule.isEnabled ?? true}
+              control={<Switch checked={newRule.isEnabled ?? false}
                 onChange={(e) => setNewRule((r) => ({ ...r, isEnabled: e.target.checked }))} />}
               label="Enabled" />
             {isPriority && (
@@ -370,13 +425,20 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button variant="contained" disabled={addMutation.isPending} onClick={() =>
+          <Button variant="contained" disabled={addMutation.isPending} onClick={() => {
+            const destinationAddressId = Number(newRule.destinationAddressId ?? 0);
+            if (destinationAddressId === Number(policy.sourceAddressId)) {
+              alert("Destination address cannot be the same as the source address.");
+              return;
+            }
+
             addMutation.mutate({ id: 0, sourceTransferPolicyId: policy.id,
-              destinationAddressId: Number(newRule.destinationAddressId ?? 0),
-              isEnabled: newRule.isEnabled ?? true, distributionMode: mode,
+              destinationAddressId,
+              isEnabled: newRule.isEnabled ?? false, distributionMode: mode,
               priority: isPriority ? Number(newRule.priority ?? 1) : 1,
               weightPercent: isWeighted ? (newRule.weightPercent ?? null) : null,
-              maxDailyKwh: newRule.maxDailyKwh ?? null })}>
+              maxDailyKwh: newRule.maxDailyKwh ?? null });
+          }}>
             Add
           </Button>
         </DialogActions>
@@ -439,10 +501,34 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
     { field: "startDateUtc", headerName: "Start", width: 155, editable: true, renderCell: (p) => fmtDate(p.value as string) },
     { field: "endDateUtc", headerName: "End", width: 155, editable: true, renderCell: (p) => fmtDate(p.value as string) },
     { field: "timeOfDayUtc", headerName: "Time", width: 90, editable: true, renderCell: (p) => (p.value as string) ?? "—" },
+    {
+      field: "repeatEveryValue",
+      headerName: "Repeat Every",
+      width: 115,
+      editable: true,
+      type: "number",
+      renderCell: (p) => (p.value as number | null) ?? "—",
+    },
+    {
+      field: "repeatEveryUnit",
+      headerName: "Repeat Unit",
+      width: 120,
+      editable: true,
+      type: "singleSelect",
+      valueOptions: Object.entries(REPEAT_EVERY_UNIT_LABELS).map(([value, label]) => ({
+        value: Number(value),
+        label,
+      })),
+      renderCell: (p) => p.value === null || p.value === undefined
+        ? "—"
+        : (REPEAT_EVERY_UNIT_LABELS[p.value as number] ?? p.value),
+    },
     { field: "nextRunUtc", headerName: "Next Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
     { field: "lastRunUtc", headerName: "Last Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
     {
-      field: "actions", type: "actions", width: 120,
+      field: "actions",
+      type: "actions",
+      width: 120,
       getActions: (params) => {
         const id = params.id as GridRowId;
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
@@ -467,12 +553,29 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
   ];
 
   const processRowUpdate = async (row: SourceTransferSchedule) => {
-    const updated = { ...row };
+    const updated: SourceTransferSchedule = {
+      ...row,
+      scheduleType: Number((row as unknown as Record<string, unknown>).scheduleType),
+      executionMode: Number((row as unknown as Record<string, unknown>).executionMode),
+      repeatEveryValue: row.repeatEveryValue === null || row.repeatEveryValue === undefined
+        ? null
+        : Number((row as unknown as Record<string, unknown>).repeatEveryValue),
+      repeatEveryUnit: row.repeatEveryUnit === null || row.repeatEveryUnit === undefined
+        ? null
+        : Number((row as unknown as Record<string, unknown>).repeatEveryUnit),
+    };
     await updateMutation.mutateAsync(updated);
     return updated;
   };
 
-  const blank: Partial<SourceTransferSchedule> = { isEnabled: true, scheduleType: 1, executionMode: 0, startDateUtc: new Date().toISOString() };
+  const blank: Partial<SourceTransferSchedule> = {
+    isEnabled: false,
+    scheduleType: 1,
+    executionMode: 0,
+    startDateUtc: new Date().toISOString(),
+    repeatEveryValue: null,
+    repeatEveryUnit: null,
+  };
 
   return (
     <Box>
@@ -482,7 +585,8 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
           Add schedule
         </Button>
       </Stack>
-      <Box sx={{ overflowX: "auto" }}>
+      <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+        <Box sx={{ minWidth: 1100 }}>
         <DataGrid autoHeight rows={schedules} columns={columns} loading={isLoading} editMode="row"
           getRowId={(r) => r.id}
           rowModesModel={rowModesModel}
@@ -492,6 +596,7 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
           initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
           pageSizeOptions={[5, 10]} disableRowSelectionOnClick
           sx={{ minWidth: 1100 }} />
+        </Box>
       </Box>
 
       <ScheduleFormDialog open={addOpen} initial={blank} policyId={policy.id}
@@ -602,8 +707,8 @@ export default function TransferRules() {
     const recenter = () => {
       const width = container.getBoundingClientRect().width;
       const maxLeft = Math.max(minLeftPanelWidth, width - minRightPanelWidth);
-      const centered = Math.min(Math.max(width / 2, minLeftPanelWidth), maxLeft);
-      setLeftPanelWidth(centered);
+      const fortyPercent = Math.min(Math.max(width * 0.4, minLeftPanelWidth), maxLeft);
+      setLeftPanelWidth(fortyPercent);
     };
 
     recenter();
@@ -643,11 +748,22 @@ export default function TransferRules() {
   );
 
   const processPolicyRowUpdate = async (row: SourceTransferPolicy) => {
-    const updated = {
+    const sourceAddressId = asNumberValue((row as unknown as Record<string, unknown>).sourceAddressId);
+    const distributionMode = asNumberValue((row as unknown as Record<string, unknown>).distributionMode);
+    const isEnabled = asBooleanValue((row as unknown as Record<string, unknown>).isEnabled);
+
+    if (!Number.isFinite(sourceAddressId) || sourceAddressId <= 0) {
+      throw new Error("Invalid source address.");
+    }
+    if (!Number.isFinite(distributionMode) || distributionMode < 0 || distributionMode > 2) {
+      throw new Error("Invalid distribution mode.");
+    }
+
+    const updated: SourceTransferPolicy = {
       ...row,
-      sourceAddressId: Number(row.sourceAddressId),
-      distributionMode: Number(row.distributionMode),
-      isEnabled: Boolean(row.isEnabled),
+      sourceAddressId,
+      distributionMode,
+      isEnabled,
     };
     await updatePolicyMutation.mutateAsync(updated);
     return updated;
@@ -679,8 +795,6 @@ export default function TransferRules() {
     },
     { field: "destinationRulesCount", headerName: "Dest.", width: 70, type: "number" },
     { field: "schedulesCount", headerName: "Sched.", width: 70, type: "number" },
-    { field: "updatedAtUtc", headerName: "Updated", width: 145,
-      renderCell: (p) => fmtDate(p.value as string) },
     {
       field: "actions", type: "actions", width: 120,
       getActions: (params) => {
@@ -707,7 +821,7 @@ export default function TransferRules() {
   ];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflowX: "hidden" }}>
       {/* Toolbar */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}
         sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider", flexShrink: 0 }}>
@@ -739,21 +853,31 @@ export default function TransferRules() {
       <Box ref={splitContainerRef} sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         {/* Left list */}
         <Box sx={{ width: leftPanelWidth, minWidth: 360, flexShrink: 0, borderRight: 1, borderColor: "divider", overflow: "auto" }}>
-          <Box sx={{ overflowX: "auto" }}>
+          <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+            <Box sx={{ minWidth: 680 }}>
             <DataGrid rows={filtered} columns={listColumns} loading={policiesLoading}
               getRowId={(r) => r.id}
               editMode="row"
               rowModesModel={policyRowModesModel}
               onRowModesModelChange={setPolicyRowModesModel}
+              onRowEditStop={(params, event) => {
+                if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+                  event.defaultMuiPrevented = true;
+                }
+              }}
               processRowUpdate={processPolicyRowUpdate}
               onProcessRowUpdateError={(e) => alert(e.message)}
-              onRowClick={(params) => setSelectedId(params.id as number)}
+              onRowClick={(params) => {
+                if (policyRowModesModel[params.id]?.mode === GridRowModes.Edit) return;
+                setSelectedId(params.id as number);
+              }}
               rowSelectionModel={selectedId !== null ? { type: "include", ids: new Set([selectedId]) } : { type: "include", ids: new Set() }}
               initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
-              pageSizeOptions={[20, 50]} disableColumnMenu
+              pageSizeOptions={[20, 50]} disableColumnMenu disableRowSelectionOnClick
               sx={{ minWidth: 680, border: "none",
                 "& .MuiDataGrid-row": { cursor: "pointer" },
                 "& .MuiDataGrid-row.Mui-selected": { bgcolor: "action.selected" } }} />
+            </Box>
           </Box>
         </Box>
 
@@ -775,7 +899,7 @@ export default function TransferRules() {
         />
 
         {/* Right detail */}
-        <Box sx={{ flex: 1, overflow: "auto" }}>
+        <Box sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>
           {selectedPolicy ? (
             <PolicyPanel key={selectedPolicy.id} policy={selectedPolicy} addresses={addresses} />
           ) : (
@@ -802,7 +926,7 @@ export default function TransferRules() {
 
       {/* Add policy dialog */}
       <PolicyFormDialog open={addPolicyOpen}
-        initial={{ sourceAddressId: 0, distributionMode: 0, isEnabled: true }}
+        initial={{ sourceAddressId: 0, distributionMode: 0, isEnabled: false }}
         addresses={addresses} title="Add Source Policy"
         onClose={() => setAddPolicyOpen(false)}
         onSave={(p) => addMutation.mutate(p)} saving={addMutation.isPending} />

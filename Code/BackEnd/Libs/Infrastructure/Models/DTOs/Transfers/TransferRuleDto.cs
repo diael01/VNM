@@ -14,5 +14,6 @@ namespace Infrastructure.DTOs
         public int DistributionMode { get; set; }
         public decimal? MaxDailyKwh { get; set; }
         public decimal? WeightPercent { get; set; }
+        public DateTime? UpdatedAtUtc { get; set; }
     }
 }

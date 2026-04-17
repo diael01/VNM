@@ -293,13 +293,6 @@ export default function NewTransfer() {
     },
     { field: "notes", headerName: "Notes", width: 180, editable: true },
     {
-      field: "createdAtUtc",
-      headerName: "Created At (UTC)",
-      width: 180,
-      editable: true,
-      valueFormatter: (value) => (value ? new Date(value as string).toLocaleString() : ""),
-    },
-    {
       field: "actions",
       type: "actions",
       width: 120,
@@ -326,12 +319,14 @@ export default function NewTransfer() {
     <Box
       sx={{
         width: "100%",
+        maxWidth: "100%",
         minHeight: "calc(100svh - 180px)",
         px: 2,
         pb: 2,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
+        overflowX: "hidden",
       }}
     >
       <Typography variant="h5" sx={{ mb: 2 }}>
@@ -344,7 +339,8 @@ export default function NewTransfer() {
         </Button>
       </Box>
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowX: "auto" }}>
+      <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+        <Box sx={{ minWidth: 2600 }}>
         <DataGrid
           rows={rows}
           columns={columns}
@@ -375,6 +371,7 @@ export default function NewTransfer() {
             noRowsOverlay: () => <Box sx={{ p: 2 }}>No transfer workflows found.</Box>,
           }}
         />
+        </Box>
       </Box>
 
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>

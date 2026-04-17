@@ -1,6 +1,6 @@
 
 using System;
-
+using Infrastructure.Enums;
 using Simulators.Models;
 
 namespace Simulators.Simulation;

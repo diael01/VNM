@@ -52,6 +52,20 @@ namespace ConsumptionPolling.Services
 
                     if (reading != null)
                     {
+                        var addressExists = await dbContext.Addresses
+                            .AsNoTracking()
+                            .AnyAsync(a => a.Id == reading.AddressId, stoppingToken);
+
+                        if (!addressExists)
+                        {
+                            _logger.LogWarning(
+                                "Skipping consumption reading for unknown address {AddressId}. Source={Source}, Timestamp={Timestamp}",
+                                reading.AddressId,
+                                reading.Source,
+                                reading.Timestamp);
+                            continue;
+                        }
+
                         var totalReadings = await dbContext.ConsumptionReadings.CountAsync(stoppingToken);
                         if (totalReadings >= 10) // retention cap for demo
                         {

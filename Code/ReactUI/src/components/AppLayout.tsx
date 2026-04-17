@@ -34,7 +34,7 @@ export default function AppLayout({
         menuHorizontal={menuHorizontal}
         onToggleMenuLayout={onToggleMenuLayout}
       />
-      <main style={{ flex: 1, width: '100%' }}>{children}</main>
+      <main style={{ flex: 1, width: '100%', overflowX: 'hidden' }}>{children}</main>
       <Footer />
     </>
   )

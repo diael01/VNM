@@ -24,3 +24,28 @@ public partial class DestinationTransferRule : AuditableEntity
 
     public virtual Address DestinationAddress { get; set; } = null!;
 }
+
+//Is Enabled meaning:
+/* 2. DestinationTransferRule.IsEnabled
+
+This is a child-level switch.
+
+Meaning:
+
+Under this source policy, is this specific destination participating?
+
+Example:
+
+Farm policy is enabled
+Hospital rule enabled
+School rule disabled temporarily
+
+This is useful if:
+    
+a destination is under maintenance
+a contract is paused
+you want to test with only one destination without deleting the row 
+
+Destinations section
+Enabled per destination
+*/
