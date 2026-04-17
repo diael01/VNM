@@ -67,7 +67,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("PostalCode")
                         .IsRequired()
@@ -106,7 +108,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
@@ -142,7 +146,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
@@ -173,7 +179,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -222,7 +230,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
@@ -258,7 +268,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<decimal>("Power")
                         .HasColumnType("decimal(18, 5)");
@@ -306,7 +318,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<DateTime>("Day")
                         .HasColumnType("datetime2");
@@ -418,7 +432,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("Manufacturer")
                         .IsRequired()
@@ -464,7 +480,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<decimal>("Current")
                         .HasColumnType("decimal(18, 5)");
@@ -520,7 +538,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<DateTime>("Day")
                         .HasColumnType("datetime2");
@@ -641,7 +661,7 @@ namespace Repositories.Migrations
                     b.Property<DateTime>("StartDateUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<TimeSpan?>("TimeOfDayUtc")
+                    b.Property<TimeOnly?>("TimeOfDayUtc")
                         .HasColumnType("time");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
@@ -673,7 +693,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<DateOnly>("Day")
                         .HasColumnType("date");
@@ -726,7 +748,9 @@ namespace Repositories.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
 
                     b.Property<int>("DestinationAddressId")
                         .HasColumnType("int");
@@ -929,7 +953,7 @@ namespace Repositories.Migrations
                         .IsRequired();
 
                     b.HasOne("Repositories.Models.DestinationTransferRule", "DestinationTransferRule")
-                        .WithMany()
+                        .WithMany("TransferWorkflows")
                         .HasForeignKey("DestinationTransferRuleId")
                         .OnDelete(DeleteBehavior.SetNull);
 
@@ -974,6 +998,11 @@ namespace Repositories.Migrations
             modelBuilder.Entity("Repositories.Models.AspNetUser", b =>
                 {
                     b.Navigation("AspNetUserClaims");
+                });
+
+            modelBuilder.Entity("Repositories.Models.DestinationTransferRule", b =>
+                {
+                    b.Navigation("TransferWorkflows");
                 });
 
             modelBuilder.Entity("Repositories.Models.InverterInfo", b =>

@@ -1,80 +1,221 @@
-import { useMemo, useState } from "react";
+﻿import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  getAllPolicies,
+  createPolicy,
+  updatePolicy,
+  deletePolicy,
+  getPolicyRules,
+  getPolicySchedules,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+} from "../api/sourcePolicyApi";
+import { createTransferRule, updateTransferRule, deleteTransferRule } from "../api/transferRuleApi";
+import { getAllAddresses } from "../api/addressApi";
+import type { SourceTransferPolicy } from "../types/sourceTransferPolicy";
+import type { SourceTransferSchedule } from "../types/sourceTransferSchedule";
+import type { TransferRule } from "../types/transferRule";
+import type { Address } from "../types/address";
+import {
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
-import type { GridCellParams, GridColDef, GridRowModesModel, GridRowId } from "@mui/x-data-grid";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Switch, TextField, Tooltip, Typography } from "@mui/material";
+import type { GridColDef, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
-import CloseIcon from "@mui/icons-material/Close";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { getAllAddresses } from "../api/addressApi";
-import { createTransferRule, deleteTransferRule, getAllTransferRules, updateTransferRule } from "../api/transferRuleApi";
-import type { Address } from "../types/address";
-import type { TransferRule } from "../types/transferRule";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
+// Legacy helpers kept for backward compatibility with existing tests
+export function coerceTransferRuleNumbers(rule: TransferRule): TransferRule {
+  return {
+    ...rule,
+    sourceTransferPolicyId: Number(rule.sourceTransferPolicyId),
+    destinationAddressId: Number(rule.destinationAddressId),
+    priority: Number(rule.priority),
+    distributionMode: Number(rule.distributionMode),
+  };
+}
+export function getSourceMode(existing: TransferRule[], policyId: number, excludeId: number): number | null {
+  const match = existing.find((r) => r.sourceTransferPolicyId === policyId && r.id !== excludeId);
+  return match ? match.distributionMode : null;
+}
+export function sanitizeByMode(rule: TransferRule): TransferRule {
+  const mode = rule.distributionMode;
+  return {
+    ...rule,
+    priority: mode === 1 ? rule.priority : 1,
+    weightPercent: mode === 2 ? rule.weightPercent : null,
+  };
+}
+
+const MODE_LABELS: Record<number, string> = { 0: "Fair", 1: "Priority", 2: "Weighted" };
 const MODE_OPTIONS = [
   { value: 0, label: "Fair" },
   { value: 1, label: "Priority" },
   { value: 2, label: "Weighted" },
 ];
+const SCHEDULE_TYPE_LABELS: Record<number, string> = {
+  0: "Once", 1: "Daily", 2: "Weekly", 3: "Monthly", 4: "Custom",
+};
+const EXEC_MODE_LABELS: Record<number, string> = {
+  0: "Plan Only", 1: "Plan & Approve", 2: "Plan & Execute",
+};
 
-function labelAddress(address: Address): string {
-  return `${address.id} - ${address.city}, ${address.street} ${address.streetNumber}`;
+function labelAddress(a: Address) {
+  return `${a.city}, ${a.street} ${a.streetNumber}`;
 }
 
-export function sanitizeByMode(rule: TransferRule): TransferRule {
-  if (rule.distributionMode === 1) {
-    return { ...rule, weightPercent: null, priority: rule.priority || 1 };
-  }
-
-  if (rule.distributionMode === 2) {
-    return { ...rule, priority: 1 };
-  }
-
-  return { ...rule, weightPercent: null, priority: 1 };
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString();
 }
 
-export function getSourceMode(rules: TransferRule[], sourceTransferPolicyId: number, excludeId?: number): number | null {
-  const found = rules.find(
-    (r) => r.sourceTransferPolicyId === sourceTransferPolicyId && (excludeId === undefined || r.id !== excludeId),
+// ── Policy form dialog ──────────────────────────────────────────────────────
+type PolicyFormDialogProps = {
+  open: boolean;
+  initial: Partial<SourceTransferPolicy>;
+  addresses: Address[];
+  title: string;
+  onClose: () => void;
+  onSave: (p: Partial<SourceTransferPolicy>) => void;
+  saving: boolean;
+};
+
+function PolicyFormDialog({ open, initial, addresses, title, onClose, onSave, saving }: PolicyFormDialogProps) {
+  const [draft, setDraft] = useState<Partial<SourceTransferPolicy>>(initial);
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open && !prevOpen) { setDraft(initial); setPrevOpen(true); }
+  if (!open && prevOpen) setPrevOpen(false);
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Source Address</InputLabel>
+            <Select label="Source Address" value={draft.sourceAddressId ?? ""}
+              onChange={(e) => setDraft((d) => ({ ...d, sourceAddressId: Number(e.target.value) }))}>
+              {addresses.map((a) => <MenuItem key={a.id} value={a.id}>{labelAddress(a)}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Distribution Mode</InputLabel>
+            <Select label="Distribution Mode" value={draft.distributionMode ?? 0}
+              onChange={(e) => setDraft((d) => ({ ...d, distributionMode: Number(e.target.value) }))}>
+              {MODE_OPTIONS.map((m) => <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControlLabel
+            control={<Switch checked={draft.isEnabled ?? true}
+              onChange={(e) => setDraft((d) => ({ ...d, isEnabled: e.target.checked }))} />}
+            label="Enabled" />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" onClick={() => onSave(draft)} disabled={saving}>Save</Button>
+      </DialogActions>
+    </Dialog>
   );
-  return found ? found.distributionMode : null;
 }
 
-export function coerceTransferRuleNumbers(updatedRow: TransferRule): TransferRule {
-  return {
-    ...updatedRow,
-    sourceTransferPolicyId: Number(updatedRow.sourceTransferPolicyId),
-    destinationAddressId: Number(updatedRow.destinationAddressId),
-    distributionMode: Number(updatedRow.distributionMode),
-    priority: Number(updatedRow.priority),
-  };
+// ── Schedule form dialog ──────────────────────────────────────────────────────
+type ScheduleFormDialogProps = {
+  open: boolean;
+  initial: Partial<SourceTransferSchedule>;
+  policyId: number;
+  title: string;
+  onClose: () => void;
+  onSave: (s: Partial<SourceTransferSchedule>) => void;
+  saving: boolean;
+};
+
+function ScheduleFormDialog({ open, initial, title, onClose, onSave, saving }: ScheduleFormDialogProps) {
+  const [draft, setDraft] = useState<Partial<SourceTransferSchedule>>(initial);
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open && !prevOpen) { setDraft(initial); setPrevOpen(true); }
+  if (!open && prevOpen) setPrevOpen(false);
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <FormControlLabel
+            control={<Switch checked={draft.isEnabled ?? true}
+              onChange={(e) => setDraft((d) => ({ ...d, isEnabled: e.target.checked }))} />}
+            label="Enabled" />
+          <FormControl fullWidth size="small">
+            <InputLabel>Schedule Type</InputLabel>
+            <Select label="Schedule Type" value={draft.scheduleType ?? 1}
+              onChange={(e) => setDraft((d) => ({ ...d, scheduleType: Number(e.target.value) }))}>
+              {Object.entries(SCHEDULE_TYPE_LABELS).map(([v, l]) =>
+                <MenuItem key={v} value={Number(v)}>{l}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Execution Mode</InputLabel>
+            <Select label="Execution Mode" value={draft.executionMode ?? 0}
+              onChange={(e) => setDraft((d) => ({ ...d, executionMode: Number(e.target.value) }))}>
+              {Object.entries(EXEC_MODE_LABELS).map(([v, l]) =>
+                <MenuItem key={v} value={Number(v)}>{l}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <TextField label="Start Date (UTC)" type="datetime-local" size="small"
+            slotProps={{ inputLabel: { shrink: true } }}
+            value={draft.startDateUtc ? draft.startDateUtc.slice(0, 16) : ""}
+            onChange={(e) => setDraft((d) => ({ ...d, startDateUtc: e.target.value + ":00Z" }))} />
+          <TextField label="End Date (UTC, optional)" type="datetime-local" size="small"
+            slotProps={{ inputLabel: { shrink: true } }}
+            value={draft.endDateUtc ? draft.endDateUtc.slice(0, 16) : ""}
+            onChange={(e) => setDraft((d) => ({ ...d, endDateUtc: e.target.value ? e.target.value + ":00Z" : null }))} />
+          <TextField label="Time of Day UTC (HH:MM)" size="small" placeholder="08:00"
+            value={draft.timeOfDayUtc ?? ""}
+            onChange={(e) => setDraft((d) => ({ ...d, timeOfDayUtc: e.target.value || null }))} />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" onClick={() => onSave(draft)} disabled={saving}>Save</Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
 
-export default function TransferRules() {
-  const queryClient = useQueryClient();
+// ── Destination rules child grid ──────────────────────────────────────────────
+type DestinationRulesGridProps = { policy: SourceTransferPolicy; addresses: Address[] };
+
+function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) {
+  const qc = useQueryClient();
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newRule, setNewRule] = useState<Partial<TransferRule>>({
-    sourceTransferPolicyId: 0,
-    destinationAddressId: 0,
-    isEnabled: true,
-    priority: 1,
-    distributionMode: 0,
-    maxDailyKwh: null,
-    weightPercent: null,
-  });
+  const [addOpen, setAddOpen] = useState(false);
+  const [newRule, setNewRule] = useState<Partial<TransferRule>>({});
 
-  const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: ["transferRules"],
-    queryFn: getAllTransferRules,
-  });
-
-  const { data: addresses = [] } = useQuery({
-    queryKey: ["addresses"],
-    queryFn: getAllAddresses,
+  const { data: rules = [], isLoading } = useQuery({
+    queryKey: ["policyRules", policy.id],
+    queryFn: () => getPolicyRules(policy.id),
   });
 
   const addressOptions = useMemo(
@@ -82,346 +223,404 @@ export default function TransferRules() {
     [addresses],
   );
 
-  const addMutation = useMutation({
-    mutationFn: createTransferRule,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transferRules"] });
-      setAddDialogOpen(false);
-      setNewRule({
-        sourceTransferPolicyId: 0,
-        destinationAddressId: 0,
-        isEnabled: true,
-        priority: 1,
-        distributionMode: 0,
-        maxDailyKwh: null,
-        weightPercent: null,
-      });
-    },
-  });
+  const mode = policy.distributionMode;
+  const isPriority = mode === 1;
+  const isWeighted = mode === 2;
 
+  const addMutation = useMutation({
+    mutationFn: (r: Partial<TransferRule>) => createTransferRule({ ...r, sourceTransferPolicyId: policy.id }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policyRules", policy.id] }); qc.invalidateQueries({ queryKey: ["policies"] }); setAddOpen(false); setNewRule({}); },
+  });
   const updateMutation = useMutation({
     mutationFn: updateTransferRule,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["transferRules"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["policyRules", policy.id] }),
   });
-
   const deleteMutation = useMutation({
     mutationFn: deleteTransferRule,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["transferRules"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policyRules", policy.id] }); qc.invalidateQueries({ queryKey: ["policies"] }); },
   });
 
-  const validateRule = (rule: TransferRule, excludeId?: number): string | null => {
-    if (!rule.sourceTransferPolicyId || !rule.destinationAddressId) {
-      return "Source transfer policy and destination are required.";
-    }
-
-    const sourceMode = getSourceMode(rows, rule.sourceTransferPolicyId, excludeId);
-    if (sourceMode !== null && sourceMode !== rule.distributionMode) {
-      return "All rules for the same source must use the same Distribution Mode.";
-    }
-
-    if (rule.distributionMode === 2 && (!rule.weightPercent || rule.weightPercent <= 0)) {
-      return "Weight % is required and must be > 0 for Weighted mode.";
-    }
-
-    if (rule.maxDailyKwh !== null && rule.maxDailyKwh <= 0) {
-      return "Daily max kWh must be greater than 0 when set.";
-    }
-
-    if (rule.priority < 1) {
-      return "Priority order must be at least 1.";
-    }
-
-    return null;
-  };
-
-  const processRowUpdate = async (updatedRow: TransferRule) => {
-    const coerced = coerceTransferRuleNumbers(updatedRow);
-    const normalized = sanitizeByMode(coerced);
-    const message = validateRule(normalized, coerced.id);
-    if (message) {
-      throw new Error(message);
-    }
-
-    await updateMutation.mutateAsync(normalized);
-    return normalized;
-  };
-
-  const handleDelete = async (id: number) => {
-    await deleteMutation.mutateAsync(id);
-  };
-
-  const handleAdd = async () => {
-    const draft: TransferRule = {
-      id: 0,
-      sourceTransferPolicyId: Number(newRule.sourceTransferPolicyId || 0),
-      destinationAddressId: Number(newRule.destinationAddressId || 0),
-      isEnabled: Boolean(newRule.isEnabled ?? true),
-      priority: Number(newRule.priority || 1),
-      distributionMode: Number(newRule.distributionMode || 0),
-      maxDailyKwh:
-        newRule.maxDailyKwh === null || newRule.maxDailyKwh === undefined || newRule.maxDailyKwh === ("" as unknown as number)
-          ? null
-          : Number(newRule.maxDailyKwh),
-      weightPercent:
-        newRule.weightPercent === null || newRule.weightPercent === undefined || newRule.weightPercent === ("" as unknown as number)
-          ? null
-          : Number(newRule.weightPercent),
-    };
-
-    const normalized = sanitizeByMode(draft);
-    const message = validateRule(normalized);
-    if (message) {
-      alert(message);
-      return;
-    }
-
-    await addMutation.mutateAsync(normalized);
-  };
-
-  const onSourceChanged = (sourceTransferPolicyId: number) => {
-    const sourceMode = getSourceMode(rows, sourceTransferPolicyId);
-    setNewRule((prev) => ({
-      ...prev,
-      sourceTransferPolicyId,
-      distributionMode: sourceMode ?? (prev.distributionMode ?? 0),
-      weightPercent: (sourceMode ?? prev.distributionMode) === 2 ? prev.weightPercent : null,
-    }));
-  };
+  const handleEditClick = (id: GridRowId) => () =>
+    setRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.Edit } }));
 
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 80 },
+    { field: "destinationAddressId", headerName: "Destination", flex: 2, editable: true,
+      type: "singleSelect", valueOptions: addressOptions },
+    { field: "isEnabled", headerName: "Enabled", width: 80, editable: true, type: "boolean" },
+    { field: "priority", headerName: "Priority", width: 90, editable: isPriority, type: "number",
+      cellClassName: !isPriority ? "cell-disabled" : undefined,
+      renderCell: (p) => isPriority ? p.value : <span style={{ color: "#bbb" }}>—</span> },
+    { field: "weightPercent", headerName: "Weight %", width: 100, editable: isWeighted, type: "number",
+      cellClassName: !isWeighted ? "cell-disabled" : undefined,
+      renderCell: (p) => isWeighted ? (p.value ?? "—") : <span style={{ color: "#bbb" }}>—</span> },
+    { field: "maxDailyKwh", headerName: "Max kWh/day", width: 120, editable: true, type: "number" },
     {
-      field: "sourceTransferPolicyId",
-      headerName: "Source Policy",
-      width: 180,
-      editable: true,
-      type: "number",
-    },
-    {
-      field: "destinationAddressId",
-      headerName: "Destination Address",
-      width: 200,
-      editable: true,
-      type: "singleSelect",
-      valueOptions: addressOptions,
-    },
-    {
-      field: "isEnabled",
-      headerName: "Enabled",
-      width: 100,
-      editable: true,
-      type: "boolean",
-    },
-    {
-      field: "distributionMode",
-      headerName: "Distribution Mode",
-      description: "0 = Fair, 1 = Priority, 2 = Weighted. Default is Fair.",
-      width: 170,
-      editable: true,
-      type: "singleSelect",
-      valueOptions: MODE_OPTIONS,
-    },
-    {
-      field: "priority",
-      headerName: "Priority order",
-      width: 140,
-      editable: true,
-      type: "number",
-    },
-    {
-      field: "weightPercent",
-      headerName: "Weight %",
-      width: 110,
-      editable: true,
-      type: "number",
-    },
-    {
-      field: "maxDailyKwh",
-      headerName: "Daily max kWh",
-      width: 150,
-      editable: true,
-      type: "number",
-    },
-    {
-      field: "actions",
-      type: "actions",
-      width: 120,
-      getActions: (params) => {
-        const id = params.id as GridRowId;
-        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
-
-        if (isInEditMode) {
-          return [
-            <GridActionsCellItem key="save" icon={<SaveIcon />} label="Save" onClick={() => setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } })} />,
-            <GridActionsCellItem key="cancel" icon={<CloseIcon />} label="Cancel" onClick={() => setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View, ignoreModifications: true } })} />,
-          ];
-        }
-
-        return [
-          <GridActionsCellItem key="edit" icon={<EditIcon />} label="Edit" onClick={() => setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } })} />,
-          <GridActionsCellItem key="delete" icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(Number(id))} />,
-        ];
-      },
+      field: "actions", type: "actions", width: 80,
+      getActions: (params) => [
+        <GridActionsCellItem icon={<EditIcon fontSize="small" />} label="Edit" onClick={handleEditClick(params.id)} />,
+        <GridActionsCellItem icon={<DeleteIcon fontSize="small" />} label="Delete"
+          onClick={() => deleteMutation.mutate(Number(params.id))} />,
+      ],
     },
   ];
 
-  const selectedMode = Number(newRule.distributionMode ?? 0);
-  const isPriorityMode = selectedMode === 1;
-  const isWeightedMode = selectedMode === 2;
-
-  const isCellEditable = (params: GridCellParams<TransferRule>) => {
-    const mode = Number(params.row.distributionMode ?? 0);
-
-    if (params.field === "priority") {
-      return mode === 1;
-    }
-
-    if (params.field === "weightPercent") {
-      return mode === 2;
-    }
-
-    return true;
+  const processRowUpdate = async (row: TransferRule) => {
+    const n: TransferRule = { ...row, distributionMode: mode,
+      priority: isPriority ? Number(row.priority) : 1,
+      weightPercent: isWeighted ? row.weightPercent : null };
+    await updateMutation.mutateAsync(n);
+    return n;
   };
 
   return (
-    <Box sx={{ height: 600, width: "100%" }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Transfer Rules
-      </Typography>
-
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setAddDialogOpen(true)}>
-          Add Rule
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Typography variant="subtitle1" fontWeight={600}>Destination Rules</Typography>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
+          Add destination
         </Button>
-      </Box>
+      </Stack>
+      <DataGrid autoHeight rows={rules} columns={columns} editMode="row"
+        rowModesModel={rowModesModel} onRowModesModelChange={setRowModesModel}
+        processRowUpdate={processRowUpdate} onProcessRowUpdateError={(e) => alert(e.message)}
+        loading={isLoading} getRowId={(r) => r.id}
+        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+        pageSizeOptions={[5, 10]} disableRowSelectionOnClick
+        sx={{ "& .cell-disabled": { color: "#bbb", pointerEvents: "none" } }} />
 
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        editMode="row"
-        isCellEditable={isCellEditable}
-        processRowUpdate={processRowUpdate}
-        getRowId={(row) => row.id}
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={setRowModesModel}
-        onProcessRowUpdateError={(e) => alert((e as Error).message)}
-        loading={isLoading}
-        slots={{
-          noRowsOverlay: () => <Box sx={{ p: 2 }}>No transfer rules found.</Box>,
-        }}
-      />
-
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Transfer Rule</DialogTitle>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Add Destination Rule</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <TextField
-              type="number"
-              label="Source Transfer Policy ID"
-              value={newRule.sourceTransferPolicyId || ""}
-              onChange={(e) => onSourceChanged(Number(e.target.value))}
-            />
-
-            <TextField
-              select
-              label="Destination Address"
-              value={newRule.destinationAddressId || ""}
-              onChange={(e) => setNewRule((prev) => ({ ...prev, destinationAddressId: Number(e.target.value) }))}
-            >
-              <MenuItem value="" disabled>
-                Select destination
-              </MenuItem>
-              {addresses.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {labelAddress(a)}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
-              select
-              label={
-                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-                  <span>Distribution Mode</span>
-                  <Tooltip title="0 = Fair, 1 = Priority, 2 = Weighted. Default is Fair.">
-                    <InfoOutlinedIcon sx={{ fontSize: 16 }} />
-                  </Tooltip>
-                </Box>
-              }
-              value={newRule.distributionMode ?? 0}
-              onChange={(e) => {
-                const mode = Number(e.target.value);
-                const sourceMode = getSourceMode(rows, Number(newRule.sourceTransferPolicyId || 0));
-                if (sourceMode !== null && sourceMode !== mode) {
-                  alert("All rules for the same source must use the same Distribution Mode.");
-                  return;
-                }
-
-                setNewRule((prev) => ({
-                  ...prev,
-                  distributionMode: mode,
-                  weightPercent: mode === 2 ? prev.weightPercent : null,
-                  priority: mode === 1 ? Number(prev.priority || 1) : 1,
-                }));
-              }}
-            >
-              {MODE_OPTIONS.map((mode) => (
-                <MenuItem key={mode.value} value={mode.value}>
-                  {mode.label}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
-              type="number"
-              label="Priority order"
-              value={newRule.priority ?? 1}
-              onChange={(e) => setNewRule((prev) => ({ ...prev, priority: Number(e.target.value || 1) }))}
-              disabled={!isPriorityMode}
-              helperText={isPriorityMode ? "Lower number = served first" : "Used only in Priority mode"}
-            />
-
-            <TextField
-              type="number"
-              label="Weight %"
-              value={newRule.weightPercent ?? ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                setNewRule((prev) => ({ ...prev, weightPercent: value === "" ? null : Number(value) }));
-              }}
-              disabled={!isWeightedMode}
-              helperText={isWeightedMode ? "Used only in Weighted mode" : "Enable Weighted mode to edit"}
-            />
-
-            <TextField
-              type="number"
-              label="Daily max kWh"
-              value={newRule.maxDailyKwh ?? ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                setNewRule((prev) => ({ ...prev, maxDailyKwh: value === "" ? null : Number(value) }));
-              }}
-              helperText="Optional cap per source-destination rule"
-            />
-
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Switch
-                checked={Boolean(newRule.isEnabled ?? true)}
-                onChange={(e) => setNewRule((prev) => ({ ...prev, isEnabled: e.target.checked }))}
-              />
-              <Typography>Rule enabled</Typography>
-            </Box>
-          </Box>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Destination Address</InputLabel>
+              <Select label="Destination Address" value={newRule.destinationAddressId ?? ""}
+                onChange={(e) => setNewRule((r) => ({ ...r, destinationAddressId: Number(e.target.value) }))}>
+                {addresses.map((a) => <MenuItem key={a.id} value={a.id}>{labelAddress(a)}</MenuItem>)}
+              </Select>
+            </FormControl>
+            <FormControlLabel
+              control={<Switch checked={newRule.isEnabled ?? true}
+                onChange={(e) => setNewRule((r) => ({ ...r, isEnabled: e.target.checked }))} />}
+              label="Enabled" />
+            {isPriority && (
+              <TextField label="Priority" type="number" size="small" value={newRule.priority ?? 1}
+                onChange={(e) => setNewRule((r) => ({ ...r, priority: Number(e.target.value) }))} />
+            )}
+            {isWeighted && (
+              <TextField label="Weight %" type="number" size="small" value={newRule.weightPercent ?? ""}
+                onChange={(e) => setNewRule((r) => ({ ...r, weightPercent: e.target.value ? Number(e.target.value) : null }))} />
+            )}
+            <TextField label="Max kWh/day (optional)" type="number" size="small" value={newRule.maxDailyKwh ?? ""}
+              onChange={(e) => setNewRule((r) => ({ ...r, maxDailyKwh: e.target.value ? Number(e.target.value) : null }))} />
+          </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleAdd} variant="contained" disabled={addMutation.isPending}>
-            Add Rule
+          <Button onClick={() => setAddOpen(false)}>Cancel</Button>
+          <Button variant="contained" disabled={addMutation.isPending} onClick={() =>
+            addMutation.mutate({ id: 0, sourceTransferPolicyId: policy.id,
+              destinationAddressId: Number(newRule.destinationAddressId ?? 0),
+              isEnabled: newRule.isEnabled ?? true, distributionMode: mode,
+              priority: isPriority ? Number(newRule.priority ?? 1) : 1,
+              weightPercent: isWeighted ? (newRule.weightPercent ?? null) : null,
+              maxDailyKwh: newRule.maxDailyKwh ?? null })}>
+            Add
           </Button>
         </DialogActions>
       </Dialog>
+    </Box>
+  );
+}
 
-      {error && <Box color="error.main">{(error as Error).message}</Box>}
+// ── Schedules child grid ──────────────────────────────────────────────────────
+function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
+  const qc = useQueryClient();
+  const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<SourceTransferSchedule | null>(null);
+
+  const { data: schedules = [], isLoading } = useQuery({
+    queryKey: ["policySchedules", policy.id],
+    queryFn: () => getPolicySchedules(policy.id),
+  });
+
+  const addMutation = useMutation({
+    mutationFn: (s: Partial<SourceTransferSchedule>) => createSchedule(policy.id, s),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policySchedules", policy.id] }); qc.invalidateQueries({ queryKey: ["policies"] }); setAddOpen(false); },
+  });
+  const updateMutation = useMutation({
+    mutationFn: (s: SourceTransferSchedule) => updateSchedule(policy.id, s),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policySchedules", policy.id] }); setEditTarget(null); },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteSchedule(policy.id, id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policySchedules", policy.id] }); qc.invalidateQueries({ queryKey: ["policies"] }); },
+  });
+
+  const columns: GridColDef[] = [
+    { field: "isEnabled", headerName: "Enabled", width: 80, type: "boolean" },
+    { field: "scheduleType", headerName: "Type", width: 100,
+      renderCell: (p) => SCHEDULE_TYPE_LABELS[p.value as number] ?? p.value },
+    { field: "executionMode", headerName: "Exec Mode", width: 140,
+      renderCell: (p) => EXEC_MODE_LABELS[p.value as number] ?? p.value },
+    { field: "startDateUtc", headerName: "Start", width: 155, renderCell: (p) => fmtDate(p.value as string) },
+    { field: "endDateUtc", headerName: "End", width: 155, renderCell: (p) => fmtDate(p.value as string) },
+    { field: "timeOfDayUtc", headerName: "Time", width: 90, renderCell: (p) => (p.value as string) ?? "—" },
+    { field: "nextRunUtc", headerName: "Next Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
+    { field: "lastRunUtc", headerName: "Last Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
+    {
+      field: "actions", type: "actions", width: 80,
+      getActions: (params) => [
+        <GridActionsCellItem icon={<EditIcon fontSize="small" />} label="Edit"
+          onClick={() => setEditTarget(schedules.find((s) => s.id === params.id) ?? null)} />,
+        <GridActionsCellItem icon={<DeleteIcon fontSize="small" />} label="Delete"
+          onClick={() => deleteMutation.mutate(Number(params.id))} />,
+      ],
+    },
+  ];
+
+  const blank: Partial<SourceTransferSchedule> = { isEnabled: true, scheduleType: 1, executionMode: 0, startDateUtc: new Date().toISOString() };
+
+  return (
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Typography variant="subtitle1" fontWeight={600}>Schedules</Typography>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
+          Add schedule
+        </Button>
+      </Stack>
+      <DataGrid autoHeight rows={schedules} columns={columns} loading={isLoading}
+        getRowId={(r) => r.id}
+        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+        pageSizeOptions={[5, 10]} disableRowSelectionOnClick />
+
+      <ScheduleFormDialog open={addOpen} initial={blank} policyId={policy.id}
+        title="Add Schedule" onClose={() => setAddOpen(false)}
+        onSave={(s) => addMutation.mutate(s)} saving={addMutation.isPending} />
+
+      {editTarget && (
+        <ScheduleFormDialog open title="Edit Schedule" initial={editTarget} policyId={policy.id}
+          onClose={() => setEditTarget(null)}
+          onSave={(s) => updateMutation.mutate({ ...editTarget, ...s } as SourceTransferSchedule)}
+          saving={updateMutation.isPending} />
+      )}
+    </Box>
+  );
+}
+
+// ── Policy detail panel ───────────────────────────────────────────────────────
+type PolicyPanelProps = {
+  policy: SourceTransferPolicy;
+  addresses: Address[];
+  onDeleted: () => void;
+};
+
+function PolicyPanel({ policy, addresses, onDeleted }: PolicyPanelProps) {
+  const qc = useQueryClient();
+  const [draft, setDraft] = useState<SourceTransferPolicy>(policy);
+  const [savedMode, setSavedMode] = useState(policy.distributionMode);
+
+  if (draft.id !== policy.id) { setDraft(policy); setSavedMode(policy.distributionMode); }
+
+  const modeChanged = draft.distributionMode !== savedMode;
+
+  const updateMutation = useMutation({
+    mutationFn: updatePolicy,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policies"] }); setSavedMode(draft.distributionMode); },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: deletePolicy,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policies"] }); onDeleted(); },
+  });
+
+  const sourceAddr = addresses.find((a) => a.id === policy.sourceAddressId);
+
+  return (
+    <Stack spacing={3} sx={{ p: 3 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+        <Box>
+          <Typography variant="h6" fontWeight={700}>
+            {sourceAddr ? labelAddress(sourceAddr) : `Policy #${policy.id}`}
+          </Typography>
+          <Chip size="small" label={MODE_LABELS[policy.distributionMode]} color="primary" variant="outlined" sx={{ mr: 1, mt: 0.5 }} />
+          <Chip size="small" label={policy.isEnabled ? "Enabled" : "Disabled"}
+            color={policy.isEnabled ? "success" : "default"} sx={{ mt: 0.5 }} />
+        </Box>
+        <Tooltip title="Delete policy and all its rules / schedules">
+          <IconButton color="error" size="small" onClick={() => deleteMutation.mutate(policy.id)}>
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </Stack>
+
+      <Divider />
+      <Typography variant="subtitle2" color="text.secondary" fontWeight={600} letterSpacing={0.5}>
+        POLICY SETTINGS
+      </Typography>
+
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
+        <FormControl size="small" sx={{ minWidth: 220 }}>
+          <InputLabel>Source Address</InputLabel>
+          <Select label="Source Address" value={draft.sourceAddressId}
+            onChange={(e) => setDraft((d) => ({ ...d, sourceAddressId: Number(e.target.value) }))}>
+            {addresses.map((a) => <MenuItem key={a.id} value={a.id}>{labelAddress(a)}</MenuItem>)}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>Distribution Mode</InputLabel>
+          <Select label="Distribution Mode" value={draft.distributionMode}
+            onChange={(e) => setDraft((d) => ({ ...d, distributionMode: Number(e.target.value) }))}>
+            {MODE_OPTIONS.map((m) => <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>)}
+          </Select>
+        </FormControl>
+        <FormControlLabel
+          control={<Switch checked={draft.isEnabled}
+            onChange={(e) => setDraft((d) => ({ ...d, isEnabled: e.target.checked }))} />}
+          label="Enabled" sx={{ mt: 0.5 }} />
+      </Stack>
+
+      {modeChanged && (
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "warning.main" }}>
+          <WarningAmberIcon fontSize="small" />
+          <Typography variant="caption">
+            Mode changed — Priority / Weight % fields will be locked to the new mode on save.
+          </Typography>
+        </Stack>
+      )}
+
+      <Box>
+        <Button variant="contained" startIcon={<SaveIcon />}
+          onClick={() => updateMutation.mutate(draft)} disabled={updateMutation.isPending}>
+          Save policy
+        </Button>
+      </Box>
+
+      <Divider />
+      <DestinationRulesGrid policy={draft} addresses={addresses} />
+      <Divider />
+      <SchedulesGrid policy={draft} />
+    </Stack>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+export default function TransferRules() {
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [addPolicyOpen, setAddPolicyOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterEnabled, setFilterEnabled] = useState<"all" | "enabled" | "disabled">("all");
+  const [filterMode, setFilterMode] = useState<number | "all">("all");
+
+  const qc = useQueryClient();
+
+  const { data: policies = [], isLoading: policiesLoading } = useQuery({
+    queryKey: ["policies"],
+    queryFn: getAllPolicies,
+  });
+  const { data: addresses = [] } = useQuery({ queryKey: ["addresses"], queryFn: getAllAddresses });
+
+  const addMutation = useMutation({
+    mutationFn: createPolicy,
+    onSuccess: (created) => {
+      qc.invalidateQueries({ queryKey: ["policies"] });
+      setAddPolicyOpen(false);
+      setSelectedId(created.id);
+    },
+  });
+
+  const filtered = useMemo(() => {
+    return policies.filter((p) => {
+      const addr = addresses.find((a) => a.id === p.sourceAddressId);
+      const label = addr ? labelAddress(addr).toLowerCase() : "";
+      if (search && !label.includes(search.toLowerCase())) return false;
+      if (filterEnabled === "enabled" && !p.isEnabled) return false;
+      if (filterEnabled === "disabled" && p.isEnabled) return false;
+      if (filterMode !== "all" && p.distributionMode !== filterMode) return false;
+      return true;
+    });
+  }, [policies, addresses, search, filterEnabled, filterMode]);
+
+  const selectedPolicy = policies.find((p) => p.id === selectedId) ?? null;
+
+  const listColumns: GridColDef[] = [
+    {
+      field: "sourceAddressId", headerName: "Source Address", flex: 2,
+      renderCell: (p) => {
+        const a = addresses.find((x) => x.id === (p.value as number));
+        return a ? labelAddress(a) : `Address #${p.value}`;
+      },
+    },
+    { field: "distributionMode", headerName: "Mode", width: 100,
+      renderCell: (p) => MODE_LABELS[p.value as number] ?? p.value },
+    { field: "isEnabled", headerName: "On", width: 60, type: "boolean" },
+    { field: "destinationRulesCount", headerName: "Dest.", width: 70, type: "number" },
+    { field: "schedulesCount", headerName: "Sched.", width: 70, type: "number" },
+    { field: "updatedAtUtc", headerName: "Updated", width: 145,
+      renderCell: (p) => fmtDate(p.value as string) },
+  ];
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+      {/* Toolbar */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}
+        sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider", flexShrink: 0 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ flexShrink: 0 }}>Transfer Rules</Typography>
+        <Button size="small" variant="contained" startIcon={<AddIcon />}
+          onClick={() => setAddPolicyOpen(true)}>Add Source Policy</Button>
+        <TextField size="small" placeholder="Search by source address…" value={search}
+          onChange={(e) => setSearch(e.target.value)} sx={{ minWidth: 200 }} />
+        <FormControl size="small" sx={{ minWidth: 110 }}>
+          <InputLabel>Status</InputLabel>
+          <Select label="Status" value={filterEnabled}
+            onChange={(e) => setFilterEnabled(e.target.value as typeof filterEnabled)}>
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="enabled">Enabled</MenuItem>
+            <MenuItem value="disabled">Disabled</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 130 }}>
+          <InputLabel>Mode</InputLabel>
+          <Select label="Mode" value={filterMode}
+            onChange={(e) => setFilterMode(e.target.value as number | "all")}>
+            <MenuItem value="all">All modes</MenuItem>
+            {MODE_OPTIONS.map((m) => <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>)}
+          </Select>
+        </FormControl>
+      </Stack>
+
+      {/* Master-detail */}
+      <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+        {/* Left list */}
+        <Box sx={{ width: 430, flexShrink: 0, borderRight: 1, borderColor: "divider", overflow: "auto" }}>
+          <DataGrid rows={filtered} columns={listColumns} loading={policiesLoading}
+            getRowId={(r) => r.id}
+            onRowClick={(params) => setSelectedId(params.id as number)}
+            rowSelectionModel={selectedId !== null ? { type: "include", ids: new Set([selectedId]) } : { type: "include", ids: new Set() }}
+            initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
+            pageSizeOptions={[20, 50]} disableColumnMenu
+            sx={{ border: "none",
+              "& .MuiDataGrid-row": { cursor: "pointer" },
+              "& .MuiDataGrid-row.Mui-selected": { bgcolor: "action.selected" } }} />
+        </Box>
+
+        {/* Right detail */}
+        <Box sx={{ flex: 1, overflow: "auto" }}>
+          {selectedPolicy ? (
+            <PolicyPanel key={selectedPolicy.id} policy={selectedPolicy} addresses={addresses}
+              onDeleted={() => setSelectedId(null)} />
+          ) : (
+            <Stack alignItems="center" justifyContent="center" sx={{ height: "100%", color: "text.secondary" }}>
+              <Typography>Select a source policy to view details</Typography>
+            </Stack>
+          )}
+        </Box>
+      </Box>
+
+      {/* Add policy dialog */}
+      <PolicyFormDialog open={addPolicyOpen}
+        initial={{ sourceAddressId: 0, distributionMode: 0, isEnabled: true }}
+        addresses={addresses} title="Add Source Policy"
+        onClose={() => setAddPolicyOpen(false)}
+        onSave={(p) => addMutation.mutate(p)} saving={addMutation.isPending} />
     </Box>
   );
 }

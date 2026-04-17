@@ -22,7 +22,11 @@ namespace Repositories.Migrations
                     City = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Street = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     StreetNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PostalCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    PostalCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -34,7 +38,11 @@ namespace Repositories.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(225)", maxLength: 225, nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true)
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -49,7 +57,11 @@ namespace Repositories.Migrations
                     ExternalSubjectId = table.Column<string>(type: "nvarchar(225)", maxLength: 225, nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(127)", maxLength: 127, nullable: true)
+                    PhoneNumber = table.Column<string>(type: "nvarchar(127)", maxLength: 127, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -69,7 +81,10 @@ namespace Repositories.Migrations
                     ActualAmount = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     SettlementMode = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -85,7 +100,11 @@ namespace Repositories.Migrations
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Power = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    AddressId = table.Column<int>(type: "int", nullable: false)
+                    AddressId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -115,7 +134,11 @@ namespace Repositories.Migrations
                     NetKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     InverterInfoId = table.Column<int>(type: "int", nullable: true, defaultValue: 0)
                         .Annotation("Relational:DefaultConstraintName", "DF__DailyEner__Inver__628FA481"),
-                    NetPerAddressKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false)
+                    NetPerAddressKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -137,7 +160,11 @@ namespace Repositories.Migrations
                     Model = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Manufacturer = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     SerialNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    AddressId = table.Column<int>(type: "int", nullable: false)
+                    AddressId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -164,7 +191,11 @@ namespace Repositories.Migrations
                     MonetaryCredit = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     EnergyCreditKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     ProcessedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    SettlementMode = table.Column<int>(type: "int", nullable: false)
+                    SettlementMode = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -177,29 +208,24 @@ namespace Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TransferRules",
+                name: "SourceTransferPolicies",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SourceAddressId = table.Column<int>(type: "int", nullable: false),
-                    DestinationAddressId = table.Column<int>(type: "int", nullable: false),
+                    DistributionMode = table.Column<int>(type: "int", nullable: false),
                     IsEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    Priority = table.Column<int>(type: "int", nullable: false),
-                    WeightPercent = table.Column<decimal>(type: "decimal(18,5)", nullable: true),
-                    MaxDailyKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: true),
-                    DistributionMode = table.Column<int>(type: "int", nullable: false)
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TransferRules", x => x.Id);
+                    table.PrimaryKey("PK_SourceTransferPolicies", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TransferRules_Addresses_DestinationAddressId",
-                        column: x => x.DestinationAddressId,
-                        principalTable: "Addresses",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_TransferRules_Addresses_SourceAddressId",
+                        name: "FK_SourceTransferPolicies_Addresses_SourceAddressId",
                         column: x => x.SourceAddressId,
                         principalTable: "Addresses",
                         principalColumn: "Id");
@@ -213,7 +239,11 @@ namespace Repositories.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RoleId = table.Column<string>(type: "nvarchar(225)", maxLength: 225, nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -234,7 +264,11 @@ namespace Repositories.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(225)", maxLength: 225, nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -283,7 +317,11 @@ namespace Repositories.Migrations
                     Voltage = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     Current = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
                     Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    AddressId = table.Column<int>(type: "int", nullable: false)
+                    AddressId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -299,6 +337,72 @@ namespace Repositories.Migrations
                         principalTable: "InverterInfos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DestinationTransferRules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SourceTransferPolicyId = table.Column<int>(type: "int", nullable: false),
+                    DestinationAddressId = table.Column<int>(type: "int", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    Priority = table.Column<int>(type: "int", nullable: false),
+                    WeightPercent = table.Column<decimal>(type: "decimal(18,5)", nullable: true),
+                    MaxDailyKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DistributionMode = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DestinationTransferRules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DestinationTransferRules_Addresses_DestinationAddressId",
+                        column: x => x.DestinationAddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_DestinationTransferRules_SourceTransferPolicies_SourceTransferPolicyId",
+                        column: x => x.SourceTransferPolicyId,
+                        principalTable: "SourceTransferPolicies",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SourceTransferSchedules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SourceTransferPolicyId = table.Column<int>(type: "int", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    ScheduleType = table.Column<int>(type: "int", nullable: false),
+                    ExecutionMode = table.Column<int>(type: "int", nullable: false),
+                    StartDateUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDateUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TimeOfDayUtc = table.Column<TimeOnly>(type: "time", nullable: true),
+                    IntervalMinutes = table.Column<int>(type: "int", nullable: true),
+                    DayOfWeek = table.Column<int>(type: "int", nullable: true),
+                    DayOfMonth = table.Column<int>(type: "int", nullable: true),
+                    LastRunUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NextRunUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SourceTransferSchedules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SourceTransferSchedules_SourceTransferPolicies_SourceTransferPolicyId",
+                        column: x => x.SourceTransferPolicyId,
+                        principalTable: "SourceTransferPolicies",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -318,11 +422,14 @@ namespace Repositories.Migrations
                     Notes = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     AppliedDistributionMode = table.Column<int>(type: "int", nullable: false),
-                    TransferRuleId = table.Column<int>(type: "int", nullable: true),
+                    DestinationTransferRuleId = table.Column<int>(type: "int", nullable: true),
                     Priority = table.Column<int>(type: "int", nullable: true),
                     WeightPercent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     RemainingSourceSurplusKwhAfterWorkflow = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
-                    AmountKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false)
+                    AmountKwh = table.Column<decimal>(type: "decimal(18,5)", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: ""),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -338,9 +445,9 @@ namespace Repositories.Migrations
                         principalTable: "Addresses",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_TransferWorkflow_TransferRules_TransferRuleId",
-                        column: x => x.TransferRuleId,
-                        principalTable: "TransferRules",
+                        name: "FK_TransferWorkflow_DestinationTransferRules_DestinationTransferRuleId",
+                        column: x => x.DestinationTransferRuleId,
+                        principalTable: "DestinationTransferRules",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                 });
@@ -376,6 +483,16 @@ namespace Repositories.Migrations
                 column: "InverterInfoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DestinationTransferRules_DestinationAddressId",
+                table: "DestinationTransferRules",
+                column: "DestinationAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DestinationTransferRules_SourceTransferPolicyId",
+                table: "DestinationTransferRules",
+                column: "SourceTransferPolicyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_InverterInfos_AddressId",
                 table: "InverterInfos",
                 column: "AddressId");
@@ -396,14 +513,14 @@ namespace Repositories.Migrations
                 column: "AddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransferRules_DestinationAddressId",
-                table: "TransferRules",
-                column: "DestinationAddressId");
+                name: "IX_SourceTransferPolicies_SourceAddressId",
+                table: "SourceTransferPolicies",
+                column: "SourceAddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransferRules_SourceAddressId",
-                table: "TransferRules",
-                column: "SourceAddressId");
+                name: "IX_SourceTransferSchedules_SourceTransferPolicyId",
+                table: "SourceTransferSchedules",
+                column: "SourceTransferPolicyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransferWorkflow_DestinationAddressId",
@@ -411,14 +528,14 @@ namespace Repositories.Migrations
                 column: "DestinationAddressId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TransferWorkflow_DestinationTransferRuleId",
+                table: "TransferWorkflow",
+                column: "DestinationTransferRuleId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransferWorkflow_SourceAddressId",
                 table: "TransferWorkflow",
                 column: "SourceAddressId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransferWorkflow_TransferRuleId",
-                table: "TransferWorkflow",
-                column: "TransferRuleId");
         }
 
         /// <inheritdoc />
@@ -446,6 +563,9 @@ namespace Repositories.Migrations
                 name: "ProviderSettlements");
 
             migrationBuilder.DropTable(
+                name: "SourceTransferSchedules");
+
+            migrationBuilder.DropTable(
                 name: "TransferRequests");
 
             migrationBuilder.DropTable(
@@ -461,7 +581,10 @@ namespace Repositories.Migrations
                 name: "InverterInfos");
 
             migrationBuilder.DropTable(
-                name: "TransferRules");
+                name: "DestinationTransferRules");
+
+            migrationBuilder.DropTable(
+                name: "SourceTransferPolicies");
 
             migrationBuilder.DropTable(
                 name: "Addresses");
