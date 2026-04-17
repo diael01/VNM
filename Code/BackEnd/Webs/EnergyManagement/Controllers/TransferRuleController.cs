@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Infrastructure.DTOs;
 using Infrastructure.Validation;
 using Services.Transfers;
+using Microsoft.EntityFrameworkCore;
 
 namespace EnergyManagement.Controllers;
 
@@ -58,8 +59,15 @@ public class TransferRuleController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _transferRuleService.DeleteAsync(id);
-        if (!deleted) return NotFound();
-        return NoContent();
+        try
+        {
+            var deleted = await _transferRuleService.DeleteAsync(id);
+            if (!deleted) return NotFound();
+            return NoContent();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict("Unable to delete transfer rule because it is still referenced by related data.");
+        }
     }
 }

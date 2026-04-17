@@ -20,7 +20,6 @@ import type { Address } from "../types/address";
 import {
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -28,14 +27,12 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
   Stack,
   Switch,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
@@ -44,7 +41,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import CloseIcon from "@mui/icons-material/Close";
 
 // Legacy helpers kept for backward compatibility with existing tests
 export function coerceTransferRuleNumbers(rule: TransferRule): TransferRule {
@@ -89,6 +86,41 @@ function labelAddress(a: Address) {
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString();
+}
+
+type ConfirmDeleteDialogProps = {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmText?: string;
+  confirming?: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+function ConfirmDeleteDialog({
+  open,
+  title,
+  message,
+  confirmText = "Delete",
+  confirming = false,
+  onCancel,
+  onConfirm,
+}: ConfirmDeleteDialogProps) {
+  return (
+    <Dialog open={open} onClose={confirming ? undefined : onCancel} maxWidth="xs" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2">{message}</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel} disabled={confirming}>Cancel</Button>
+        <Button color="error" variant="contained" onClick={onConfirm} disabled={confirming}>
+          {confirmText}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
 
 // ── Policy form dialog ──────────────────────────────────────────────────────
@@ -212,6 +244,7 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [addOpen, setAddOpen] = useState(false);
   const [newRule, setNewRule] = useState<Partial<TransferRule>>({});
+  const [ruleIdToDelete, setRuleIdToDelete] = useState<number | null>(null);
 
   const { data: rules = [], isLoading } = useQuery({
     queryKey: ["policyRules", policy.id],
@@ -238,6 +271,10 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
   const deleteMutation = useMutation({
     mutationFn: deleteTransferRule,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["policyRules", policy.id] }); qc.invalidateQueries({ queryKey: ["policies"] }); },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Failed to delete destination rule";
+      alert(message);
+    },
   });
 
   const handleEditClick = (id: GridRowId) => () =>
@@ -255,12 +292,26 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
       renderCell: (p) => isWeighted ? (p.value ?? "—") : <span style={{ color: "#bbb" }}>—</span> },
     { field: "maxDailyKwh", headerName: "Max kWh/day", width: 120, editable: true, type: "number" },
     {
-      field: "actions", type: "actions", width: 80,
-      getActions: (params) => [
-        <GridActionsCellItem icon={<EditIcon fontSize="small" />} label="Edit" onClick={handleEditClick(params.id)} />,
-        <GridActionsCellItem icon={<DeleteIcon fontSize="small" />} label="Delete"
-          onClick={() => deleteMutation.mutate(Number(params.id))} />,
-      ],
+      field: "actions", type: "actions", width: 120,
+      getActions: (params) => {
+        const id = params.id as GridRowId;
+        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem icon={<SaveIcon fontSize="small" />} label="Save"
+              onClick={() => setRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.View } }))} />,
+            <GridActionsCellItem icon={<CloseIcon fontSize="small" />} label="Cancel"
+              onClick={() => setRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.View, ignoreModifications: true } }))} />,
+          ];
+        }
+
+        return [
+          <GridActionsCellItem icon={<EditIcon fontSize="small" />} label="Edit" onClick={handleEditClick(id)} />,
+          <GridActionsCellItem icon={<DeleteIcon fontSize="small" />} label="Delete"
+            onClick={() => setRuleIdToDelete(Number(id))} />,
+        ];
+      },
     },
   ];
 
@@ -330,6 +381,20 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={ruleIdToDelete !== null}
+        title="Delete Destination Rule"
+        message="Are you sure you want to delete this destination rule?"
+        confirming={deleteMutation.isPending}
+        onCancel={() => setRuleIdToDelete(null)}
+        onConfirm={() => {
+          if (ruleIdToDelete === null) return;
+          deleteMutation.mutate(ruleIdToDelete, {
+            onSettled: () => setRuleIdToDelete(null),
+          });
+        }}
+      />
     </Box>
   );
 }
@@ -337,8 +402,9 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
 // ── Schedules child grid ──────────────────────────────────────────────────────
 function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
   const qc = useQueryClient();
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [addOpen, setAddOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<SourceTransferSchedule | null>(null);
+  const [scheduleIdToDelete, setScheduleIdToDelete] = useState<number | null>(null);
 
   const { data: schedules = [], isLoading } = useQuery({
     queryKey: ["policySchedules", policy.id],
@@ -351,7 +417,7 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
   });
   const updateMutation = useMutation({
     mutationFn: (s: SourceTransferSchedule) => updateSchedule(policy.id, s),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policySchedules", policy.id] }); setEditTarget(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policySchedules", policy.id] }); },
   });
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteSchedule(policy.id, id),
@@ -359,26 +425,52 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
   });
 
   const columns: GridColDef[] = [
-    { field: "isEnabled", headerName: "Enabled", width: 80, type: "boolean" },
+    { field: "isEnabled", headerName: "Enabled", width: 80, type: "boolean", editable: true },
     { field: "scheduleType", headerName: "Type", width: 100,
+      editable: true,
+      type: "singleSelect",
+      valueOptions: Object.entries(SCHEDULE_TYPE_LABELS).map(([value, label]) => ({ value: Number(value), label })),
       renderCell: (p) => SCHEDULE_TYPE_LABELS[p.value as number] ?? p.value },
     { field: "executionMode", headerName: "Exec Mode", width: 140,
+      editable: true,
+      type: "singleSelect",
+      valueOptions: Object.entries(EXEC_MODE_LABELS).map(([value, label]) => ({ value: Number(value), label })),
       renderCell: (p) => EXEC_MODE_LABELS[p.value as number] ?? p.value },
-    { field: "startDateUtc", headerName: "Start", width: 155, renderCell: (p) => fmtDate(p.value as string) },
-    { field: "endDateUtc", headerName: "End", width: 155, renderCell: (p) => fmtDate(p.value as string) },
-    { field: "timeOfDayUtc", headerName: "Time", width: 90, renderCell: (p) => (p.value as string) ?? "—" },
+    { field: "startDateUtc", headerName: "Start", width: 155, editable: true, renderCell: (p) => fmtDate(p.value as string) },
+    { field: "endDateUtc", headerName: "End", width: 155, editable: true, renderCell: (p) => fmtDate(p.value as string) },
+    { field: "timeOfDayUtc", headerName: "Time", width: 90, editable: true, renderCell: (p) => (p.value as string) ?? "—" },
     { field: "nextRunUtc", headerName: "Next Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
     { field: "lastRunUtc", headerName: "Last Run", width: 155, renderCell: (p) => fmtDate(p.value as string) },
     {
-      field: "actions", type: "actions", width: 80,
-      getActions: (params) => [
-        <GridActionsCellItem icon={<EditIcon fontSize="small" />} label="Edit"
-          onClick={() => setEditTarget(schedules.find((s) => s.id === params.id) ?? null)} />,
-        <GridActionsCellItem icon={<DeleteIcon fontSize="small" />} label="Delete"
-          onClick={() => deleteMutation.mutate(Number(params.id))} />,
-      ],
+      field: "actions", type: "actions", width: 120,
+      getActions: (params) => {
+        const id = params.id as GridRowId;
+        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem icon={<SaveIcon fontSize="small" />} label="Save"
+              onClick={() => setRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.View } }))} />,
+            <GridActionsCellItem icon={<CloseIcon fontSize="small" />} label="Cancel"
+              onClick={() => setRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.View, ignoreModifications: true } }))} />,
+          ];
+        }
+
+        return [
+          <GridActionsCellItem icon={<EditIcon fontSize="small" />} label="Edit"
+            onClick={() => setRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.Edit } }))} />,
+          <GridActionsCellItem icon={<DeleteIcon fontSize="small" />} label="Delete"
+            onClick={() => setScheduleIdToDelete(Number(id))} />,
+        ];
+      },
     },
   ];
+
+  const processRowUpdate = async (row: SourceTransferSchedule) => {
+    const updated = { ...row };
+    await updateMutation.mutateAsync(updated);
+    return updated;
+  };
 
   const blank: Partial<SourceTransferSchedule> = { isEnabled: true, scheduleType: 1, executionMode: 0, startDateUtc: new Date().toISOString() };
 
@@ -391,8 +483,12 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
         </Button>
       </Stack>
       <Box sx={{ overflowX: "auto" }}>
-        <DataGrid autoHeight rows={schedules} columns={columns} loading={isLoading}
+        <DataGrid autoHeight rows={schedules} columns={columns} loading={isLoading} editMode="row"
           getRowId={(r) => r.id}
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={setRowModesModel}
+          processRowUpdate={processRowUpdate}
+          onProcessRowUpdateError={(e) => alert(e.message)}
           initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
           pageSizeOptions={[5, 10]} disableRowSelectionOnClick
           sx={{ minWidth: 1100 }} />
@@ -402,12 +498,19 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
         title="Add Schedule" onClose={() => setAddOpen(false)}
         onSave={(s) => addMutation.mutate(s)} saving={addMutation.isPending} />
 
-      {editTarget && (
-        <ScheduleFormDialog open title="Edit Schedule" initial={editTarget} policyId={policy.id}
-          onClose={() => setEditTarget(null)}
-          onSave={(s) => updateMutation.mutate({ ...editTarget, ...s } as SourceTransferSchedule)}
-          saving={updateMutation.isPending} />
-      )}
+      <ConfirmDeleteDialog
+        open={scheduleIdToDelete !== null}
+        title="Delete Schedule"
+        message="Are you sure you want to delete this schedule?"
+        confirming={deleteMutation.isPending}
+        onCancel={() => setScheduleIdToDelete(null)}
+        onConfirm={() => {
+          if (scheduleIdToDelete === null) return;
+          deleteMutation.mutate(scheduleIdToDelete, {
+            onSettled: () => setScheduleIdToDelete(null),
+          });
+        }}
+      />
     </Box>
   );
 }
@@ -416,93 +519,14 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
 type PolicyPanelProps = {
   policy: SourceTransferPolicy;
   addresses: Address[];
-  onDeleted: () => void;
 };
 
-function PolicyPanel({ policy, addresses, onDeleted }: PolicyPanelProps) {
-  const qc = useQueryClient();
-  const [draft, setDraft] = useState<SourceTransferPolicy>(policy);
-  const [savedMode, setSavedMode] = useState(policy.distributionMode);
-
-  if (draft.id !== policy.id) { setDraft(policy); setSavedMode(policy.distributionMode); }
-
-  const modeChanged = draft.distributionMode !== savedMode;
-
-  const updateMutation = useMutation({
-    mutationFn: updatePolicy,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policies"] }); setSavedMode(draft.distributionMode); },
-  });
-  const deleteMutation = useMutation({
-    mutationFn: deletePolicy,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["policies"] }); onDeleted(); },
-  });
-
-  const sourceAddr = addresses.find((a) => a.id === policy.sourceAddressId);
-
+function PolicyPanel({ policy, addresses }: PolicyPanelProps) {
   return (
     <Stack spacing={3} sx={{ p: 3 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-        <Box>
-          <Typography variant="h6" fontWeight={700}>
-            {sourceAddr ? labelAddress(sourceAddr) : `Policy #${policy.id}`}
-          </Typography>
-          <Chip size="small" label={MODE_LABELS[policy.distributionMode]} color="primary" variant="outlined" sx={{ mr: 1, mt: 0.5 }} />
-          <Chip size="small" label={policy.isEnabled ? "Enabled" : "Disabled"}
-            color={policy.isEnabled ? "success" : "default"} sx={{ mt: 0.5 }} />
-        </Box>
-        <Tooltip title="Delete policy and all its rules / schedules">
-          <IconButton color="error" size="small" onClick={() => deleteMutation.mutate(policy.id)}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      </Stack>
-
+      <DestinationRulesGrid policy={policy} addresses={addresses} />
       <Divider />
-      <Typography variant="subtitle2" color="text.secondary" fontWeight={600} letterSpacing={0.5}>
-        POLICY SETTINGS
-      </Typography>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
-        <FormControl size="small" sx={{ minWidth: 220 }}>
-          <InputLabel>Source Address</InputLabel>
-          <Select label="Source Address" value={draft.sourceAddressId}
-            onChange={(e) => setDraft((d) => ({ ...d, sourceAddressId: Number(e.target.value) }))}>
-            {addresses.map((a) => <MenuItem key={a.id} value={a.id}>{labelAddress(a)}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Distribution Mode</InputLabel>
-          <Select label="Distribution Mode" value={draft.distributionMode}
-            onChange={(e) => setDraft((d) => ({ ...d, distributionMode: Number(e.target.value) }))}>
-            {MODE_OPTIONS.map((m) => <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <FormControlLabel
-          control={<Switch checked={draft.isEnabled}
-            onChange={(e) => setDraft((d) => ({ ...d, isEnabled: e.target.checked }))} />}
-          label="Enabled" sx={{ mt: 0.5 }} />
-      </Stack>
-
-      {modeChanged && (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "warning.main" }}>
-          <WarningAmberIcon fontSize="small" />
-          <Typography variant="caption">
-            Mode changed — Priority / Weight % fields will be locked to the new mode on save.
-          </Typography>
-        </Stack>
-      )}
-
-      <Box>
-        <Button variant="contained" startIcon={<SaveIcon />}
-          onClick={() => updateMutation.mutate(draft)} disabled={updateMutation.isPending}>
-          Save policy
-        </Button>
-      </Box>
-
-      <Divider />
-      <DestinationRulesGrid policy={draft} addresses={addresses} />
-      <Divider />
-      <SchedulesGrid policy={draft} />
+      <SchedulesGrid policy={policy} />
     </Stack>
   );
 }
@@ -519,6 +543,8 @@ export default function TransferRules() {
   const [leftPanelWidth, setLeftPanelWidth] = useState(minLeftPanelWidth);
   const [isResizing, setIsResizing] = useState(false);
   const [hasUserResized, setHasUserResized] = useState(false);
+  const [policyRowModesModel, setPolicyRowModesModel] = useState<GridRowModesModel>({});
+  const [policyIdToDelete, setPolicyIdToDelete] = useState<number | null>(null);
   const splitContainerRef = useRef<HTMLDivElement | null>(null);
 
   const qc = useQueryClient();
@@ -535,6 +561,21 @@ export default function TransferRules() {
       qc.invalidateQueries({ queryKey: ["policies"] });
       setAddPolicyOpen(false);
       setSelectedId(created.id);
+    },
+  });
+
+  const updatePolicyMutation = useMutation({
+    mutationFn: updatePolicy,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["policies"] });
+    },
+  });
+
+  const deletePolicyMutation = useMutation({
+    mutationFn: deletePolicy,
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ["policies"] });
+      if (selectedId === id) setSelectedId(null);
     },
   });
 
@@ -596,21 +637,73 @@ export default function TransferRules() {
     };
   }, [isResizing]);
 
+  const addressOptions = useMemo(
+    () => addresses.map((a) => ({ value: a.id, label: labelAddress(a) })),
+    [addresses],
+  );
+
+  const processPolicyRowUpdate = async (row: SourceTransferPolicy) => {
+    const updated = {
+      ...row,
+      sourceAddressId: Number(row.sourceAddressId),
+      distributionMode: Number(row.distributionMode),
+      isEnabled: Boolean(row.isEnabled),
+    };
+    await updatePolicyMutation.mutateAsync(updated);
+    return updated;
+  };
+
   const listColumns: GridColDef[] = [
     {
       field: "sourceAddressId", headerName: "Source Address", flex: 2,
+      editable: true,
+      type: "singleSelect",
+      valueOptions: addressOptions,
       renderCell: (p) => {
         const a = addresses.find((x) => x.id === (p.value as number));
         return a ? labelAddress(a) : `Address #${p.value}`;
       },
     },
-    { field: "distributionMode", headerName: "Mode", width: 100,
+    { field: "distributionMode", headerName: "Mode", width: 120,
+      editable: true,
+      type: "singleSelect",
+      valueOptions: MODE_OPTIONS,
       renderCell: (p) => MODE_LABELS[p.value as number] ?? p.value },
-    { field: "isEnabled", headerName: "On", width: 60, type: "boolean" },
+    {
+      field: "isEnabled",
+      headerName: "Enabled",
+      width: 120,
+      editable: true,
+      type: "boolean",
+      renderCell: (p) => <Typography variant="caption">{p.value ? "Enabled" : "Disabled"}</Typography>,
+    },
     { field: "destinationRulesCount", headerName: "Dest.", width: 70, type: "number" },
     { field: "schedulesCount", headerName: "Sched.", width: 70, type: "number" },
     { field: "updatedAtUtc", headerName: "Updated", width: 145,
       renderCell: (p) => fmtDate(p.value as string) },
+    {
+      field: "actions", type: "actions", width: 120,
+      getActions: (params) => {
+        const id = params.id as GridRowId;
+        const isInEditMode = policyRowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem icon={<SaveIcon fontSize="small" />} label="Save"
+              onClick={() => setPolicyRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.View } }))} />,
+            <GridActionsCellItem icon={<CloseIcon fontSize="small" />} label="Cancel"
+              onClick={() => setPolicyRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.View, ignoreModifications: true } }))} />,
+          ];
+        }
+
+        return [
+          <GridActionsCellItem icon={<EditIcon fontSize="small" />} label="Edit"
+            onClick={() => setPolicyRowModesModel((m) => ({ ...m, [id]: { mode: GridRowModes.Edit } }))} />,
+          <GridActionsCellItem icon={<DeleteIcon fontSize="small" />} label="Delete"
+            onClick={() => setPolicyIdToDelete(Number(id))} />,
+        ];
+      },
+    },
   ];
 
   return (
@@ -649,6 +742,11 @@ export default function TransferRules() {
           <Box sx={{ overflowX: "auto" }}>
             <DataGrid rows={filtered} columns={listColumns} loading={policiesLoading}
               getRowId={(r) => r.id}
+              editMode="row"
+              rowModesModel={policyRowModesModel}
+              onRowModesModelChange={setPolicyRowModesModel}
+              processRowUpdate={processPolicyRowUpdate}
+              onProcessRowUpdateError={(e) => alert(e.message)}
               onRowClick={(params) => setSelectedId(params.id as number)}
               rowSelectionModel={selectedId !== null ? { type: "include", ids: new Set([selectedId]) } : { type: "include", ids: new Set() }}
               initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
@@ -679,8 +777,7 @@ export default function TransferRules() {
         {/* Right detail */}
         <Box sx={{ flex: 1, overflow: "auto" }}>
           {selectedPolicy ? (
-            <PolicyPanel key={selectedPolicy.id} policy={selectedPolicy} addresses={addresses}
-              onDeleted={() => setSelectedId(null)} />
+            <PolicyPanel key={selectedPolicy.id} policy={selectedPolicy} addresses={addresses} />
           ) : (
             <Stack alignItems="center" justifyContent="center" sx={{ height: "100%", color: "text.secondary" }}>
               <Typography>Select a source policy to view details</Typography>
@@ -688,6 +785,20 @@ export default function TransferRules() {
           )}
         </Box>
       </Box>
+
+      <ConfirmDeleteDialog
+        open={policyIdToDelete !== null}
+        title="Delete Source Policy"
+        message="Are you sure you want to delete this source policy? This will also remove all destination rules and schedules under it."
+        confirming={deletePolicyMutation.isPending}
+        onCancel={() => setPolicyIdToDelete(null)}
+        onConfirm={() => {
+          if (policyIdToDelete === null) return;
+          deletePolicyMutation.mutate(policyIdToDelete, {
+            onSettled: () => setPolicyIdToDelete(null),
+          });
+        }}
+      />
 
       {/* Add policy dialog */}
       <PolicyFormDialog open={addPolicyOpen}

@@ -17,11 +17,16 @@ namespace Services.Transfers
     public sealed class TransferRuleService : ITransferRuleService
     {
         private readonly ITransferRuleRepository _transferRuleRepository;
+        private readonly ITransferWorkflowRepository _transferWorkflowRepository;
         private readonly IMapper _mapper;
 
-        public TransferRuleService(ITransferRuleRepository transferRuleRepository, IMapper mapper)
+        public TransferRuleService(
+            ITransferRuleRepository transferRuleRepository,
+            ITransferWorkflowRepository transferWorkflowRepository,
+            IMapper mapper)
         {
             _transferRuleRepository = transferRuleRepository;
+            _transferWorkflowRepository = transferWorkflowRepository;
             _mapper = mapper;
         }
 
@@ -55,6 +60,15 @@ namespace Services.Transfers
 
         public async Task<bool> DeleteAsync(int id)
         {
+            // Some workflows may still reference this rule. Clear the optional FK first,
+            // then remove the rule.
+            var linkedWorkflows = await _transferWorkflowRepository.FindAsync(w => w.DestinationTransferRuleId == id);
+            foreach (var workflow in linkedWorkflows)
+            {
+                workflow.DestinationTransferRuleId = null;
+                await _transferWorkflowRepository.UpdateAsync(workflow);
+            }
+
             return await _transferRuleRepository.DeleteAsync(id);
         }
     }

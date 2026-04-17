@@ -19,11 +19,22 @@ namespace Services.Transfers
     public sealed class SourceTransferPolicyService : ISourceTransferPolicyService
     {
         private readonly ISourceTransferPolicyRepository _policyRepository;
+        private readonly ISourceTransferScheduleRepository _scheduleRepository;
+        private readonly ITransferRuleRepository _ruleRepository;
+        private readonly ITransferWorkflowRepository _workflowRepository;
         private readonly IMapper _mapper;
 
-        public SourceTransferPolicyService(ISourceTransferPolicyRepository policyRepository, IMapper mapper)
+        public SourceTransferPolicyService(
+            ISourceTransferPolicyRepository policyRepository,
+            ISourceTransferScheduleRepository scheduleRepository,
+            ITransferRuleRepository ruleRepository,
+            ITransferWorkflowRepository workflowRepository,
+            IMapper mapper)
         {
             _policyRepository = policyRepository;
+            _scheduleRepository = scheduleRepository;
+            _ruleRepository = ruleRepository;
+            _workflowRepository = workflowRepository;
             _mapper = mapper;
         }
 
@@ -57,6 +68,33 @@ namespace Services.Transfers
 
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
+            var existing = await _policyRepository.GetByIdAsync(id, cancellationToken);
+            if (existing is null) return false;
+
+            // Delete destination rules under this policy and clear workflow references first.
+            var rules = await _ruleRepository.FindAsync(r => r.SourceTransferPolicyId == id, cancellationToken);
+            foreach (var rule in rules)
+            {
+                var linkedWorkflows = await _workflowRepository.FindAsync(
+                    w => w.DestinationTransferRuleId == rule.Id,
+                    cancellationToken);
+
+                foreach (var workflow in linkedWorkflows)
+                {
+                    workflow.DestinationTransferRuleId = null;
+                    await _workflowRepository.UpdateAsync(workflow, cancellationToken);
+                }
+
+                await _ruleRepository.DeleteAsync(rule.Id, cancellationToken);
+            }
+
+            // Delete schedules under this policy.
+            var schedules = await _scheduleRepository.FindAsync(s => s.SourceTransferPolicyId == id, cancellationToken);
+            foreach (var schedule in schedules)
+            {
+                await _scheduleRepository.DeleteAsync(schedule.Id, cancellationToken);
+            }
+
             return await _policyRepository.DeleteAsync(id, cancellationToken);
         }
 
