@@ -43,8 +43,7 @@ const menuItems: MenuItem[] = [
     label: "Transfers",
     children: [
       { key: "transfers-rules", label: "Rules" },
-      { key: "transfers-new", label: "New Transfer" },
-      { key: "transfers-history", label: "History" },
+      { key: "transfers-new", label: "Transitions" },
     ],
   },
   {

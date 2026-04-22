@@ -10,5 +10,6 @@ public class TransferWorkflowProfile : Profile
     {
         CreateMap<TransferWorkflow, TransferWorkflowDto>();
         CreateMap<TransferWorkflowDto, TransferWorkflow>();
+        CreateMap<TransferWorkflowStatusHistory, TransferWorkflowStatusHistoryDto>();
     }
 }

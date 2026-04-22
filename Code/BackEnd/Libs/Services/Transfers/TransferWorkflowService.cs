@@ -447,3 +447,12 @@ public class AddressPosition
     public decimal RemainingSurplusKwh { get; set; }
     public decimal RemainingDeficitKwh { get; set; }
 }
+
+
+/* Best practical flow
+
+Planned --Approve--> Approved --Execute--> Executed --Settle--> Settled
+Planned --Reject--> Rejected
+Approved --Cancel--> Cancelled
+Approved --Execute fails--> Failed
+Failed --Retry Execute--> Executed */

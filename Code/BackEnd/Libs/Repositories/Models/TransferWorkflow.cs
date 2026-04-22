@@ -37,6 +37,8 @@ public partial class TransferWorkflow : AuditableEntity
 
     public decimal? WeightPercent { get; set; }
 
+    public virtual ICollection<TransferWorkflowStatusHistory> StatusHistory { get; set; } = new List<TransferWorkflowStatusHistory>();
+
     public virtual Address DestinationAddress { get; set; } = null!;
 
     public virtual Address SourceAddress { get; set; } = null!;

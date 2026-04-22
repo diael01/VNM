@@ -41,6 +41,8 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<TransferWorkflow> TransferWorkflows { get; set; }
 
+    public virtual DbSet<TransferWorkflowStatusHistory> TransferWorkflowStatusHistory { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
@@ -248,6 +250,23 @@ public partial class VnmDbContext : DbContext
             entity.HasOne(d => d.DestinationTransferRule).WithMany()
                 .HasForeignKey(d => d.DestinationTransferRuleId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TransferWorkflowStatusHistory>(entity =>
+        {
+            entity.ToTable("TransferWorkflowStatusHistory");
+
+            entity.HasIndex(e => e.TransferWorkflowId, "IX_TransferWorkflowStatusHistory_TransferWorkflowId");
+
+            entity.HasIndex(e => e.CreatedAtUtc, "IX_TransferWorkflowStatusHistory_CreatedAtUtc");
+
+            entity.Property(e => e.Note).HasMaxLength(255);
+
+            entity.HasOne(d => d.TransferWorkflow)
+                .WithMany(p => p.StatusHistory)
+                .HasForeignKey(d => d.TransferWorkflowId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_TransferWorkflowStatusHistory_TransferWorkflow");
         });
 
         OnModelCreatingPartial(modelBuilder);

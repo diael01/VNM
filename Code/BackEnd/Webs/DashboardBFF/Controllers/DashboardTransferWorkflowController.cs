@@ -13,6 +13,11 @@ public class DashboardTransferWorkflowController : ControllerBase
 {
     private readonly IDashboardTransferWorkflowRedirectService _dashboardService;
 
+    public sealed class WorkflowActionRequest
+    {
+        public string? Note { get; set; }
+    }
+
     public DashboardTransferWorkflowController(IDashboardTransferWorkflowRedirectService dashboardService)
     {
         _dashboardService = dashboardService;
@@ -73,5 +78,41 @@ public class DashboardTransferWorkflowController : ControllerBase
         var deleted = await _dashboardService.DeleteTransferWorkflowAsync(accessToken, id, cancellationToken);
         if (!deleted) return NotFound();
         return NoContent();
+    }
+
+    [HttpPost("{id}/approve")]
+    [Authorize]
+    public async Task<IActionResult> ApproveTransferWorkflow(int id, [FromBody] WorkflowActionRequest? request, CancellationToken cancellationToken)
+    {
+        var accessToken = await HttpContextAccessTokenHelper.GetAccessTokenOrThrowAsync(HttpContext, cancellationToken);
+        var updated = await _dashboardService.ApproveTransferWorkflowAsync(accessToken, id, request?.Note, cancellationToken);
+        return Ok(updated);
+    }
+
+    [HttpPost("{id}/reject")]
+    [Authorize]
+    public async Task<IActionResult> RejectTransferWorkflow(int id, [FromBody] WorkflowActionRequest? request, CancellationToken cancellationToken)
+    {
+        var accessToken = await HttpContextAccessTokenHelper.GetAccessTokenOrThrowAsync(HttpContext, cancellationToken);
+        var updated = await _dashboardService.RejectTransferWorkflowAsync(accessToken, id, request?.Note, cancellationToken);
+        return Ok(updated);
+    }
+
+    [HttpPost("{id}/execute")]
+    [Authorize]
+    public async Task<IActionResult> ExecuteTransferWorkflow(int id, [FromBody] WorkflowActionRequest? request, CancellationToken cancellationToken)
+    {
+        var accessToken = await HttpContextAccessTokenHelper.GetAccessTokenOrThrowAsync(HttpContext, cancellationToken);
+        var updated = await _dashboardService.ExecuteTransferWorkflowAsync(accessToken, id, request?.Note, cancellationToken);
+        return Ok(updated);
+    }
+
+    [HttpPost("{id}/settle")]
+    [Authorize]
+    public async Task<IActionResult> SettleTransferWorkflow(int id, [FromBody] WorkflowActionRequest? request, CancellationToken cancellationToken)
+    {
+        var accessToken = await HttpContextAccessTokenHelper.GetAccessTokenOrThrowAsync(HttpContext, cancellationToken);
+        var updated = await _dashboardService.SettleTransferWorkflowAsync(accessToken, id, request?.Note, cancellationToken);
+        return Ok(updated);
     }
 }

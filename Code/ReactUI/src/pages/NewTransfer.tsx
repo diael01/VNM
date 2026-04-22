@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
 import type { GridColDef, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography } from "@mui/material";
+import { Badge, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Tab, Tabs, TextField, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -10,9 +10,13 @@ import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import { getAllAddresses } from "../api/addressApi";
 import {
+  approveTransferWorkflow,
   createTransferWorkflow,
   deleteTransferWorkflow,
+  executeTransferWorkflow,
   getAllTransferWorkflows,
+  rejectTransferWorkflow,
+  settleTransferWorkflow,
   updateTransferWorkflow,
 } from "../api/transferWorkflowApi";
 import type { Address } from "../types/address";
@@ -42,6 +46,16 @@ const TRIGGER_OPTIONS = [
 const FAIR_MODE = 0;
 const PRIORITY_MODE = 1;
 const WEIGHTED_MODE = 2;
+
+type TabKey = "planned" | "approved" | "execution" | "rejected" | "history";
+
+const TAB_FILTERS: Record<TabKey, (status: number) => boolean> = {
+  planned:   (s) => s === STATUS_PLANNED,
+  approved:  (s) => s === STATUS_APPROVED,
+  execution: (s) => s === STATUS_EXECUTED || s === STATUS_FAILED,
+  rejected:  (s) => s === STATUS_REJECTED,
+  history:   (s) => s === STATUS_SETTLED || s === STATUS_CANCELLED,
+};
 
 const STATUS_PLANNED = 0;
 const STATUS_APPROVED = 1;
@@ -165,7 +179,7 @@ function getStatusActions(status: number): StatusAction[] {
         { label: "Cancel", nextStatus: STATUS_CANCELLED },
       ];
     case STATUS_REJECTED:
-      return [{ label: "Reopen", nextStatus: STATUS_PLANNED }];
+      return [];
     case STATUS_CANCELLED:
       return [{ label: "Reopen", nextStatus: STATUS_PLANNED }];
     default:
@@ -173,8 +187,22 @@ function getStatusActions(status: number): StatusAction[] {
   }
 }
 
+function isPlannedStatus(status: number): boolean {
+  return status === STATUS_PLANNED;
+}
+
+function hasLockedTransferFieldsChanged(before: TransferWorkflow, after: TransferWorkflow): boolean {
+  return before.sourceAddressId !== after.sourceAddressId
+    || before.destinationAddressId !== after.destinationAddressId
+    || before.amountKwh !== after.amountKwh
+    || before.sourceSurplusKwhAtWorkflow !== after.sourceSurplusKwhAtWorkflow
+    || before.destinationDeficitKwhAtWorkflow !== after.destinationDeficitKwhAtWorkflow
+    || before.remainingSourceSurplusKwhAfterWorkflow !== after.remainingSourceSurplusKwhAfterWorkflow;
+}
+
 export default function NewTransfer() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<TabKey>("planned");
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newWorkflow, setNewWorkflow] = useState<Partial<TransferWorkflow>>(createInitialWorkflowDraft);
@@ -183,6 +211,7 @@ export default function NewTransfer() {
   const { data: rows = [], isLoading, error } = useQuery({
     queryKey: ["transferWorkflows"],
     queryFn: getAllTransferWorkflows,
+  refetchInterval: 30_000,
   });
 
   const { data: addresses = [] } = useQuery({
@@ -193,6 +222,19 @@ export default function NewTransfer() {
   const addressOptions = useMemo(
     () => addresses.map((a) => ({ value: a.id, label: labelAddress(a) })),
     [addresses],
+  );
+
+  const tabCounts = useMemo(() => ({
+    planned:   rows.filter((r) => TAB_FILTERS.planned(r.status)).length,
+    approved:  rows.filter((r) => TAB_FILTERS.approved(r.status)).length,
+    execution: rows.filter((r) => TAB_FILTERS.execution(r.status)).length,
+    rejected:  rows.filter((r) => TAB_FILTERS.rejected(r.status)).length,
+    history:   rows.filter((r) => TAB_FILTERS.history(r.status)).length,
+  }), [rows]);
+
+  const visibleRows = useMemo(
+    () => rows.filter((r) => TAB_FILTERS[activeTab](r.status)),
+    [rows, activeTab],
   );
 
   const addMutation = useMutation({
@@ -260,6 +302,19 @@ export default function NewTransfer() {
   const processRowUpdate = async (updatedRow: TransferWorkflow) => {
     const normalizedByMode = normalizeWorkflow(updatedRow);
 
+    const existing = rows.find((r) => r.id === normalizedByMode.id);
+    if (existing) {
+      const existingNormalized = normalizeWorkflow(existing);
+
+      if (normalizedByMode.status !== existingNormalized.status) {
+        throw new Error("Status is action-driven. Use buttons in Actions column.");
+      }
+
+      if (!isPlannedStatus(existingNormalized.status) && hasLockedTransferFieldsChanged(existingNormalized, normalizedByMode)) {
+        throw new Error("Approved/executed workflows are frozen. Core transfer values cannot be edited.");
+      }
+    }
+
     const message = validateWorkflow(normalizedByMode);
     if (message) {
       throw new Error(message);
@@ -275,6 +330,30 @@ export default function NewTransfer() {
 
     if (message) {
       alert(message);
+      return;
+    }
+
+    if (nextStatus === STATUS_APPROVED) {
+      await approveTransferWorkflow(row.id);
+      await queryClient.invalidateQueries({ queryKey: ["transferWorkflows"] });
+      return;
+    }
+
+    if (nextStatus === STATUS_EXECUTED) {
+      await executeTransferWorkflow(row.id);
+      await queryClient.invalidateQueries({ queryKey: ["transferWorkflows"] });
+      return;
+    }
+
+    if (nextStatus === STATUS_REJECTED) {
+      await rejectTransferWorkflow(row.id);
+      await queryClient.invalidateQueries({ queryKey: ["transferWorkflows"] });
+      return;
+    }
+
+    if (nextStatus === STATUS_SETTLED) {
+      await settleTransferWorkflow(row.id);
+      await queryClient.invalidateQueries({ queryKey: ["transferWorkflows"] });
       return;
     }
 
@@ -299,7 +378,7 @@ export default function NewTransfer() {
       remainingSourceSurplusKwhAfterWorkflow: toNumber(newWorkflow.remainingSourceSurplusKwhAfterWorkflow),
       amountKwh: toNumber(newWorkflow.amountKwh),
       triggerType: toNumber(newWorkflow.triggerType),
-      status: toNumber(newWorkflow.status),
+      status: STATUS_PLANNED,
       notes: newWorkflow.notes || null,
       createdAtUtc: new Date().toISOString(),
       appliedDistributionMode: toNumber(newWorkflow.appliedDistributionMode),
@@ -379,16 +458,24 @@ export default function NewTransfer() {
     },
     {
       field: "remainingSourceSurplusKwhAfterWorkflow",
-      headerName: "Remaining Src Surplus",
-      width: 170,
+      headerName: "Remaining Src kWh",
+      width: 130,
       editable: true,
       type: "number",
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Remaining</div><div>Src kWh</div></Box>,
     },
-    { field: "amountKwh", headerName: "Amount kWh", width: 120, editable: true, type: "number" },
+    {
+      field: "amountKwh",
+      headerName: "Amount kWh",
+      width: 90,
+      editable: true,
+      type: "number",
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Amount</div><div>kWh</div></Box>,
+    },
     {
       field: "triggerType",
       headerName: "Trigger",
-      width: 120,
+      width: 90,
       editable: true,
       type: "singleSelect",
       valueOptions: TRIGGER_OPTIONS,
@@ -396,15 +483,15 @@ export default function NewTransfer() {
     {
       field: "status",
       headerName: "Status",
-      width: 120,
-      editable: true,
+      width: 130,
+      editable: false,
       type: "singleSelect",
       valueOptions: STATUS_OPTIONS,
     },
     {
       field: "statusActions",
       headerName: "Actions",
-      width: 240,
+      width: 210,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
@@ -436,7 +523,7 @@ export default function NewTransfer() {
     {
       field: "appliedDistributionMode",
       headerName: "Distrib Mode",
-      width: 120,
+      width: 90,
       editable: true,
       type: "singleSelect",
       valueOptions: MODE_OPTIONS,
@@ -445,14 +532,15 @@ export default function NewTransfer() {
     {
       field: "destinationTransferRuleId",
       headerName: "Transfer Rule ID",
-      width: 130,
+      width: 95,
       editable: true,
       type: "number",
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Transfer</div><div>Rule ID</div></Box>,
     },
     {
       field: "priority",
       headerName: "Priority",
-      width: 110,
+      width: 85,
       editable: true,
       type: "number",
       renderCell: (params) => {
@@ -471,7 +559,7 @@ export default function NewTransfer() {
         return isWeightedMode(mode) ? (params.value ?? "") : <span style={{ color: "#999" }}>-</span>;
       },
     },
-    { field: "notes", headerName: "Notes", width: 180, editable: true },
+    { field: "notes", headerName: "Notes", width: 140, editable: true },
     {
       field: "rowActions",
       headerName: "Manage",
@@ -479,6 +567,8 @@ export default function NewTransfer() {
       width: 120,
       getActions: (params) => {
         const id = params.id as GridRowId;
+        const row = params.row as TransferWorkflow;
+        const canManage = isPlannedStatus(toNumber(row.status, STATUS_PLANNED));
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
@@ -486,6 +576,10 @@ export default function NewTransfer() {
             <GridActionsCellItem key="save" icon={<SaveIcon />} label="Save" onClick={() => setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } })} />,
             <GridActionsCellItem key="cancel" icon={<CloseIcon />} label="Cancel" onClick={() => setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View, ignoreModifications: true } })} />,
           ];
+        }
+
+        if (!canManage) {
+          return [];
         }
 
         return [
@@ -511,8 +605,37 @@ export default function NewTransfer() {
       }}
     >
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Planned Transfer Workflows
+        Transfer Workflows
       </Typography>
+
+      <Tabs
+        value={activeTab}
+        onChange={(_, v: TabKey) => { setActiveTab(v); setRowModesModel({}); }}
+        sx={{ mb: 1, borderBottom: 1, borderColor: "divider" }}
+      >
+        {(["planned", "approved", "execution", "rejected", "history"] as TabKey[]).map((key) => {
+          const labels: Record<TabKey, string> = {
+            planned: "Planned",
+            approved: "Approved",
+            execution: "Execution",
+            rejected: "Rejected",
+            history: "History",
+          };
+          return (
+            <Tab
+              key={key}
+              value={key}
+              sx={{ minWidth: key === "planned" || key === "approved" || key === "rejected" ? 170 : 130 }}
+              label={
+                <Badge badgeContent={tabCounts[key]} color="primary" max={999}
+                  sx={{ "& .MuiBadge-badge": { right: -16, top: 2 } }}>
+                  <span style={{ paddingRight: 20 }}>{labels[key]}</span>
+                </Badge>
+              }
+            />
+          );
+        })}
+      </Tabs>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
         <Button startIcon={<AddIcon />} variant="contained" onClick={handleOpenAddDialog}>
@@ -523,11 +646,21 @@ export default function NewTransfer() {
       <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
         <Box sx={{ minWidth: 2840 }}>
         <DataGrid
-          rows={rows}
+          rows={visibleRows}
           columns={columns}
           editMode="row"
           processRowUpdate={processRowUpdate}
           isCellEditable={(params) => {
+            const rowStatus = toNumber((params.row as TransferWorkflow).status, STATUS_PLANNED);
+
+            if (params.field === "status") {
+              return false;
+            }
+
+            if (!isPlannedStatus(rowStatus)) {
+              return false;
+            }
+
             if (params.field === "priority") {
               return isPriorityMode(toNumber(params.row.appliedDistributionMode, FAIR_MODE));
             }
@@ -557,6 +690,23 @@ export default function NewTransfer() {
             },
             "& .MuiDataGrid-cell": {
               alignItems: "center",
+            },
+            "& .MuiDataGrid-footerContainer": {
+              justifyContent: "flex-end",
+            },
+            "& .MuiTablePagination-root": {
+              width: "auto",
+              marginLeft: "auto",
+              marginRight: "120px",
+              flexShrink: 0,
+            },
+            "& .MuiTablePagination-toolbar": {
+              justifyContent: "flex-end",
+              paddingLeft: 0,
+              paddingRight: 0,
+            },
+            "& .MuiTablePagination-spacer": {
+              display: "none",
             },
           }}
           slots={{
@@ -615,8 +765,8 @@ export default function NewTransfer() {
             <TextField
               select
               label="Status"
-              value={newWorkflow.status ?? 0}
-              onChange={(e) => setNewWorkflow((prev) => ({ ...prev, status: Number(e.target.value) }))}
+              value={STATUS_PLANNED}
+              disabled
             >
               {STATUS_OPTIONS.map((status) => (
                 <MenuItem key={status.value} value={status.value}>{status.label}</MenuItem>

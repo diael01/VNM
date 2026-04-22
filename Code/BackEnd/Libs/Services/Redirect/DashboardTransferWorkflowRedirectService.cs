@@ -10,6 +10,10 @@ public interface IDashboardTransferWorkflowRedirectService
     Task<TransferWorkflowDto?> GetTransferWorkflowByIdAsync(string accessToken, int id, CancellationToken cancellationToken = default);
     Task<TransferWorkflowDto> CreateTransferWorkflowAsync(string accessToken, TransferWorkflowDto workflow, CancellationToken cancellationToken = default);
     Task<TransferWorkflowDto> UpdateTransferWorkflowAsync(string accessToken, int id, TransferWorkflowDto workflow, CancellationToken cancellationToken = default);
+    Task<TransferWorkflowDto> ApproveTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default);
+    Task<TransferWorkflowDto> RejectTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default);
+    Task<TransferWorkflowDto> ExecuteTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default);
+    Task<TransferWorkflowDto> SettleTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default);
     Task<bool> DeleteTransferWorkflowAsync(string accessToken, int id, CancellationToken cancellationToken = default);
 }
 
@@ -60,6 +64,46 @@ public sealed class DashboardTransferWorkflowRedirectService : IDashboardTransfe
         var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
         workflow.Id = id;
         var response = await meterClient.PutAsJsonAsync($"api/v1/TransferWorkflow/{id}", workflow, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
+
+        return (await response.Content.ReadFromJsonAsync<TransferWorkflowDto>(cancellationToken: cancellationToken))!;
+    }
+
+    public async Task<TransferWorkflowDto> ApproveTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default)
+    {
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var response = await meterClient.PostAsJsonAsync($"api/v1/TransferWorkflow/{id}/approve", new { note }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
+
+        return (await response.Content.ReadFromJsonAsync<TransferWorkflowDto>(cancellationToken: cancellationToken))!;
+    }
+
+    public async Task<TransferWorkflowDto> RejectTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default)
+    {
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var response = await meterClient.PostAsJsonAsync($"api/v1/TransferWorkflow/{id}/reject", new { note }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
+
+        return (await response.Content.ReadFromJsonAsync<TransferWorkflowDto>(cancellationToken: cancellationToken))!;
+    }
+
+    public async Task<TransferWorkflowDto> ExecuteTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default)
+    {
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var response = await meterClient.PostAsJsonAsync($"api/v1/TransferWorkflow/{id}/execute", new { note }, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
+
+        return (await response.Content.ReadFromJsonAsync<TransferWorkflowDto>(cancellationToken: cancellationToken))!;
+    }
+
+    public async Task<TransferWorkflowDto> SettleTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default)
+    {
+        var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
+        var response = await meterClient.PostAsJsonAsync($"api/v1/TransferWorkflow/{id}/settle", new { note }, cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
 

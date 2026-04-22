@@ -52,8 +52,8 @@ public class TransferWorkflowDtoValidator : CustomValidator<TransferWorkflowDto>
             .WithMessage("Trigger type must be >= 0.");
 
         RuleFor(x => x.Status)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage("Status must be >= 0.");
+            .InclusiveBetween(0, 6)
+            .WithMessage("Status must be between 0 and 6.");
 
         RuleFor(x => x.Notes)
             .MaximumLength(255)
