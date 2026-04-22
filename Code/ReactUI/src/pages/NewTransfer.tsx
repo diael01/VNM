@@ -25,15 +25,31 @@ const MODE_OPTIONS = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: 0, label: "Pending" },
-  { value: 1, label: "Applied" },
-  { value: 2, label: "Failed" },
+  { value: 0, label: "Planned" },
+  { value: 1, label: "Approved" },
+  { value: 2, label: "Executed" },
+  { value: 3, label: "Settled" },
+  { value: 4, label: "Rejected" },
+  { value: 5, label: "Cancelled" },
+  { value: 6, label: "Failed" },
 ];
 
 const TRIGGER_OPTIONS = [
   { value: 0, label: "Manual" },
   { value: 1, label: "Automatic" },
 ];
+
+const FAIR_MODE = 0;
+const PRIORITY_MODE = 1;
+const WEIGHTED_MODE = 2;
+
+const STATUS_PLANNED = 0;
+const STATUS_APPROVED = 1;
+const STATUS_EXECUTED = 2;
+const STATUS_SETTLED = 3;
+const STATUS_REJECTED = 4;
+const STATUS_CANCELLED = 5;
+const STATUS_FAILED = 6;
 
 function labelAddress(address: Address): string {
   return `${address.id} - ${address.city}, ${address.street} ${address.streetNumber}`;
@@ -51,11 +67,8 @@ function fromDateInputValue(value: string): string {
   return new Date(value).toISOString();
 }
 
-export default function NewTransfer() {
-  const queryClient = useQueryClient();
-  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newWorkflow, setNewWorkflow] = useState<Partial<TransferWorkflow>>({
+function createInitialWorkflowDraft(): Partial<TransferWorkflow> {
+  return {
     effectiveAtUtc: new Date().toISOString(),
     balanceDayUtc: new Date().toISOString(),
     sourceAddressId: 0,
@@ -72,7 +85,100 @@ export default function NewTransfer() {
     destinationTransferRuleId: null,
     priority: null,
     weightPercent: null,
-  });
+  };
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (value == null || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isPriorityMode(mode: number): boolean {
+  return mode === PRIORITY_MODE;
+}
+
+function isWeightedMode(mode: number): boolean {
+  return mode === WEIGHTED_MODE;
+}
+
+function normalizeModeSpecificFields(workflow: TransferWorkflow): TransferWorkflow {
+  const mode = toNumber(workflow.appliedDistributionMode, FAIR_MODE);
+
+  return {
+    ...workflow,
+    priority: isPriorityMode(mode) ? workflow.priority : null,
+    weightPercent: isWeightedMode(mode) ? workflow.weightPercent : null,
+  };
+}
+
+function normalizeWorkflow(workflow: TransferWorkflow): TransferWorkflow {
+  const normalized: TransferWorkflow = {
+    ...workflow,
+    sourceAddressId: toNumber(workflow.sourceAddressId),
+    destinationAddressId: toNumber(workflow.destinationAddressId),
+    amountKwh: toNumber(workflow.amountKwh),
+    sourceSurplusKwhAtWorkflow: toNumber(workflow.sourceSurplusKwhAtWorkflow),
+    destinationDeficitKwhAtWorkflow: toNumber(workflow.destinationDeficitKwhAtWorkflow),
+    remainingSourceSurplusKwhAfterWorkflow: toNumber(workflow.remainingSourceSurplusKwhAfterWorkflow),
+    triggerType: toNumber(workflow.triggerType),
+    status: toNumber(workflow.status),
+    appliedDistributionMode: toNumber(workflow.appliedDistributionMode),
+    destinationTransferRuleId: toNullableNumber(workflow.destinationTransferRuleId),
+    priority: toNullableNumber(workflow.priority),
+    weightPercent: toNullableNumber(workflow.weightPercent),
+  };
+
+  return normalizeModeSpecificFields(normalized);
+}
+
+type StatusAction = {
+  label: string;
+  nextStatus: number;
+};
+
+function getStatusActions(status: number): StatusAction[] {
+  switch (status) {
+    case STATUS_PLANNED:
+      return [
+        { label: "Approve", nextStatus: STATUS_APPROVED },
+        { label: "Reject", nextStatus: STATUS_REJECTED },
+      ];
+    case STATUS_APPROVED:
+      return [
+        { label: "Execute", nextStatus: STATUS_EXECUTED },
+        { label: "Cancel", nextStatus: STATUS_CANCELLED },
+      ];
+    case STATUS_EXECUTED:
+      return [{ label: "Settle", nextStatus: STATUS_SETTLED }];
+    case STATUS_FAILED:
+      return [
+        { label: "Retry Execute", nextStatus: STATUS_EXECUTED },
+        { label: "Cancel", nextStatus: STATUS_CANCELLED },
+      ];
+    case STATUS_REJECTED:
+      return [{ label: "Reopen", nextStatus: STATUS_PLANNED }];
+    case STATUS_CANCELLED:
+      return [{ label: "Reopen", nextStatus: STATUS_PLANNED }];
+    default:
+      return [];
+  }
+}
+
+export default function NewTransfer() {
+  const queryClient = useQueryClient();
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [newWorkflow, setNewWorkflow] = useState<Partial<TransferWorkflow>>(createInitialWorkflowDraft);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { data: rows = [], isLoading, error } = useQuery({
     queryKey: ["transferWorkflows"],
@@ -93,6 +199,8 @@ export default function NewTransfer() {
     mutationFn: createTransferWorkflow,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transferWorkflows"] });
+      setNewWorkflow(createInitialWorkflowDraft());
+      setFormError(null);
       setAddDialogOpen(false);
     },
   });
@@ -120,34 +228,57 @@ export default function NewTransfer() {
       return "Amount kWh must be greater than 0.";
     }
 
+    if (!Number.isFinite(workflow.amountKwh)) {
+      return "Amount kWh must be a valid number.";
+    }
+
+    if (Number.isNaN(new Date(workflow.effectiveAtUtc).getTime())) {
+      return "Effective date/time is invalid.";
+    }
+
+    if (Number.isNaN(new Date(workflow.balanceDayUtc).getTime())) {
+      return "Balance day is invalid.";
+    }
+
+    if (isPriorityMode(workflow.appliedDistributionMode) && (workflow.priority == null || workflow.priority < 1)) {
+      return "Priority mode requires a priority greater than or equal to 1.";
+    }
+
+    if (isWeightedMode(workflow.appliedDistributionMode)) {
+      if (workflow.weightPercent == null) {
+        return "Weighted mode requires weight percent.";
+      }
+
+      if (workflow.weightPercent <= 0 || workflow.weightPercent > 100) {
+        return "Weight percent must be greater than 0 and less than or equal to 100.";
+      }
+    }
+
     return null;
   };
 
   const processRowUpdate = async (updatedRow: TransferWorkflow) => {
-    const normalized: TransferWorkflow = {
-      ...updatedRow,
-      sourceAddressId: Number(updatedRow.sourceAddressId),
-      destinationAddressId: Number(updatedRow.destinationAddressId),
-      amountKwh: Number(updatedRow.amountKwh),
-      sourceSurplusKwhAtWorkflow: Number(updatedRow.sourceSurplusKwhAtWorkflow),
-      destinationDeficitKwhAtWorkflow: Number(updatedRow.destinationDeficitKwhAtWorkflow),
-      remainingSourceSurplusKwhAfterWorkflow: Number(updatedRow.remainingSourceSurplusKwhAfterWorkflow),
-      triggerType: Number(updatedRow.triggerType),
-      status: Number(updatedRow.status),
-      appliedDistributionMode: Number(updatedRow.appliedDistributionMode),
-      destinationTransferRuleId:
-        updatedRow.destinationTransferRuleId === null ? null : Number(updatedRow.destinationTransferRuleId),
-      priority: updatedRow.priority === null ? null : Number(updatedRow.priority),
-      weightPercent: updatedRow.weightPercent === null ? null : Number(updatedRow.weightPercent),
-    };
+    const normalizedByMode = normalizeWorkflow(updatedRow);
 
-    const message = validateWorkflow(normalized);
+    const message = validateWorkflow(normalizedByMode);
     if (message) {
       throw new Error(message);
     }
 
-    await updateMutation.mutateAsync(normalized);
-    return normalized;
+    await updateMutation.mutateAsync(normalizedByMode);
+    return normalizedByMode;
+  };
+
+  const handleStatusTransition = async (row: TransferWorkflow, nextStatus: number) => {
+    const candidate = normalizeWorkflow({ ...row, status: nextStatus });
+    const message = validateWorkflow(candidate);
+
+    if (message) {
+      alert(message);
+      return;
+    }
+
+    await updateMutation.mutateAsync(candidate);
   };
 
   const handleDelete = async (id: number) => {
@@ -155,41 +286,48 @@ export default function NewTransfer() {
   };
 
   const handleAdd = async () => {
+    setFormError(null);
+
     const draft: TransferWorkflow = {
       id: 0,
       effectiveAtUtc: newWorkflow.effectiveAtUtc || new Date().toISOString(),
       balanceDayUtc: newWorkflow.balanceDayUtc || new Date().toISOString(),
-      sourceAddressId: Number(newWorkflow.sourceAddressId || 0),
-      destinationAddressId: Number(newWorkflow.destinationAddressId || 0),
-      sourceSurplusKwhAtWorkflow: Number(newWorkflow.sourceSurplusKwhAtWorkflow || 0),
-      destinationDeficitKwhAtWorkflow: Number(newWorkflow.destinationDeficitKwhAtWorkflow || 0),
-      remainingSourceSurplusKwhAfterWorkflow: Number(newWorkflow.remainingSourceSurplusKwhAfterWorkflow || 0),
-      amountKwh: Number(newWorkflow.amountKwh || 0),
-      triggerType: Number(newWorkflow.triggerType || 0),
-      status: Number(newWorkflow.status || 0),
+      sourceAddressId: toNumber(newWorkflow.sourceAddressId),
+      destinationAddressId: toNumber(newWorkflow.destinationAddressId),
+      sourceSurplusKwhAtWorkflow: toNumber(newWorkflow.sourceSurplusKwhAtWorkflow),
+      destinationDeficitKwhAtWorkflow: toNumber(newWorkflow.destinationDeficitKwhAtWorkflow),
+      remainingSourceSurplusKwhAfterWorkflow: toNumber(newWorkflow.remainingSourceSurplusKwhAfterWorkflow),
+      amountKwh: toNumber(newWorkflow.amountKwh),
+      triggerType: toNumber(newWorkflow.triggerType),
+      status: toNumber(newWorkflow.status),
       notes: newWorkflow.notes || null,
       createdAtUtc: new Date().toISOString(),
-      appliedDistributionMode: Number(newWorkflow.appliedDistributionMode || 0),
-      destinationTransferRuleId:
-        newWorkflow.destinationTransferRuleId == null ||
-        newWorkflow.destinationTransferRuleId === ("" as unknown as number)
-        ? null
-        : Number(newWorkflow.destinationTransferRuleId),
-      priority: newWorkflow.priority == null || newWorkflow.priority === ("" as unknown as number)
-        ? null
-        : Number(newWorkflow.priority),
-      weightPercent: newWorkflow.weightPercent == null || newWorkflow.weightPercent === ("" as unknown as number)
-        ? null
-        : Number(newWorkflow.weightPercent),
+      appliedDistributionMode: toNumber(newWorkflow.appliedDistributionMode),
+      destinationTransferRuleId: toNullableNumber(newWorkflow.destinationTransferRuleId),
+      priority: toNullableNumber(newWorkflow.priority),
+      weightPercent: toNullableNumber(newWorkflow.weightPercent),
     };
 
-    const message = validateWorkflow(draft);
+    const normalizedDraft = normalizeModeSpecificFields(draft);
+
+    const message = validateWorkflow(normalizedDraft);
     if (message) {
-      alert(message);
+      setFormError(message);
       return;
     }
 
-    await addMutation.mutateAsync(draft);
+    await addMutation.mutateAsync(normalizedDraft);
+  };
+
+  const handleOpenAddDialog = () => {
+    setFormError(null);
+    setAddDialogOpen(true);
+  };
+
+  const handleCloseAddDialog = () => {
+    setFormError(null);
+    setNewWorkflow(createInitialWorkflowDraft());
+    setAddDialogOpen(false);
   };
 
   const columns: GridColDef[] = [
@@ -210,38 +348,39 @@ export default function NewTransfer() {
     },
     {
       field: "sourceAddressId",
-      headerName: "Source Address",
-      width: 220,
+      headerName: "Src Address",
+      width: 160,
       editable: true,
       type: "singleSelect",
       valueOptions: addressOptions,
     },
     {
       field: "destinationAddressId",
-      headerName: "Destination Address",
-      width: 230,
+      headerName: "Dest Address",
+      width: 160,
       editable: true,
       type: "singleSelect",
       valueOptions: addressOptions,
     },
     {
       field: "sourceSurplusKwhAtWorkflow",
-      headerName: "Source Surplus kWh At Workflow",
-      width: 180,
+      headerName: "Src Surplus kWh",
+      width: 130,
       editable: true,
       type: "number",
     },
     {
       field: "destinationDeficitKwhAtWorkflow",
-      headerName: "Destination Deficit kWh At Workflow",
-      width: 200,
+      headerName: "Dest Deficit kWh",
+      width: 140,
       editable: true,
       type: "number",
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Dest Deficit</div><div>kWh</div></Box>,
     },
     {
       field: "remainingSourceSurplusKwhAfterWorkflow",
-      headerName: "Remaining Source Surplus After Workflow",
-      width: 220,
+      headerName: "Remaining Src Surplus",
+      width: 170,
       editable: true,
       type: "number",
     },
@@ -263,12 +402,45 @@ export default function NewTransfer() {
       valueOptions: STATUS_OPTIONS,
     },
     {
+      field: "statusActions",
+      headerName: "Actions",
+      width: 240,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => {
+        const status = toNumber(params.row.status, STATUS_PLANNED);
+        const actions = getStatusActions(status);
+
+        if (actions.length === 0) {
+          return <span style={{ color: "#999" }}>-</span>;
+        }
+
+        return (
+          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", py: 0.5 }}>
+            {actions.map((action) => (
+              <Button
+                key={action.label}
+                size="small"
+                variant="outlined"
+                disabled={updateMutation.isPending}
+                onClick={() => handleStatusTransition(params.row as TransferWorkflow, action.nextStatus)}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </Box>
+        );
+      },
+    },
+    {
       field: "appliedDistributionMode",
-      headerName: "Applied Distribution Mode",
+      headerName: "Distrib Mode",
       width: 120,
       editable: true,
       type: "singleSelect",
       valueOptions: MODE_OPTIONS,
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Distrib</div><div>Mode</div></Box>,
     },
     {
       field: "destinationTransferRuleId",
@@ -283,17 +455,26 @@ export default function NewTransfer() {
       width: 110,
       editable: true,
       type: "number",
+      renderCell: (params) => {
+        const mode = toNumber(params.row.appliedDistributionMode, FAIR_MODE);
+        return isPriorityMode(mode) ? (params.value ?? "") : <span style={{ color: "#999" }}>-</span>;
+      },
     },
     {
       field: "weightPercent",
-      headerName: "Weight Percent",
-      width: 120,
+      headerName: "Weight %",
+      width: 90,
       editable: true,
       type: "number",
+      renderCell: (params) => {
+        const mode = toNumber(params.row.appliedDistributionMode, FAIR_MODE);
+        return isWeightedMode(mode) ? (params.value ?? "") : <span style={{ color: "#999" }}>-</span>;
+      },
     },
     { field: "notes", headerName: "Notes", width: 180, editable: true },
     {
-      field: "actions",
+      field: "rowActions",
+      headerName: "Manage",
       type: "actions",
       width: 120,
       getActions: (params) => {
@@ -334,18 +515,29 @@ export default function NewTransfer() {
       </Typography>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setAddDialogOpen(true)}>
+        <Button startIcon={<AddIcon />} variant="contained" onClick={handleOpenAddDialog}>
           Add Workflow
         </Button>
       </Box>
 
       <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
-        <Box sx={{ minWidth: 2600 }}>
+        <Box sx={{ minWidth: 2840 }}>
         <DataGrid
           rows={rows}
           columns={columns}
           editMode="row"
           processRowUpdate={processRowUpdate}
+          isCellEditable={(params) => {
+            if (params.field === "priority") {
+              return isPriorityMode(toNumber(params.row.appliedDistributionMode, FAIR_MODE));
+            }
+
+            if (params.field === "weightPercent") {
+              return isWeightedMode(toNumber(params.row.appliedDistributionMode, FAIR_MODE));
+            }
+
+            return true;
+          }}
           getRowId={(row) => row.id}
           rowModesModel={rowModesModel}
           onRowModesModelChange={setRowModesModel}
@@ -353,7 +545,7 @@ export default function NewTransfer() {
           loading={isLoading}
           columnHeaderHeight={64}
           sx={{
-            minWidth: 2600,
+            minWidth: 2840,
             height: "100%",
             "& .MuiDataGrid-columnHeaderTitle": {
               whiteSpace: "normal",
@@ -374,13 +566,13 @@ export default function NewTransfer() {
         </Box>
       </Box>
 
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={addDialogOpen} onClose={handleCloseAddDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Add Transfer Workflow</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <TextField
               select
-              label="Source Address"
+              label="Src"
               value={newWorkflow.sourceAddressId || ""}
               onChange={(e) => setNewWorkflow((prev) => ({ ...prev, sourceAddressId: Number(e.target.value) }))}
             >
@@ -392,7 +584,7 @@ export default function NewTransfer() {
 
             <TextField
               select
-              label="Destination Address"
+              label="Dest"
               value={newWorkflow.destinationAddressId || ""}
               onChange={(e) => setNewWorkflow((prev) => ({ ...prev, destinationAddressId: Number(e.target.value) }))}
             >
@@ -435,12 +627,39 @@ export default function NewTransfer() {
               select
               label="Applied Distribution Mode"
               value={newWorkflow.appliedDistributionMode ?? 0}
-              onChange={(e) => setNewWorkflow((prev) => ({ ...prev, appliedDistributionMode: Number(e.target.value) }))}
+              onChange={(e) => {
+                const mode = Number(e.target.value);
+
+                setNewWorkflow((prev) => ({
+                  ...prev,
+                  appliedDistributionMode: mode,
+                  priority: mode === PRIORITY_MODE ? prev.priority : null,
+                  weightPercent: mode === WEIGHTED_MODE ? prev.weightPercent : null,
+                }));
+              }}
             >
               {MODE_OPTIONS.map((mode) => (
                 <MenuItem key={mode.value} value={mode.value}>{mode.label}</MenuItem>
               ))}
             </TextField>
+
+            {toNumber(newWorkflow.appliedDistributionMode, FAIR_MODE) === PRIORITY_MODE && (
+              <TextField
+                type="number"
+                label="Priority"
+                value={newWorkflow.priority ?? ""}
+                onChange={(e) => setNewWorkflow((prev) => ({ ...prev, priority: toNullableNumber(e.target.value) }))}
+              />
+            )}
+
+            {toNumber(newWorkflow.appliedDistributionMode, FAIR_MODE) === WEIGHTED_MODE && (
+              <TextField
+                type="number"
+                label="Weight Percent"
+                value={newWorkflow.weightPercent ?? ""}
+                onChange={(e) => setNewWorkflow((prev) => ({ ...prev, weightPercent: toNullableNumber(e.target.value) }))}
+              />
+            )}
 
             <TextField
               type="datetime-local"
@@ -465,10 +684,12 @@ export default function NewTransfer() {
               multiline
               minRows={2}
             />
+
+            {formError && <Box color="error.main">{formError}</Box>}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleCloseAddDialog}>Cancel</Button>
           <Button onClick={handleAdd} variant="contained" disabled={addMutation.isPending}>
             Add Workflow
           </Button>

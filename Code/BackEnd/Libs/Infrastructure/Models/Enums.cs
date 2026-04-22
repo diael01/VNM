@@ -12,14 +12,26 @@ public enum TransferDistributionMode
     Weighted = 2
 }
 
+/* What each status means
+Planned = proposal exists
+Approved = user accepted it
+Executed = system actually performed it
+Settled = accounting/legal/provider settlement completed
+Rejected = user explicitly refused the plan
+Cancelled = previously acceptable row was stopped/voided before execution
+Failed = execution was attempted but failed */
 public enum TransferStatus
 {
     Planned = 0,
     Approved = 1,
     Executed = 2,
     Settled = 3,
-    Rejected = 4
+    Rejected = 4,
+    Cancelled = 5,
+    Failed = 6  
 }
+
+
 
 public enum TriggerType
 {

@@ -142,35 +142,73 @@ public class TransferWorkflowService : ITransferWorkflowService
         ManualTransferRequest request,
         CancellationToken ct = default)
     {
-        var dayUtc = ToUtcStartOfDay(request.Day);
-        var workflows = new List<TransferWorkflow>();
+        if (request.Targets == null || request.Targets.Count == 0)
+            return Array.Empty<TransferWorkflow>();
+
+        var dayStartUtc = ToUtcStartOfDay(request.Day);
+        var dayEndUtc = dayStartUtc.AddDays(1);
+
+        var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
+        var positionsByAddress = positions.ToDictionary(x => x.AddressId);
+
+        if (!positionsByAddress.TryGetValue(request.SourceAddressId, out var sourcePosition))
+            throw new InvalidOperationException(
+                $"Source address {request.SourceAddressId} has no balance position for {request.Day}.");
+
+        var created = new List<TransferWorkflow>();
+        var runningRemainingSource = sourcePosition.RemainingSurplusKwh;
 
         foreach (var target in request.Targets)
         {
+            if (runningRemainingSource <= 0)
+                break;
+
             if (target.RequestedKwh <= 0)
                 continue;
 
             if (target.DestinationAddressId == request.SourceAddressId)
                 throw new InvalidOperationException("Source and destination cannot be the same address.");
 
-            workflows.Add(new TransferWorkflow
+            if (!positionsByAddress.TryGetValue(target.DestinationAddressId, out var destinationPosition))
+                throw new InvalidOperationException(
+                    $"Destination address {target.DestinationAddressId} has no balance position for {request.Day}.");
+
+            var sourceAvailableBefore = decimal.Round(runningRemainingSource, 4);
+            var destinationNeedBefore = decimal.Round(destinationPosition.RemainingDeficitKwh, 4);
+
+            var amount = Math.Min(target.RequestedKwh, sourceAvailableBefore);
+            amount = Math.Min(amount, destinationNeedBefore);
+            amount = decimal.Round(amount, 4);
+
+            if (amount <= 0)
+                continue;
+
+            var remainingSourceAfter = decimal.Round(sourceAvailableBefore - amount, 4);
+
+            var workflow = new TransferWorkflow
             {
                 SourceAddressId = request.SourceAddressId,
                 DestinationAddressId = target.DestinationAddressId,
-                AmountKwh = target.RequestedKwh,
-                BalanceDayUtc = dayUtc,
+                SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
+                DestinationDeficitKwhAtWorkflow = destinationNeedBefore,
+                AmountKwh = amount,
+                RemainingSourceSurplusKwhAfterWorkflow = remainingSourceAfter,
+                BalanceDayUtc = dayStartUtc,
                 Status = (int)TransferStatus.Planned,
-                TriggerType = (int)TriggerType.Manual
-            });
+                TriggerType = (int)TriggerType.Manual,
+                AppliedDistributionMode = (int)TransferDistributionMode.Fair
+            };
+
+            _db.TransferWorkflows.Add(workflow);
+            created.Add(workflow);
+
+            runningRemainingSource = remainingSourceAfter;
         }
 
-        if (workflows.Count > 0)
-        {
-            _db.TransferWorkflows.AddRange(workflows);
+        if (created.Count > 0)
             await _db.SaveChangesAsync(ct);
-        }
 
-        return workflows;
+        return created;
     }
 
     private sealed record DestinationEntry(DestinationTransferRule Rule, AddressPosition Position);
@@ -188,20 +226,39 @@ public class TransferWorkflowService : ITransferWorkflowService
         if (count <= 0 || totalSurplus <= 0)
             return workflows;
 
-        var share = totalSurplus / count;
+        var share = decimal.Round(totalSurplus / count, 4);
+        var runningRemainingSource = decimal.Round(totalSurplus, 4);
 
         foreach (var dest in destinations)
         {
-            var amount = Math.Min(share, dest.Position.RemainingDeficitKwh);
+            var sourceAvailableBefore = runningRemainingSource;
+            var destinationNeedBefore = decimal.Round(dest.Position.RemainingDeficitKwh, 4);
+
+            var amount = Math.Min(share, destinationNeedBefore);
+            if (dest.Rule.MaxDailyKwh.HasValue)
+                amount = Math.Min(amount, dest.Rule.MaxDailyKwh.Value);
+
+            amount = decimal.Round(amount, 4);
 
             if (amount <= 0)
                 continue;
+
+            var remainingSourceAfter = decimal.Round(sourceAvailableBefore - amount, 4);
 
             workflows.Add(CreateWorkflow(
                 source.AddressId,
                 dest.Rule.DestinationAddressId,
                 amount,
-                dayUtc));
+                sourceAvailableBefore,
+                destinationNeedBefore,
+                remainingSourceAfter,
+                dayUtc,
+                TransferDistributionMode.Fair,
+                dest.Rule.Id,
+                dest.Rule.Priority,
+                dest.Rule.WeightPercent));
+
+            runningRemainingSource = remainingSourceAfter;
         }
 
         return workflows;
@@ -213,25 +270,41 @@ public class TransferWorkflowService : ITransferWorkflowService
         DateTime dayUtc)
     {
         var workflows = new List<TransferWorkflow>();
-        var remaining = source.RemainingSurplusKwh;
+        var runningRemainingSource = decimal.Round(source.RemainingSurplusKwh, 4);
 
         foreach (var dest in destinations.OrderBy(x => x.Rule.Priority))
         {
-            if (remaining <= 0)
+            if (runningRemainingSource <= 0)
                 break;
 
-            var amount = Math.Min(remaining, dest.Position.RemainingDeficitKwh);
+            var sourceAvailableBefore = runningRemainingSource;
+            var destinationNeedBefore = decimal.Round(dest.Position.RemainingDeficitKwh, 4);
+
+            var amount = Math.Min(sourceAvailableBefore, destinationNeedBefore);
+            if (dest.Rule.MaxDailyKwh.HasValue)
+                amount = Math.Min(amount, dest.Rule.MaxDailyKwh.Value);
+
+            amount = decimal.Round(amount, 4);
 
             if (amount <= 0)
                 continue;
+
+            var remainingSourceAfter = decimal.Round(sourceAvailableBefore - amount, 4);
 
             workflows.Add(CreateWorkflow(
                 source.AddressId,
                 dest.Rule.DestinationAddressId,
                 amount,
-                dayUtc));
+                sourceAvailableBefore,
+                destinationNeedBefore,
+                remainingSourceAfter,
+                dayUtc,
+                TransferDistributionMode.Priority,
+                dest.Rule.Id,
+                dest.Rule.Priority,
+                dest.Rule.WeightPercent));
 
-            remaining -= amount;
+            runningRemainingSource = remainingSourceAfter;
         }
 
         return workflows;
@@ -245,25 +318,49 @@ public class TransferWorkflowService : ITransferWorkflowService
         var workflows = new List<TransferWorkflow>();
 
         var totalSurplus = source.RemainingSurplusKwh;
-        var totalWeight = destinations.Sum(x => x.Rule.WeightPercent ?? 0);
+        var totalWeight = destinations.Sum(x => x.Rule.WeightPercent ?? 0m);
 
         if (totalWeight <= 0 || totalSurplus <= 0)
             return workflows;
 
+        var runningRemainingSource = decimal.Round(totalSurplus, 4);
+
         foreach (var dest in destinations)
         {
-            var weight = dest.Rule.WeightPercent ?? 0;
-            var portion = totalSurplus * (weight / totalWeight);
-            var amount = Math.Min(portion, dest.Position.RemainingDeficitKwh);
+            if (runningRemainingSource <= 0)
+                break;
+
+            var sourceAvailableBefore = runningRemainingSource;
+            var destinationNeedBefore = decimal.Round(dest.Position.RemainingDeficitKwh, 4);
+
+            var weight = dest.Rule.WeightPercent ?? 0m;
+            var targetAmount = decimal.Round(totalSurplus * (weight / totalWeight), 4);
+            var amount = Math.Min(targetAmount, destinationNeedBefore);
+
+            if (dest.Rule.MaxDailyKwh.HasValue)
+                amount = Math.Min(amount, dest.Rule.MaxDailyKwh.Value);
+
+            amount = decimal.Round(amount, 4);
 
             if (amount <= 0)
                 continue;
+
+            var remainingSourceAfter = decimal.Round(sourceAvailableBefore - amount, 4);
 
             workflows.Add(CreateWorkflow(
                 source.AddressId,
                 dest.Rule.DestinationAddressId,
                 amount,
-                dayUtc));
+                sourceAvailableBefore,
+                destinationNeedBefore,
+                remainingSourceAfter,
+                dayUtc,
+                TransferDistributionMode.Weighted,
+                dest.Rule.Id,
+                dest.Rule.Priority,
+                dest.Rule.WeightPercent));
+
+            runningRemainingSource = remainingSourceAfter;
         }
 
         return workflows;
@@ -273,16 +370,30 @@ public class TransferWorkflowService : ITransferWorkflowService
         int sourceId,
         int destId,
         decimal amount,
-        DateTime dayUtc)
+        decimal sourceSurplusAtWorkflow,
+        decimal destinationDeficitAtWorkflow,
+        decimal remainingSourceSurplusAfterWorkflow,
+        DateTime dayUtc,
+        TransferDistributionMode distributionMode,
+        int? destinationTransferRuleId,
+        int? priority,
+        decimal? weightPercent)
     {
         return new TransferWorkflow
         {
             SourceAddressId = sourceId,
             DestinationAddressId = destId,
+            SourceSurplusKwhAtWorkflow = sourceSurplusAtWorkflow,
+            DestinationDeficitKwhAtWorkflow = destinationDeficitAtWorkflow,
             AmountKwh = amount,
+            RemainingSourceSurplusKwhAfterWorkflow = remainingSourceSurplusAfterWorkflow,
             BalanceDayUtc = dayUtc,
             Status = (int)TransferStatus.Planned,
-            TriggerType = (int)TriggerType.Auto
+            TriggerType = (int)TriggerType.Auto,
+            AppliedDistributionMode = (int)distributionMode,
+            DestinationTransferRuleId = destinationTransferRuleId,
+            Priority = priority,
+            WeightPercent = weightPercent
         };
     }
 

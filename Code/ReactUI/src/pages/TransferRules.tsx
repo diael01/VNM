@@ -93,6 +93,27 @@ function fmtDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleString();
 }
 
+function normalizeIsoString(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? trimmed : parsed.toISOString();
+}
+
+function normalizeOptionalString(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function normalizeOptionalNumber(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
 function asNumberValue(value: unknown): number {
   if (typeof value === "number") return value;
   if (typeof value === "string") return Number(value);
@@ -190,20 +211,6 @@ function PolicyFormDialog({ open, initial, addresses, title, onClose, onSave, sa
         <Button
           variant="contained"
           onClick={() => {
-            const scheduleType = Number(draft.scheduleType ?? 1);
-            const repeatEveryValue = draft.repeatEveryValue;
-            const repeatEveryUnit = draft.repeatEveryUnit;
-
-            if (scheduleType === 4) {
-              const hasRepeatValue = repeatEveryValue !== null && repeatEveryValue !== undefined && Number(repeatEveryValue) > 0;
-              const hasRepeatUnit = repeatEveryUnit !== null && repeatEveryUnit !== undefined;
-
-              if (!hasRepeatValue || !hasRepeatUnit) {
-                alert("For Interval schedules, Repeat Every and Repeat Unit are required.");
-                return;
-              }
-            }
-
             onSave(draft);
           }}
           disabled={saving}
@@ -452,6 +459,14 @@ function DestinationRulesGrid({ policy, addresses }: DestinationRulesGridProps) 
             const destinationAddressId = Number(newRule.destinationAddressId ?? 0);
             if (destinationAddressId === Number(policy.sourceAddressId)) {
               alert("Destination address cannot be the same as the source address.");
+              return;
+            }
+
+            const duplicateDestination = rules.some(
+              (rule) => Number(rule.destinationAddressId) === destinationAddressId,
+            );
+            if (duplicateDestination) {
+              alert("This destination already exists for the selected source policy.");
               return;
             }
 
@@ -707,7 +722,47 @@ function SchedulesGrid({ policy }: { policy: SourceTransferPolicy }) {
 
       <ScheduleFormDialog open={addOpen} initial={blank} policyId={policy.id}
         title="Add Schedule" onClose={() => setAddOpen(false)}
-        onSave={(s) => addMutation.mutate(s)} saving={addMutation.isPending} />
+        onSave={(s) => {
+          const candidate = {
+            isEnabled: Boolean(s.isEnabled ?? false),
+            scheduleType: Number(s.scheduleType ?? 1),
+            executionMode: Number(s.executionMode ?? 0),
+            startDateUtc: normalizeIsoString(s.startDateUtc),
+            endDateUtc: normalizeIsoString(s.endDateUtc),
+            timeOfDayUtc: normalizeOptionalString(s.timeOfDayUtc),
+            repeatEveryValue: normalizeOptionalNumber(s.repeatEveryValue),
+            repeatEveryUnit: normalizeOptionalNumber(s.repeatEveryUnit),
+          };
+
+          const hasExactDuplicate = schedules.some((existing) => {
+            const normalizedExisting = {
+              isEnabled: Boolean(existing.isEnabled),
+              scheduleType: Number(existing.scheduleType ?? 1),
+              executionMode: Number(existing.executionMode ?? 0),
+              startDateUtc: normalizeIsoString(existing.startDateUtc),
+              endDateUtc: normalizeIsoString(existing.endDateUtc),
+              timeOfDayUtc: normalizeOptionalString(existing.timeOfDayUtc),
+              repeatEveryValue: normalizeOptionalNumber(existing.repeatEveryValue),
+              repeatEveryUnit: normalizeOptionalNumber(existing.repeatEveryUnit),
+            };
+
+            return normalizedExisting.isEnabled === candidate.isEnabled
+              && normalizedExisting.scheduleType === candidate.scheduleType
+              && normalizedExisting.executionMode === candidate.executionMode
+              && normalizedExisting.startDateUtc === candidate.startDateUtc
+              && normalizedExisting.endDateUtc === candidate.endDateUtc
+              && normalizedExisting.timeOfDayUtc === candidate.timeOfDayUtc
+              && normalizedExisting.repeatEveryValue === candidate.repeatEveryValue
+              && normalizedExisting.repeatEveryUnit === candidate.repeatEveryUnit;
+          });
+
+          if (hasExactDuplicate) {
+            alert("An identical schedule already exists for this policy.");
+            return;
+          }
+
+          addMutation.mutate(s);
+        }} saving={addMutation.isPending} />
 
       <ConfirmDeleteDialog
         open={scheduleIdToDelete !== null}
@@ -899,8 +954,8 @@ export default function TransferRules() {
       type: "boolean",
       renderCell: (p) => <Typography variant="caption">{p.value ? "Enabled" : "Disabled"}</Typography>,
     },
-    { field: "destinationRulesCount", headerName: "Dest.", width: 70, type: "number" },
-    { field: "schedulesCount", headerName: "Sched.", width: 70, type: "number" },
+    { field: "destinationRulesCount", headerName: "#Dest Count", width: 110, type: "number" },
+    { field: "schedulesCount", headerName: "#Sched Count", width: 110, type: "number" },
     {
       field: "actions", type: "actions", width: 120,
       getActions: (params) => {
