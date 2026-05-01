@@ -31,25 +31,19 @@ public class TransferWorkflowService : ITransferWorkflowService
         var dayStartUtc = ToUtcStartOfDay(day);
         var dayEndUtc = dayStartUtc.AddDays(1);
 
-        if (await HasFinalizedOrInProgressAutoWorkflowsForSourceAsync(
-                sourceAddressId,
-                dayStartUtc,
-                dayEndUtc,
-                ct))
+        // Important rule:
+        // As long as all auto rows are still Planned, the scheduler may refresh them.
+        // Once the user touched the workflow lifecycle (Approved/Executed/Settled/Rejected/etc.),
+        // planning is frozen for that source/day to avoid overwriting business decisions.
+        if (await HasNonPlannedAutoWorkflowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct))
         {
             _logger.LogWarning(
-                "Skipping automatic workflow generation for Source={Source} Day={Day} because an auto workflow already exists in Approved/Executed/Settled state.",
+                "Skipping automatic workflow refresh for Source={Source} Day={Day} because at least one auto workflow for this source/day is no longer Planned.",
                 sourceAddressId,
                 day);
 
             return Array.Empty<TransferWorkflow>();
         }
-
-        await DeleteExistingAutoPlannedRowsForSourceAsync(
-            sourceAddressId,
-            dayStartUtc,
-            dayEndUtc,
-            ct);
 
         var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
         var positionsByAddress = positions.ToDictionary(x => x.AddressId);
@@ -65,6 +59,7 @@ public class TransferWorkflowService : ITransferWorkflowService
         if (sourcePosition.RemainingSurplusKwh <= 0)
         {
             _logger.LogWarning("Source {Source} has no surplus", sourceAddressId);
+            await DeleteExistingAutoPlannedRowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct);
             return Array.Empty<TransferWorkflow>();
         }
 
@@ -79,7 +74,10 @@ public class TransferWorkflowService : ITransferWorkflowService
         _logger.LogInformation("Loaded {Count} rules for source {Source}", rules.Count, sourceAddressId);
 
         if (rules.Count == 0)
+        {
+            await DeleteExistingAutoPlannedRowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct);
             return Array.Empty<TransferWorkflow>();
+        }
 
         foreach (var rule in rules.Where(r => r.DestinationAddressId == sourceAddressId))
         {
@@ -102,9 +100,12 @@ public class TransferWorkflowService : ITransferWorkflowService
         _logger.LogInformation("Eligible destinations: {Count}", destinations.Count);
 
         if (destinations.Count == 0)
+        {
+            await DeleteExistingAutoPlannedRowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct);
             return Array.Empty<TransferWorkflow>();
+        }
 
-        var workflows = distributionMode switch
+        var desiredWorkflows = distributionMode switch
         {
             TransferDistributionMode.Fair =>
                 AllocateFair(sourcePosition, destinations, dayStartUtc),
@@ -118,18 +119,21 @@ public class TransferWorkflowService : ITransferWorkflowService
             _ => throw new InvalidOperationException("Unknown distribution mode")
         };
 
-        if (workflows.Count > 0)
-        {
-            _db.TransferWorkflows.AddRange(workflows);
-            await _db.SaveChangesAsync(ct);
-        }
+        var refreshed = await UpsertAutoPlannedRowsForSourceAsync(
+            sourceAddressId,
+            dayStartUtc,
+            dayEndUtc,
+            desiredWorkflows,
+            ct);
 
         _logger.LogInformation(
-            "Generated {Count} workflows for source {Source}",
-            workflows.Count,
-            sourceAddressId);
+            "Automatic workflow refresh finished for Source={Source}, Day={Day}. Desired={DesiredCount}, Returned={ReturnedCount}",
+            sourceAddressId,
+            day,
+            desiredWorkflows.Count,
+            refreshed.Count);
 
-        return workflows;
+        return refreshed;
     }
 
     public async Task<IReadOnlyList<TransferWorkflow>> RunAutomaticWorkflowAsync(
@@ -169,7 +173,12 @@ public class TransferWorkflowService : ITransferWorkflowService
             throw new InvalidOperationException(
                 $"Source address {request.SourceAddressId} has no balance position for {request.Day}.");
 
-        var created = new List<TransferWorkflow>();
+        // Do not allow a manual workflow to be created/changed after lifecycle action already happened.
+        if (await HasNonPlannedManualWorkflowsForSourceAsync(request.SourceAddressId, dayStartUtc, dayEndUtc, ct))
+            throw new InvalidOperationException(
+                $"Manual workflows for source {request.SourceAddressId} and day {request.Day} already contain non-Planned rows. Manual re-planning is not allowed.");
+
+        var desired = new List<TransferWorkflow>();
         var runningRemainingSource = sourcePosition.RemainingSurplusKwh;
 
         foreach (var target in request.Targets)
@@ -199,7 +208,7 @@ public class TransferWorkflowService : ITransferWorkflowService
 
             var remainingSourceAfter = decimal.Round(sourceAvailableBefore - amount, 4);
 
-            var workflow = new TransferWorkflow
+            desired.Add(new TransferWorkflow
             {
                 SourceAddressId = request.SourceAddressId,
                 DestinationAddressId = target.DestinationAddressId,
@@ -211,18 +220,17 @@ public class TransferWorkflowService : ITransferWorkflowService
                 Status = (int)TransferStatus.Planned,
                 TriggerType = (int)TriggerType.Manual,
                 AppliedDistributionMode = (int)TransferDistributionMode.Fair
-            };
-
-            _db.TransferWorkflows.Add(workflow);
-            created.Add(workflow);
+            });
 
             runningRemainingSource = remainingSourceAfter;
         }
 
-        if (created.Count > 0)
-            await _db.SaveChangesAsync(ct);
-
-        return created;
+        return await UpsertManualPlannedRowsForSourceAsync(
+            request.SourceAddressId,
+            dayStartUtc,
+            dayEndUtc,
+            desired,
+            ct);
     }
 
     private sealed record DestinationEntry(DestinationTransferRule Rule, AddressPosition Position);
@@ -411,6 +419,171 @@ public class TransferWorkflowService : ITransferWorkflowService
         };
     }
 
+    private async Task<List<TransferWorkflow>> UpsertAutoPlannedRowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        List<TransferWorkflow> desiredWorkflows,
+        CancellationToken ct)
+    {
+        return await UpsertPlannedRowsForSourceAsync(
+            sourceAddressId,
+            dayStartUtc,
+            dayEndUtc,
+            (int)TriggerType.Auto,
+            desiredWorkflows,
+            ct);
+    }
+
+    private async Task<List<TransferWorkflow>> UpsertManualPlannedRowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        List<TransferWorkflow> desiredWorkflows,
+        CancellationToken ct)
+    {
+        return await UpsertPlannedRowsForSourceAsync(
+            sourceAddressId,
+            dayStartUtc,
+            dayEndUtc,
+            (int)TriggerType.Manual,
+            desiredWorkflows,
+            ct);
+    }
+
+    private async Task<List<TransferWorkflow>> UpsertPlannedRowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        int triggerType,
+        List<TransferWorkflow> desiredWorkflows,
+        CancellationToken ct)
+    {
+        var existingPlanned = await _db.TransferWorkflows
+            .Where(x =>
+                x.SourceAddressId == sourceAddressId &&
+                x.BalanceDayUtc >= dayStartUtc &&
+                x.BalanceDayUtc < dayEndUtc &&
+                x.TriggerType == triggerType &&
+                x.Status == (int)TransferStatus.Planned)
+            .ToListAsync(ct);
+
+        var existingByDestination = existingPlanned
+            .GroupBy(x => x.DestinationAddressId)
+            .ToDictionary(x => x.Key, x => x.OrderByDescending(w => w.Id).First());
+
+        // If old duplicates already exist, keep the newest row per destination and delete the rest.
+        var duplicatePlannedRows = existingPlanned
+            .GroupBy(x => x.DestinationAddressId)
+            .SelectMany(g => g.OrderByDescending(w => w.Id).Skip(1))
+            .ToList();
+
+        if (duplicatePlannedRows.Count > 0)
+        {
+            _logger.LogWarning(
+                "Deleting {Count} duplicate Planned workflows for Source={Source}, TriggerType={TriggerType}, DayStart={DayStartUtc}",
+                duplicatePlannedRows.Count,
+                sourceAddressId,
+                triggerType,
+                dayStartUtc);
+
+            _db.TransferWorkflows.RemoveRange(duplicatePlannedRows);
+        }
+
+        var desiredDestinationIds = desiredWorkflows
+            .Select(x => x.DestinationAddressId)
+            .ToHashSet();
+
+        var obsoleteRows = existingByDestination.Values
+            .Where(x => !desiredDestinationIds.Contains(x.DestinationAddressId))
+            .ToList();
+
+        if (obsoleteRows.Count > 0)
+        {
+            _logger.LogInformation(
+                "Deleting {Count} obsolete Planned workflows for Source={Source}, TriggerType={TriggerType}, DayStart={DayStartUtc}",
+                obsoleteRows.Count,
+                sourceAddressId,
+                triggerType,
+                dayStartUtc);
+
+            _db.TransferWorkflows.RemoveRange(obsoleteRows);
+        }
+
+        var result = new List<TransferWorkflow>();
+
+        foreach (var desired in desiredWorkflows)
+        {
+            if (existingByDestination.TryGetValue(desired.DestinationAddressId, out var existing))
+            {
+                existing.SourceSurplusKwhAtWorkflow = desired.SourceSurplusKwhAtWorkflow;
+                existing.DestinationDeficitKwhAtWorkflow = desired.DestinationDeficitKwhAtWorkflow;
+                existing.AmountKwh = desired.AmountKwh;
+                existing.RemainingSourceSurplusKwhAfterWorkflow = desired.RemainingSourceSurplusKwhAfterWorkflow;
+                existing.AppliedDistributionMode = desired.AppliedDistributionMode;
+                existing.DestinationTransferRuleId = desired.DestinationTransferRuleId;
+                existing.Priority = desired.Priority;
+                existing.WeightPercent = desired.WeightPercent;
+
+                result.Add(existing);
+            }
+            else
+            {
+                _db.TransferWorkflows.Add(desired);
+                result.Add(desired);
+            }
+        }
+
+        if (duplicatePlannedRows.Count > 0 || obsoleteRows.Count > 0 || result.Count > 0)
+            await _db.SaveChangesAsync(ct);
+
+        return result;
+    }
+
+    private async Task<bool> HasNonPlannedAutoWorkflowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        CancellationToken ct)
+    {
+        return await HasNonPlannedWorkflowsForSourceAsync(
+            sourceAddressId,
+            dayStartUtc,
+            dayEndUtc,
+            (int)TriggerType.Auto,
+            ct);
+    }
+
+    private async Task<bool> HasNonPlannedManualWorkflowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        CancellationToken ct)
+    {
+        return await HasNonPlannedWorkflowsForSourceAsync(
+            sourceAddressId,
+            dayStartUtc,
+            dayEndUtc,
+            (int)TriggerType.Manual,
+            ct);
+    }
+
+    private async Task<bool> HasNonPlannedWorkflowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        int triggerType,
+        CancellationToken ct)
+    {
+        return await _db.TransferWorkflows.AnyAsync(x =>
+            x.SourceAddressId == sourceAddressId &&
+            x.BalanceDayUtc >= dayStartUtc &&
+            x.BalanceDayUtc < dayEndUtc &&
+            x.TriggerType == triggerType &&
+            x.Status != (int)TransferStatus.Planned,
+            ct);
+    }
+
     private static DateTime ToUtcStartOfDay(DateOnly day)
     {
         return day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
@@ -432,28 +605,6 @@ public class TransferWorkflowService : ITransferWorkflowService
             .ToListAsync(ct);
     }
 
-    private async Task<bool> HasFinalizedOrInProgressAutoWorkflowsForSourceAsync(
-        int sourceAddressId,
-        DateTime dayStartUtc,
-        DateTime dayEndUtc,
-        CancellationToken ct)
-    {
-        var protectedStatuses = new[]
-        {
-            (int)TransferStatus.Approved,
-            (int)TransferStatus.Executed,
-            (int)TransferStatus.Settled
-        };
-
-        return await _db.TransferWorkflows.AnyAsync(x =>
-            x.SourceAddressId == sourceAddressId &&
-            x.BalanceDayUtc >= dayStartUtc &&
-            x.BalanceDayUtc < dayEndUtc &&
-            x.TriggerType == (int)TriggerType.Auto &&
-            protectedStatuses.Contains(x.Status),
-            ct);
-    }
-
     private async Task DeleteExistingAutoPlannedRowsForSourceAsync(
         int sourceAddressId,
         DateTime dayStartUtc,
@@ -472,11 +623,10 @@ public class TransferWorkflowService : ITransferWorkflowService
         if (existing.Count > 0)
         {
             _logger.LogInformation(
-                "Deleting {Count} existing auto Planned workflow rows for Source={Source} between {DayStartUtc} and {DayEndUtc} before regenerating plan.",
+                "Deleting {Count} auto Planned workflows for Source={Source}, DayStart={DayStartUtc}",
                 existing.Count,
                 sourceAddressId,
-                dayStartUtc,
-                dayEndUtc);
+                dayStartUtc);
 
             _db.TransferWorkflows.RemoveRange(existing);
             await _db.SaveChangesAsync(ct);
