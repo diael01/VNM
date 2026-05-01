@@ -76,7 +76,8 @@ builder.Services.AddAutoMapper(typeof(AddressProfile).Assembly);
 // ---------------------
 builder.Services.AddSqlServerDbContexts<VnmDbContext, VnmDbContext>(builder.Configuration);
 builder.Services.AddRepositoriesCrud();
-builder.Services.AddAppServices();
+builder.Services.AddAppServices(builder.Configuration);
+
 
 // ---------------------
 // Inverter Poller Factory & Poller (singleton)

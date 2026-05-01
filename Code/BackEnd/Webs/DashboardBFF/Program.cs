@@ -38,7 +38,7 @@ builder.Services.AddBffAuthentication(builder.Configuration);
 builder.Services.AddDownstreamServiceClients(builder.Configuration);
 builder.Services.AddSqlServerDbContext<VnmDbContext>(builder.Configuration);
 builder.Services.AddRepositoriesCrud();
-builder.Services.AddAppServices();
+builder.Services.AddAppServices(builder.Configuration);
 
 //Application Services
 builder.Services.AddBffApplicationServices();

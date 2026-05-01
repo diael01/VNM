@@ -83,3 +83,8 @@ namespace Infrastructure.Options;
     }
 
 
+public class TransferExecutionSimulatorOptions
+{
+    public string BaseUrl { get; set; } = string.Empty;
+}
+

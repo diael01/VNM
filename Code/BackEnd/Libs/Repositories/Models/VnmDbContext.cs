@@ -39,6 +39,8 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<TransferWorkflow> TransferWorkflows { get; set; }
 
+    public virtual DbSet<TransferLedgerEntry> TransferLedgerEntries { get; set; }
+
     public virtual DbSet<TransferWorkflowStatusHistory> TransferWorkflowStatusHistory { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -242,6 +244,25 @@ public partial class VnmDbContext : DbContext
             entity.HasOne(d => d.DestinationTransferRule).WithMany()
                 .HasForeignKey(d => d.DestinationTransferRuleId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TransferLedgerEntry>(entity =>
+        {
+            entity.ToTable("TransferLedgerEntries");
+
+            entity.HasIndex(e => e.TransferWorkflowId, "IX_TransferLedgerEntries_TransferWorkflowId");
+
+            entity.HasIndex(e => e.ExecutedAtUtc, "IX_TransferLedgerEntries_ExecutedAtUtc");
+
+            entity.Property(e => e.AmountKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.ExecutionReference).HasMaxLength(64);
+            entity.Property(e => e.Notes).HasMaxLength(255);
+
+            entity.HasOne(d => d.TransferWorkflow)
+                .WithMany()
+                .HasForeignKey(d => d.TransferWorkflowId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_TransferLedgerEntries_TransferWorkflow");
         });
 
         modelBuilder.Entity<TransferWorkflowStatusHistory>(entity =>

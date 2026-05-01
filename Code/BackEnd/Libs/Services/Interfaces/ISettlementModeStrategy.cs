@@ -26,11 +26,11 @@ namespace EnergyManagement.Services.ModeSwitching
             AvailableTransferBalanceDto available);
 
         void FillTransferAmounts(
-            TransferRequest transfer,
+            TransferExecutionRequest transfer,
             decimal requestedAmount);
 
         TransferImpactDto BuildImpact(
-            TransferRequest transfer,
+            TransferExecutionRequest transfer,
             DailyEnergyBalance destinationBalance,
             decimal ratePerKwh);
     }

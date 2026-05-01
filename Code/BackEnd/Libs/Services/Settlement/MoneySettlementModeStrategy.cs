@@ -31,33 +31,33 @@ public class MoneySettlementModeStrategy : ISettlementModeStrategy
                 throw new InvalidOperationException("Not enough money balance");
         }
 
-        public void FillTransferAmounts(TransferRequest transfer, decimal amount)
+        public void FillTransferAmounts(TransferExecutionRequest transfer, decimal amount)
         {
-            transfer.RequestedAmount = amount;
+           /*  transfer.RequestedAmount = amount;
             transfer.ActualAmount = amount;
             transfer.RequestedAmount = 0;
             transfer.ActualAmount = 0;
-            transfer.SettlementModeEnum = SettlementMode;
+            transfer.SettlementModeEnum = SettlementMode; */
         }
 
         public TransferImpactDto BuildImpact(
-            TransferRequest transfer,
+            TransferExecutionRequest transfer,
             DailyEnergyBalance balance,
             decimal rate)
         {
             var originalCost = (balance.DeficitKwh) * rate;
-            var coveredKwh = transfer.ActualAmount / rate;
+            var coveredKwh = transfer.AmountKwh / rate;
 
             return new TransferImpactDto
             {
                 DestinationAddressId = transfer.DestinationAddressId,
-                Day = transfer.Day,
+                Day = transfer.BalanceDay,
                 OriginalDeficitKwh = balance.DeficitKwh,
                 CoveredByTransferKwh = coveredKwh,
                 RemainingDeficitKwh = Math.Max((balance.DeficitKwh) - coveredKwh, 0m),
                 OriginalCost = originalCost,
-                CoveredValue = transfer.ActualAmount,
-                RemainingCost = Math.Max(originalCost - transfer.ActualAmount, 0m)
+                CoveredValue = transfer.AmountKwh,
+                RemainingCost = Math.Max(originalCost - transfer.AmountKwh, 0m)
             };
         }
     }

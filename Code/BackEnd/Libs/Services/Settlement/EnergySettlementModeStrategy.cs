@@ -32,27 +32,27 @@ namespace EnergyManagement.Services.ModeSwitching;
                 throw new InvalidOperationException("Not enough energy balance");
         }
 
-        public void FillTransferAmounts(TransferRequest transfer, decimal amount)
+        public void FillTransferAmounts(TransferExecutionRequest transfer, decimal amount)
         {
-            transfer.RequestedAmount = amount;
+           /*  transfer.RequestedAmount = amount;
             transfer.ActualAmount = amount;
             transfer.RequestedAmount = 0;
             transfer.ActualAmount = 0;
-            transfer.SettlementModeEnum = SettlementMode;
+            transfer.SettlementModeEnum = SettlementMode;*/
         }
 
         public TransferImpactDto BuildImpact(
-            TransferRequest transfer,
+            TransferExecutionRequest transfer,
             DailyEnergyBalance balance,
             decimal rate)
         {
-            var coveredKwh = Math.Min(transfer.ActualAmount, balance.DeficitKwh);
+            var coveredKwh = Math.Min(transfer.AmountKwh, balance.DeficitKwh);
             var originalCost =  (balance.DeficitKwh) * rate;
 
             return new TransferImpactDto
             {
                 DestinationAddressId = transfer.DestinationAddressId,
-                Day = transfer.Day,
+                Day = transfer.BalanceDay,
                 OriginalDeficitKwh = balance.DeficitKwh,
                 CoveredByTransferKwh = coveredKwh,
                 RemainingDeficitKwh = Math.Max((balance.DeficitKwh) - coveredKwh, 0m),
