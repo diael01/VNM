@@ -27,6 +27,8 @@ public partial class TransferWorkflow : AuditableEntity
 
     public int Status { get; set; }
 
+    public int SettlementMode { get; set; }
+
     public string? Notes { get; set; }
 
     public int AppliedDistributionMode { get; set; }

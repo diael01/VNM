@@ -37,8 +37,6 @@ public partial class VnmDbContext : DbContext
 
     public virtual DbSet<SourceTransferSchedule> SourceTransferSchedules { get; set; }
 
-    public virtual DbSet<TransferRequest> TransferRequests { get; set; }
-
     public virtual DbSet<TransferWorkflow> TransferWorkflows { get; set; }
 
     public virtual DbSet<TransferWorkflowStatusHistory> TransferWorkflowStatusHistory { get; set; }
@@ -214,12 +212,6 @@ public partial class VnmDbContext : DbContext
             entity.HasOne(d => d.SourceTransferPolicy).WithMany(p => p.SourceTransferSchedules)
                 .HasForeignKey(d => d.SourceTransferPolicyId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
-        });
-
-        modelBuilder.Entity<TransferRequest>(entity =>
-        {
-            entity.Property(e => e.ActualAmount).HasColumnType("decimal(18, 5)");
-            entity.Property(e => e.RequestedAmount).HasColumnType("decimal(18, 5)");
         });
 
         modelBuilder.Entity<TransferWorkflow>(entity =>

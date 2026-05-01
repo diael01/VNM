@@ -30,16 +30,21 @@ public class TransferWorkflowBackgroundService : BackgroundService
         {
             var options = _optionsMonitor.CurrentValue;
 
+            var pollIntervalSeconds = options.PollIntervalSeconds > 0
+                ? options.PollIntervalSeconds
+                : 60;
+
+            _logger.LogInformation(
+                "Transfer scheduler options: Enabled={Enabled}, PollIntervalSeconds={PollIntervalSeconds}",
+                options.Enabled,
+                pollIntervalSeconds);
+
             if (!options.Enabled)
             {
                 _logger.LogInformation("Transfer scheduler worker disabled. Sleeping 1 minute.");
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 continue;
             }
-
-            var pollIntervalSeconds = options.PollIntervalSeconds > 0
-                ? options.PollIntervalSeconds
-                : 60;
 
             try
             {
@@ -49,7 +54,9 @@ public class TransferWorkflowBackgroundService : BackgroundService
                 var workflowService = scope.ServiceProvider.GetRequiredService<ITransferWorkflowService>();
 
                 var nowUtc = DateTime.UtcNow;
-                _logger.LogInformation("Scheduler tick at {NowUtc}", nowUtc);
+
+                _logger.LogInformation("Transfer scheduler tick at {NowUtc}", nowUtc);
+
                 var dueSchedules = await db.SourceTransferSchedules
                     .Include(x => x.SourceTransferPolicy)
                     .Where(x =>
@@ -57,48 +64,57 @@ public class TransferWorkflowBackgroundService : BackgroundService
                         x.SourceTransferPolicy.IsEnabled &&
                         x.StartDateUtc <= nowUtc &&
                         (!x.EndDateUtc.HasValue || x.EndDateUtc >= nowUtc) &&
-                        x.NextRunUtc.HasValue &&
-                        x.NextRunUtc <= nowUtc)
-                    .OrderBy(x => x.NextRunUtc)
+                        (
+                            !x.NextRunUtc.HasValue ||
+                            x.NextRunUtc <= nowUtc
+                        ))
+                    .OrderBy(x => x.NextRunUtc ?? x.StartDateUtc)
                     .ToListAsync(stoppingToken);
-                    _logger.LogInformation("Found {Count} due schedules at {NowUtc}",dueSchedules.Count,nowUtc);
 
-                if (dueSchedules.Count == 0)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(pollIntervalSeconds), stoppingToken);
-                    continue;
-                }
+                _logger.LogInformation(
+                    "Found {Count} due transfer schedules at {NowUtc}",
+                    dueSchedules.Count,
+                    nowUtc);
 
                 foreach (var schedule in dueSchedules)
                 {
                     try
                     {
                         _logger.LogInformation(
-                            "Schedule {ScheduleId}: Source={Source}, NextRunUtc={NextRun}, Repeat={Value} {Unit}, Enabled={Enabled}",
-                            schedule.Id, schedule.SourceTransferPolicy.SourceAddressId, schedule.NextRunUtc, schedule.RepeatEveryValue, schedule.RepeatEveryUnit, schedule.IsEnabled);
+                            "Processing schedule {ScheduleId}: PolicyId={PolicyId}, Source={SourceAddressId}, NextRunUtc={NextRunUtc}, LastRunUtc={LastRunUtc}, Repeat={RepeatEveryValue} {RepeatEveryUnit}, ExecutionMode={ExecutionMode}",
+                            schedule.Id,
+                            schedule.SourceTransferPolicyId,
+                            schedule.SourceTransferPolicy.SourceAddressId,
+                            schedule.NextRunUtc,
+                            schedule.LastRunUtc,
+                            schedule.RepeatEveryValue,
+                            schedule.RepeatEveryUnit,
+                            schedule.ExecutionMode);
 
                         var day = DateOnly.FromDateTime(nowUtc);
-                        _logger.LogInformation("Calling workflow service for Source={Source} Day={Day}", schedule.SourceTransferPolicy.SourceAddressId, day);
+
                         var created = await workflowService.RunAutomaticWorkflowForSourceAsync(
                             schedule.SourceTransferPolicy.SourceAddressId,
                             day,
                             stoppingToken);
-                        _logger.LogInformation("Workflow service returned {Count} rows for Source={Source}", created.Count, schedule.SourceTransferPolicy.SourceAddressId);
+
                         schedule.LastRunUtc = nowUtc;
                         schedule.NextRunUtc = CalculateNextRunUtc(schedule, nowUtc);
 
                         _logger.LogInformation(
-                            "Processed schedule {ScheduleId} for source {SourceAddressId}. Created {Count} workflows. ExecutionMode={ExecutionMode}",
+                            "Processed schedule {ScheduleId}. Source={SourceAddressId}, Day={Day}, Created={CreatedCount}, LastRunUtc={LastRunUtc}, NextRunUtc={NextRunUtc}",
                             schedule.Id,
                             schedule.SourceTransferPolicy.SourceAddressId,
+                            day,
                             created.Count,
-                            schedule.ExecutionMode);
+                            schedule.LastRunUtc,
+                            schedule.NextRunUtc);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(
                             ex,
-                            "Error processing schedule {ScheduleId} for source policy {PolicyId}.",
+                            "Error processing schedule {ScheduleId} for policy {PolicyId}.",
                             schedule.Id,
                             schedule.SourceTransferPolicyId);
                     }
@@ -117,20 +133,13 @@ public class TransferWorkflowBackgroundService : BackgroundService
 
     private static DateTime? CalculateNextRunUtc(SourceTransferSchedule schedule, DateTime referenceUtc)
     {
-        var scheduleType = schedule.ScheduleTypeEnum;
-
-        return scheduleType switch
+        return schedule.ScheduleTypeEnum switch
         {
             ScheduleType.Once => null,
-
             ScheduleType.Interval => CalculateIntervalNextRunUtc(schedule, referenceUtc),
-
             ScheduleType.Daily => CalculateDailyNextRunUtc(schedule, referenceUtc),
-
             ScheduleType.Weekly => CalculateWeeklyNextRunUtc(schedule, referenceUtc),
-
             ScheduleType.Monthly => CalculateMonthlyNextRunUtc(schedule, referenceUtc),
-
             _ => null
         };
     }
@@ -153,7 +162,12 @@ public class TransferWorkflowBackgroundService : BackgroundService
     private static DateTime? CalculateDailyNextRunUtc(SourceTransferSchedule schedule, DateTime referenceUtc)
     {
         var timeOfDay = schedule.TimeOfDayUtc ?? TimeSpan.Zero;
-        var candidate = referenceUtc.Date.AddDays(1).Add(timeOfDay);
+
+        var candidate = referenceUtc.Date.Add(timeOfDay);
+
+        if (candidate <= referenceUtc)
+            candidate = candidate.AddDays(1);
+
         return candidate;
     }
 
@@ -163,12 +177,14 @@ public class TransferWorkflowBackgroundService : BackgroundService
             return null;
 
         var timeOfDay = schedule.TimeOfDayUtc ?? TimeSpan.Zero;
-        var current = referenceUtc.Date.AddDays(1);
+        var candidate = referenceUtc.Date.Add(timeOfDay);
 
-        while ((int)current.DayOfWeek != schedule.DayOfWeek.Value)
-            current = current.AddDays(1);
+        while ((int)candidate.DayOfWeek != schedule.DayOfWeek.Value || candidate <= referenceUtc)
+        {
+            candidate = candidate.AddDays(1).Date.Add(timeOfDay);
+        }
 
-        return current.Add(timeOfDay);
+        return candidate;
     }
 
     private static DateTime? CalculateMonthlyNextRunUtc(SourceTransferSchedule schedule, DateTime referenceUtc)
@@ -178,9 +194,32 @@ public class TransferWorkflowBackgroundService : BackgroundService
 
         var timeOfDay = schedule.TimeOfDayUtc ?? TimeSpan.Zero;
 
-        var nextMonth = new DateTime(referenceUtc.Year, referenceUtc.Month, 1).AddMonths(1);
-        var day = Math.Min(schedule.DayOfMonth.Value, DateTime.DaysInMonth(nextMonth.Year, nextMonth.Month));
+        var candidate = BuildMonthlyCandidate(
+            referenceUtc.Year,
+            referenceUtc.Month,
+            schedule.DayOfMonth.Value,
+            timeOfDay);
 
-        return new DateTime(nextMonth.Year, nextMonth.Month, day).Add(timeOfDay);
+        if (candidate <= referenceUtc)
+        {
+            var nextMonth = referenceUtc.AddMonths(1);
+            candidate = BuildMonthlyCandidate(
+                nextMonth.Year,
+                nextMonth.Month,
+                schedule.DayOfMonth.Value,
+                timeOfDay);
+        }
+
+        return candidate;
+    }
+
+    private static DateTime BuildMonthlyCandidate(
+        int year,
+        int month,
+        int requestedDay,
+        TimeSpan timeOfDay)
+    {
+        var day = Math.Min(requestedDay, DateTime.DaysInMonth(year, month));
+        return new DateTime(year, month, day).Add(timeOfDay);
     }
 }

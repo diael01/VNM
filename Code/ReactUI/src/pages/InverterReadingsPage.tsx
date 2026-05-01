@@ -52,7 +52,10 @@ export default function InverterReadingsPage({ permissions: _permissions }: Inve
           autoHeight
           rows={readings}
           columns={columns}
-          initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10, page: 0 } },
+            sorting: { sortModel: [{ field: "timestamp", sort: "desc" }] },
+          }}
           pageSizeOptions={[10, 20, 50]}
           disableRowSelectionOnClick
           getRowId={(row) => row.id}

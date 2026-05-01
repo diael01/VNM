@@ -232,10 +232,28 @@ export default function NewTransfer() {
     history:   rows.filter((r) => TAB_FILTERS.history(r.status)).length,
   }), [rows]);
 
-  const visibleRows = useMemo(
-    () => rows.filter((r) => TAB_FILTERS[activeTab](r.status)),
-    [rows, activeTab],
-  );
+  const visibleRows = useMemo(() => {
+    const filtered = rows.filter((r) => TAB_FILTERS[activeTab](r.status));
+
+    return filtered.sort((a, b) => {
+      const aTime = new Date(a.balanceDayUtc).getTime();
+      const bTime = new Date(b.balanceDayUtc).getTime();
+
+      if (Number.isNaN(aTime) && Number.isNaN(bTime)) {
+        return 0;
+      }
+
+      if (Number.isNaN(aTime)) {
+        return 1;
+      }
+
+      if (Number.isNaN(bTime)) {
+        return -1;
+      }
+
+      return bTime - aTime;
+    });
+  }, [rows, activeTab]);
 
   const addMutation = useMutation({
     mutationFn: createTransferWorkflow,
@@ -410,13 +428,62 @@ export default function NewTransfer() {
   };
 
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 80 },
     {
-      field: "effectiveAtUtc",
-      headerName: "Effective (UTC)",
-      width: 180,
+      field: "statusActions",
+      headerName: "Actions",
+      width: 210,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => {
+        const status = toNumber(params.row.status, STATUS_PLANNED);
+        const actions = getStatusActions(status);
+
+        if (actions.length === 0) {
+          return <span style={{ color: "#999" }}>-</span>;
+        }
+
+        return (
+          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", py: 0.5 }}>
+            {actions.map((action) => (
+              <Button
+                key={action.label}
+                size="small"
+                variant="outlined"
+                disabled={updateMutation.isPending}
+                onClick={() => handleStatusTransition(params.row as TransferWorkflow, action.nextStatus)}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </Box>
+        );
+      },
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 130,
+      editable: false,
+      type: "singleSelect",
+      valueOptions: STATUS_OPTIONS,
+    },
+    {
+      field: "triggerType",
+      headerName: "Trigger",
+      width: 90,
       editable: true,
-      valueFormatter: (value) => (value ? new Date(value as string).toLocaleString() : ""),
+      type: "singleSelect",
+      valueOptions: TRIGGER_OPTIONS,
+    },
+    {
+      field: "appliedDistributionMode",
+      headerName: "Distrib Mode",
+      width: 90,
+      editable: true,
+      type: "singleSelect",
+      valueOptions: MODE_OPTIONS,
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Distrib</div><div>Mode</div></Box>,
     },
     {
       field: "balanceDayUtc",
@@ -473,69 +540,19 @@ export default function NewTransfer() {
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Amount</div><div>kWh</div></Box>,
     },
     {
-      field: "triggerType",
-      headerName: "Trigger",
-      width: 90,
-      editable: true,
-      type: "singleSelect",
-      valueOptions: TRIGGER_OPTIONS,
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 130,
-      editable: false,
-      type: "singleSelect",
-      valueOptions: STATUS_OPTIONS,
-    },
-    {
-      field: "statusActions",
-      headerName: "Actions",
-      width: 210,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params) => {
-        const status = toNumber(params.row.status, STATUS_PLANNED);
-        const actions = getStatusActions(status);
-
-        if (actions.length === 0) {
-          return <span style={{ color: "#999" }}>-</span>;
-        }
-
-        return (
-          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", py: 0.5 }}>
-            {actions.map((action) => (
-              <Button
-                key={action.label}
-                size="small"
-                variant="outlined"
-                disabled={updateMutation.isPending}
-                onClick={() => handleStatusTransition(params.row as TransferWorkflow, action.nextStatus)}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </Box>
-        );
-      },
-    },
-    {
-      field: "appliedDistributionMode",
-      headerName: "Distrib Mode",
-      width: 90,
-      editable: true,
-      type: "singleSelect",
-      valueOptions: MODE_OPTIONS,
-      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Distrib</div><div>Mode</div></Box>,
-    },
-    {
       field: "destinationTransferRuleId",
       headerName: "Transfer Rule ID",
       width: 95,
       editable: true,
       type: "number",
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Transfer</div><div>Rule ID</div></Box>,
+    },
+    {
+      field: "effectiveAtUtc",
+      headerName: "Effective (UTC)",
+      width: 180,
+      editable: true,
+      valueFormatter: (value) => (value ? new Date(value as string).toLocaleString() : ""),
     },
     {
       field: "priority",
@@ -648,6 +665,9 @@ export default function NewTransfer() {
         <DataGrid
           rows={visibleRows}
           columns={columns}
+          initialState={{
+            sorting: { sortModel: [{ field: "balanceDayUtc", sort: "desc" }] },
+          }}
           editMode="row"
           processRowUpdate={processRowUpdate}
           isCellEditable={(params) => {
