@@ -31,6 +31,20 @@ public class TransferWorkflowService : ITransferWorkflowService
         var dayStartUtc = ToUtcStartOfDay(day);
         var dayEndUtc = dayStartUtc.AddDays(1);
 
+        if (await HasFinalizedOrInProgressAutoWorkflowsForSourceAsync(
+                sourceAddressId,
+                dayStartUtc,
+                dayEndUtc,
+                ct))
+        {
+            _logger.LogWarning(
+                "Skipping automatic workflow generation for Source={Source} Day={Day} because an auto workflow already exists in Approved/Executed/Settled state.",
+                sourceAddressId,
+                day);
+
+            return Array.Empty<TransferWorkflow>();
+        }
+
         await DeleteExistingAutoPlannedRowsForSourceAsync(
             sourceAddressId,
             dayStartUtc,
@@ -418,6 +432,28 @@ public class TransferWorkflowService : ITransferWorkflowService
             .ToListAsync(ct);
     }
 
+    private async Task<bool> HasFinalizedOrInProgressAutoWorkflowsForSourceAsync(
+        int sourceAddressId,
+        DateTime dayStartUtc,
+        DateTime dayEndUtc,
+        CancellationToken ct)
+    {
+        var protectedStatuses = new[]
+        {
+            (int)TransferStatus.Approved,
+            (int)TransferStatus.Executed,
+            (int)TransferStatus.Settled
+        };
+
+        return await _db.TransferWorkflows.AnyAsync(x =>
+            x.SourceAddressId == sourceAddressId &&
+            x.BalanceDayUtc >= dayStartUtc &&
+            x.BalanceDayUtc < dayEndUtc &&
+            x.TriggerType == (int)TriggerType.Auto &&
+            protectedStatuses.Contains(x.Status),
+            ct);
+    }
+
     private async Task DeleteExistingAutoPlannedRowsForSourceAsync(
         int sourceAddressId,
         DateTime dayStartUtc,
@@ -435,6 +471,13 @@ public class TransferWorkflowService : ITransferWorkflowService
 
         if (existing.Count > 0)
         {
+            _logger.LogInformation(
+                "Deleting {Count} existing auto Planned workflow rows for Source={Source} between {DayStartUtc} and {DayEndUtc} before regenerating plan.",
+                existing.Count,
+                sourceAddressId,
+                dayStartUtc,
+                dayEndUtc);
+
             _db.TransferWorkflows.RemoveRange(existing);
             await _db.SaveChangesAsync(ct);
         }
