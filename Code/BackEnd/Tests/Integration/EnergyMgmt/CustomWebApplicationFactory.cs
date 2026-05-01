@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
 using Repositories.Models;
 using System.Diagnostics;
+using EnergyManagement.Services.Transfers.Execution;
 
 namespace EnergyManagementWeb.IntegrationTests;
 
@@ -44,6 +45,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<VnmDbContext>();
             services.RemoveAll<IHostedService>();
             services.RemoveAll<IInverterPoller>();
+            services.RemoveAll<ITransferExecutionAdapter>();
 
             // Use configuration from builder context (safe, avoids root provider issues)
             var configuration = context.Configuration;
@@ -71,6 +73,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 });
 
             services.AddSingleton(pollerMock.Object);
+            services.AddSingleton<ITransferExecutionAdapter, TestTransferExecutionAdapter>();
         });
     }
 

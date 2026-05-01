@@ -93,7 +93,7 @@ public sealed class DashboardTransferWorkflowRedirectService : IDashboardTransfe
     public async Task<TransferWorkflowDto> ExecuteTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default)
     {
         var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
-        var response = await meterClient.PostAsJsonAsync($"api/v1/TransferWorkflow/{id}/execute", new { note }, cancellationToken);
+        var response = await meterClient.PostAsJsonAsync($"api/v1/transfer-execution/workflows/{id}/execute", new { note }, cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
 
@@ -103,7 +103,7 @@ public sealed class DashboardTransferWorkflowRedirectService : IDashboardTransfe
     public async Task<TransferWorkflowDto> SettleTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default)
     {
         var meterClient = EnergyManagementApiClientHelper.CreateAuthorizedMeterClient(_httpClientFactory, accessToken);
-        var response = await meterClient.PostAsJsonAsync($"api/v1/TransferWorkflow/{id}/settle", new { note }, cancellationToken);
+        var response = await meterClient.PostAsJsonAsync($"api/v1/transfer-execution/workflows/{id}/settle", new { note }, cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"EnergyManagement API returned status code {(int)response.StatusCode}.");
 

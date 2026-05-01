@@ -23,6 +23,7 @@
 
    <ItemGroup>
     <ProjectReference Include="../../../Webs/EnergyManagement/EnergyManagement.csproj" />
+    <ProjectReference Include="../../../Webs/DashboardBFF/DashboardBFF.csproj" Aliases="dashboardbff" />
     <Using Include="Xunit" />
   </ItemGroup>
 

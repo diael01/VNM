@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
 import type { GridColDef, GridRowId, GridRowModesModel } from "@mui/x-data-grid";
 import { Badge, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Tab, Tabs, TextField, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
@@ -47,14 +46,16 @@ const FAIR_MODE = 0;
 const PRIORITY_MODE = 1;
 const WEIGHTED_MODE = 2;
 
-type TabKey = "planned" | "approved" | "execution" | "rejected" | "history";
+type TabKey = "planned" | "execution" | "executed" | "settled" | "rejected" | "failed" | "history";
 
 const TAB_FILTERS: Record<TabKey, (status: number) => boolean> = {
   planned:   (s) => s === STATUS_PLANNED,
-  approved:  (s) => s === STATUS_APPROVED,
-  execution: (s) => s === STATUS_EXECUTED || s === STATUS_FAILED,
+  execution: (s) => s === STATUS_APPROVED,
+  executed:  (s) => s === STATUS_EXECUTED,
+  settled:   (s) => s === STATUS_SETTLED,
   rejected:  (s) => s === STATUS_REJECTED,
-  history:   (s) => s === STATUS_SETTLED || s === STATUS_CANCELLED,
+  failed:    (s) => s === STATUS_FAILED,
+  history:   (s) => s === STATUS_CANCELLED,
 };
 
 const STATUS_PLANNED = 0;
@@ -226,9 +227,11 @@ export default function NewTransfer() {
 
   const tabCounts = useMemo(() => ({
     planned:   rows.filter((r) => TAB_FILTERS.planned(r.status)).length,
-    approved:  rows.filter((r) => TAB_FILTERS.approved(r.status)).length,
     execution: rows.filter((r) => TAB_FILTERS.execution(r.status)).length,
+    executed:  rows.filter((r) => TAB_FILTERS.executed(r.status)).length,
+    settled:   rows.filter((r) => TAB_FILTERS.settled(r.status)).length,
     rejected:  rows.filter((r) => TAB_FILTERS.rejected(r.status)).length,
+    failed:    rows.filter((r) => TAB_FILTERS.failed(r.status)).length,
     history:   rows.filter((r) => TAB_FILTERS.history(r.status)).length,
   }), [rows]);
 
@@ -414,11 +417,6 @@ export default function NewTransfer() {
     }
 
     await addMutation.mutateAsync(normalizedDraft);
-  };
-
-  const handleOpenAddDialog = () => {
-    setFormError(null);
-    setAddDialogOpen(true);
   };
 
   const handleCloseAddDialog = () => {
@@ -630,19 +628,28 @@ export default function NewTransfer() {
         onChange={(_, v: TabKey) => { setActiveTab(v); setRowModesModel({}); }}
         sx={{ mb: 1, borderBottom: 1, borderColor: "divider" }}
       >
-        {(["planned", "approved", "execution", "rejected", "history"] as TabKey[]).map((key) => {
+        {(["planned", "execution", "executed", "settled", "rejected", "failed", "history"] as TabKey[]).map((key) => {
           const labels: Record<TabKey, string> = {
             planned: "Planned",
-            approved: "Approved",
-            execution: "Execution",
+            execution: "Approved",
+            executed: "Executed",
+            settled: "Settled",
             rejected: "Rejected",
+            failed: "Failed",
             history: "History",
           };
           return (
             <Tab
               key={key}
               value={key}
-              sx={{ minWidth: key === "planned" || key === "approved" || key === "rejected" ? 170 : 130 }}
+              sx={{
+                minWidth:
+                  key === "execution"
+                    ? 220
+                    : key === "planned" || key === "executed" || key === "settled" || key === "rejected" || key === "failed"
+                      ? 170
+                      : 130,
+              }}
               label={
                 <Badge badgeContent={tabCounts[key]} color="primary" max={999}
                   sx={{ "& .MuiBadge-badge": { right: -16, top: 2 } }}>
@@ -653,12 +660,6 @@ export default function NewTransfer() {
           );
         })}
       </Tabs>
-
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={handleOpenAddDialog}>
-          Add Workflow
-        </Button>
-      </Box>
 
       <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
         <Box sx={{ minWidth: 2840 }}>

@@ -21,7 +21,7 @@ public sealed class TransferExecutionService : ITransferExecutionService
         _logger = logger;
     }
 
-    public async Task ExecuteAsync(int workflowId, string? executedBy, CancellationToken ct)
+    public async Task ExecuteAsync(int workflowId, string? executedBy, string? note, CancellationToken ct)
     {
         var workflow = await _db.TransferWorkflows
             .FirstOrDefaultAsync(x => x.Id == workflowId, ct);
@@ -33,6 +33,9 @@ public sealed class TransferExecutionService : ITransferExecutionService
             throw new InvalidOperationException(
                 $"Workflow {workflowId} must be Approved before execution. Current status: {workflow.Status}");
 
+        var userNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        var executionNote = userNote ?? "Manual execution from VNM workflow.";
+
         var request = new TransferExecutionRequest
         {
             WorkflowId = workflow.Id,
@@ -42,7 +45,7 @@ public sealed class TransferExecutionService : ITransferExecutionService
             BalanceDay = DateOnly.FromDateTime(workflow.BalanceDayUtc),
             RequestedAtUtc = DateTime.UtcNow,
             RequestedBy = executedBy,
-            Notes = "Manual execution from VNM workflow."
+            Notes = executionNote
         };
 
         _logger.LogInformation(
@@ -69,7 +72,7 @@ public sealed class TransferExecutionService : ITransferExecutionService
                 ToStatus = workflow.Status,
                 UpdatedAtUtc = DateTime.UtcNow,
                 UpdatedBy = executedBy ?? "system",
-                Note = result.ErrorMessage ?? "Transfer execution failed."
+                Note = BuildFailureHistoryNote(result.ErrorMessage, userNote)
             });
 
             await _db.SaveChangesAsync(ct);
@@ -85,7 +88,7 @@ public sealed class TransferExecutionService : ITransferExecutionService
             AmountKwh = workflow.AmountKwh,
             ExecutedAtUtc = result.ExecutedAtUtc,
             ExecutionReference = result.ExternalReference ?? Guid.NewGuid().ToString("N"),
-            Notes = "Executed by transfer simulator."
+            Notes = executionNote
         });
 
         workflow.Status = (int)TransferStatus.Executed;
@@ -99,9 +102,31 @@ public sealed class TransferExecutionService : ITransferExecutionService
             ToStatus = workflow.Status,
             UpdatedAtUtc = DateTime.UtcNow,
             UpdatedBy = executedBy ?? "system",
-            Note = $"Executed. ExternalReference={result.ExternalReference}"
+            Note = BuildSuccessHistoryNote(result.ExternalReference, userNote)
         });
 
         await _db.SaveChangesAsync(ct);
+    }
+
+    private static string BuildFailureHistoryNote(string? errorMessage, string? userNote)
+    {
+        var failure = string.IsNullOrWhiteSpace(errorMessage)
+            ? "Transfer execution failed."
+            : $"Transfer execution failed. Error={errorMessage}";
+
+        return string.IsNullOrWhiteSpace(userNote)
+            ? failure
+            : $"{failure} UserNote={userNote}";
+    }
+
+    private static string BuildSuccessHistoryNote(string? externalReference, string? userNote)
+    {
+        var note = string.IsNullOrWhiteSpace(externalReference)
+            ? "Executed."
+            : $"Executed. ExternalReference={externalReference}";
+
+        return string.IsNullOrWhiteSpace(userNote)
+            ? note
+            : $"{note} UserNote={userNote}";
     }
 }

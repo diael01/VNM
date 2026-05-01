@@ -1,7 +1,7 @@
 
 public interface ITransferExecutionService
 {
-    Task ExecuteAsync(int workflowId, string? executedBy, CancellationToken ct);
+    Task ExecuteAsync(int workflowId, string? executedBy, string? note, CancellationToken ct);
 }
 public interface ITransferExecutionAdapter
 {
