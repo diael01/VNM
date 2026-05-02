@@ -12,13 +12,10 @@ public interface ITransferWorkflowCrudService
     Task<List<TransferWorkflowStatusHistoryDto>> GetAllHistoryAsync();
     Task<TransferWorkflowDto?> GetByIdAsync(int id);
     Task<List<TransferWorkflowStatusHistoryDto>> GetHistoryAsync(int id);
-    Task<TransferWorkflowDto> CreateAsync(TransferWorkflowDto transferWorkflowDto);
-    Task<TransferWorkflowDto> UpdateAsync(int id, TransferWorkflowDto transferWorkflowDto);
     Task<TransferWorkflowDto> ApproveAsync(int id, string? note = null);
     Task<TransferWorkflowDto> RejectAsync(int id, string? note = null);
     Task<TransferWorkflowDto> ExecuteAsync(int id, string? note = null);
     Task<TransferWorkflowDto> SettleAsync(int id, string? note = null);
-    Task<bool> DeleteAsync(int id);
 }
 
 public sealed class TransferWorkflowCrudService : ITransferWorkflowCrudService
@@ -78,65 +75,6 @@ public sealed class TransferWorkflowCrudService : ITransferWorkflowCrudService
         return _mapper.Map<List<TransferWorkflowStatusHistoryDto>>(history);
     }
 
-    public async Task<TransferWorkflowDto> CreateAsync(TransferWorkflowDto transferWorkflowDto)
-    {
-        var workflow = _mapper.Map<TransferWorkflow>(transferWorkflowDto);
-        workflow.Id = 0;
-        workflow.Status = StatusPlanned;
-
-        if (workflow.CreatedAtUtc == default)
-        {
-            workflow.CreatedAtUtc = DateTime.UtcNow;
-        }
-
-        if (workflow.EffectiveAtUtc == default)
-        {
-            workflow.EffectiveAtUtc = DateTime.UtcNow;
-        }
-
-        if (workflow.BalanceDayUtc == default)
-        {
-            workflow.BalanceDayUtc = DateTime.UtcNow.Date;
-        }
-
-        _dbContext.TransferWorkflowStatusHistory.Add(new TransferWorkflowStatusHistory
-        {
-            TransferWorkflow = workflow,
-            FromStatus = null,
-            ToStatus = workflow.Status,
-            Note = "Created",
-        });
-
-        var created = await _transferWorkflowRepository.AddAsync(workflow);
-        return _mapper.Map<TransferWorkflowDto>(created);
-    }
-
-    public async Task<TransferWorkflowDto> UpdateAsync(int id, TransferWorkflowDto transferWorkflowDto)
-    {
-        var existing = await _transferWorkflowRepository.GetByIdAsync(id)
-            ?? throw new InvalidOperationException("Transfer workflow not found.");
-
-        var candidate = _mapper.Map<TransferWorkflow>(transferWorkflowDto);
-        candidate.Id = id;
-
-        if (existing.Status != candidate.Status)
-        {
-            throw new InvalidOperationException("Status updates are command-driven. Use approve/reject/execute/settle endpoints.");
-        }
-
-        if (existing.Status != StatusPlanned && HasLockedPlanningFieldsChanged(existing, candidate))
-        {
-            throw new InvalidOperationException("Approved/executed workflows are frozen. Core transfer values cannot be edited.");
-        }
-
-        // Preserve immutable creation audit fields from the existing entity.
-        candidate.CreatedAtUtc = existing.CreatedAtUtc;
-        candidate.CreatedBy = existing.CreatedBy;
-
-        var updated = await _transferWorkflowRepository.UpdateAsync(candidate);
-        return _mapper.Map<TransferWorkflowDto>(updated);
-    }
-
     public Task<TransferWorkflowDto> ApproveAsync(int id, string? note = null)
         => TransitionStatusAsync(id, StatusApproved, string.IsNullOrWhiteSpace(note) ? "Workflow has been approved" : note);
 
@@ -148,21 +86,6 @@ public sealed class TransferWorkflowCrudService : ITransferWorkflowCrudService
 
     public Task<TransferWorkflowDto> SettleAsync(int id, string? note = null)
         => TransitionStatusAsync(id, StatusSettled, note);
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        return await _transferWorkflowRepository.DeleteAsync(id);
-    }
-
-    private static bool HasLockedPlanningFieldsChanged(TransferWorkflow existing, TransferWorkflow candidate)
-    {
-        return existing.SourceAddressId != candidate.SourceAddressId
-            || existing.DestinationAddressId != candidate.DestinationAddressId
-            || existing.AmountKwh != candidate.AmountKwh
-            || existing.SourceSurplusKwhAtWorkflow != candidate.SourceSurplusKwhAtWorkflow
-            || existing.DestinationDeficitKwhAtWorkflow != candidate.DestinationDeficitKwhAtWorkflow
-            || existing.RemainingSourceSurplusKwhAfterWorkflow != candidate.RemainingSourceSurplusKwhAfterWorkflow;
-    }
 
     private async Task<TransferWorkflowDto> TransitionStatusAsync(int id, int toStatus, string? note)
     {

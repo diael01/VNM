@@ -32,6 +32,7 @@ public class DashboardTransferWorkflowController : ControllerBase
 
     [HttpGet("history")]
     [HttpGet("~/api/v1/dashboard/transfers/history")]
+    [HttpGet("~/api/v1/dashboard/transferHistory")]
     [Authorize]
     public async Task<IActionResult> GetTransferWorkflowHistory(CancellationToken cancellationToken)
     {

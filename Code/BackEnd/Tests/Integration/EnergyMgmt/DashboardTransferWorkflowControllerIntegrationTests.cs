@@ -30,6 +30,20 @@ public class DashboardTransferWorkflowControllerIntegrationTests : IClassFixture
     }
 
     [Fact]
+    public async Task History_Legacy_Endpoint_Alias_Returns_Status_Transitions()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("api/v1/dashboard/transferHistory");
+        response.EnsureSuccessStatusCode();
+
+        var dto = await response.Content.ReadFromJsonAsync<List<TransferWorkflowStatusHistoryDto>>();
+        Assert.NotNull(dto);
+        Assert.Single(dto!);
+        Assert.Equal(123, dto[0].TransferWorkflowId);
+    }
+
+    [Fact]
     public async Task Execute_Endpoint_Forwards_Note_And_Returns_Updated_Workflow()
     {
         var client = _factory.CreateClient();
