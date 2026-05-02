@@ -29,7 +29,7 @@ public sealed class TransferExecutionService : ITransferExecutionService
         if (workflow is null)
             throw new InvalidOperationException($"Transfer workflow {workflowId} was not found.");
 
-        if (workflow.Status != (int)TransferStatus.Approved)
+        if (workflow.TransferStatusEnum != TransferStatus.Approved)
             throw new InvalidOperationException(
                 $"Workflow {workflowId} must be Approved before execution. Current status: {workflow.Status}");
 
@@ -61,7 +61,7 @@ public sealed class TransferExecutionService : ITransferExecutionService
 
         if (!result.Success)
         {
-            workflow.Status = (int)TransferStatus.Failed;
+            workflow.TransferStatusEnum = TransferStatus.Failed;
             workflow.UpdatedAtUtc = DateTime.UtcNow;
             workflow.UpdatedBy = executedBy;
 
@@ -91,7 +91,14 @@ public sealed class TransferExecutionService : ITransferExecutionService
             Notes = executionNote
         });
 
-        workflow.Status = (int)TransferStatus.Executed;
+        workflow.TransferStatusEnum = TransferStatus.Executed;
+        workflow.EffectiveAtUtc = DateTime.UtcNow;
+        workflow.RemainingSourceSurplusKwhAfterWorkflow = decimal.Round(
+            Math.Max(0m, workflow.SourceSurplusKwhAtWorkflow - workflow.AmountKwh),
+            4);
+        workflow.RemainingDestinationDeficitKwhAfterWorkflow = decimal.Round(
+            Math.Max(0m, workflow.DestinationDeficitKwhAtWorkflow - workflow.AmountKwh),
+            4);
         workflow.UpdatedAtUtc = DateTime.UtcNow;
         workflow.UpdatedBy = executedBy;
 

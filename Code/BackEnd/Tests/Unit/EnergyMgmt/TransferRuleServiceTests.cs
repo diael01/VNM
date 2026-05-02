@@ -11,6 +11,7 @@ namespace Tests.Transfers;
 public class TransferRuleServiceTests
 {
     private readonly Mock<ITransferRuleRepository> _repo = new();
+    private readonly Mock<ISourceTransferPolicyRepository> _sourcePolicyRepo = new();
     private readonly Mock<ITransferWorkflowRepository> _workflowRepo = new();
     private readonly Mock<IMapper> _mapper = new();
 
@@ -60,7 +61,7 @@ public class TransferRuleServiceTests
                 WeightPercent = src.WeightPercent,
             });
 
-        var sut = new TransferRuleService(_repo.Object, _workflowRepo.Object, _mapper.Object);
+        var sut = new TransferRuleService(_repo.Object, _sourcePolicyRepo.Object, _workflowRepo.Object, _mapper.Object);
 
         var created = await sut.CreateAsync(dto);
  
@@ -116,7 +117,7 @@ public class TransferRuleServiceTests
                 WeightPercent = src.WeightPercent,
             });
 
-        var sut = new TransferRuleService(_repo.Object, _workflowRepo.Object, _mapper.Object);
+        var sut = new TransferRuleService(_repo.Object, _sourcePolicyRepo.Object, _workflowRepo.Object, _mapper.Object);
 
         var updated = await sut.UpdateAsync(routeId, dto);
 

@@ -229,6 +229,7 @@ public partial class VnmDbContext : DbContext
             entity.Property(e => e.AmountKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.DestinationDeficitKwhAtWorkflow).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.Notes).HasMaxLength(255);
+            entity.Property(e => e.RemainingDestinationDeficitKwhAfterWorkflow).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.RemainingSourceSurplusKwhAfterWorkflow).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.SourceSurplusKwhAtWorkflow).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.WeightPercent).HasColumnType("decimal(18, 2)");

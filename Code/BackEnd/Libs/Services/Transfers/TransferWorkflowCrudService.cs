@@ -105,6 +105,16 @@ public sealed class TransferWorkflowCrudService : ITransferWorkflowCrudService
         var fromStatus = workflow.Status;
         workflow.Status = toStatus;
 
+        if (toStatus == StatusExecuted)
+        {
+            workflow.RemainingSourceSurplusKwhAfterWorkflow = decimal.Round(
+                Math.Max(0m, workflow.SourceSurplusKwhAtWorkflow - workflow.AmountKwh),
+                4);
+            workflow.RemainingDestinationDeficitKwhAfterWorkflow = decimal.Round(
+                Math.Max(0m, workflow.DestinationDeficitKwhAtWorkflow - workflow.AmountKwh),
+                4);
+        }
+
         _dbContext.TransferWorkflowStatusHistory.Add(new TransferWorkflowStatusHistory
         {
             TransferWorkflowId = workflow.Id,

@@ -162,6 +162,7 @@ public sealed class FakeDashboardTransferWorkflowRedirectService : IDashboardTra
             SourceSurplusKwhAtWorkflow = 10,
             DestinationDeficitKwhAtWorkflow = 8,
             RemainingSourceSurplusKwhAfterWorkflow = 2,
+            RemainingDestinationDeficitKwhAfterWorkflow = 0,
             AmountKwh = 8,
             TriggerType = 0,
             Status = status,

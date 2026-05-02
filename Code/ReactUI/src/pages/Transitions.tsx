@@ -130,7 +130,8 @@ function normalizeWorkflow(workflow: TransferWorkflow): TransferWorkflow {
     amountKwh: toNumber(workflow.amountKwh),
     sourceSurplusKwhAtWorkflow: toNumber(workflow.sourceSurplusKwhAtWorkflow),
     destinationDeficitKwhAtWorkflow: toNumber(workflow.destinationDeficitKwhAtWorkflow),
-    remainingSourceSurplusKwhAfterWorkflow: toNumber(workflow.remainingSourceSurplusKwhAfterWorkflow),
+    remainingSourceSurplusKwhAfterWorkflow: toNullableNumber(workflow.remainingSourceSurplusKwhAfterWorkflow),
+    remainingDestinationDeficitKwhAfterWorkflow: toNullableNumber(workflow.remainingDestinationDeficitKwhAfterWorkflow),
     triggerType: toNumber(workflow.triggerType),
     status: toNumber(workflow.status),
     appliedDistributionMode: toNumber(workflow.appliedDistributionMode),
@@ -155,7 +156,10 @@ function getStatusActions(status: number): StatusAction[] {
         { label: "Reject", nextStatus: STATUS_REJECTED },
       ];
     case STATUS_APPROVED:
-      return [{ label: "Execute", nextStatus: STATUS_EXECUTED }];
+      return [
+        { label: "Execute", nextStatus: STATUS_EXECUTED },
+        { label: "Reject", nextStatus: STATUS_REJECTED },
+      ];
     case STATUS_EXECUTED:
       return [{ label: "Settle", nextStatus: STATUS_SETTLED }];
     case STATUS_FAILED:
@@ -346,12 +350,6 @@ export default function Transitions() {
 
   const columns: GridColDef[] = [
     {
-      field: "id",
-      headerName: "ID",
-      width: 70,
-      type: "number",
-    },
-    {
       field: "sourceAddressId",
       headerName: "Src Address",
       width: 160,
@@ -400,7 +398,7 @@ export default function Transitions() {
     {
       field: "status",
       headerName: "Status",
-      width: 130,
+      width: 100,
       type: "singleSelect",
       valueOptions: STATUS_OPTIONS,
     },
@@ -422,28 +420,16 @@ export default function Transitions() {
     {
       field: "balanceDayUtc",
       headerName: "Balance Day",
-      width: 140,
+      width: 110,
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Balance</div><div>Day</div></Box>,
       valueFormatter: (value) => (value ? new Date(value as string).toLocaleDateString() : ""),
     },
     {
-      field: "sourceSurplusKwhAtWorkflow",
-      headerName: "Src Surplus kWh",
+      field: "effectiveAtUtc",
+      headerName: "Effective (UTC)",
       width: 130,
-      type: "number",
-    },
-    {
-      field: "destinationDeficitKwhAtWorkflow",
-      headerName: "Dest Deficit kWh",
-      width: 140,
-      type: "number",
-      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Dest Deficit</div><div>kWh</div></Box>,
-    },
-    {
-      field: "remainingSourceSurplusKwhAfterWorkflow",
-      headerName: "Remaining Src kWh",
-      width: 130,
-      type: "number",
-      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Remaining</div><div>Src kWh</div></Box>,
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Effective</div><div>(UTC)</div></Box>,
+      valueFormatter: (value) => (value ? new Date(value as string).toLocaleString() : ""),
     },
     {
       field: "amountKwh",
@@ -453,17 +439,59 @@ export default function Transitions() {
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Amount</div><div>kWh</div></Box>,
     },
     {
+      field: "sourceSurplusKwhAtWorkflow",
+      headerName: "Src Surplus Before Transfer kWh",
+      width: 130,
+      type: "number",
+    },
+    {
+      field: "destinationDeficitKwhAtWorkflow",
+      headerName: "Dest Deficit Before Transfer kWh",
+      width: 150,
+      type: "number",
+    },
+    {
+      field: "remainingSourceSurplusKwhAfterWorkflow",
+      headerName: "Remaining Src Surplus After Transfer kWh",
+      width: 170,
+      type: "number",
+      valueGetter: (_value, row: TransferWorkflow) => {
+        if (row.status < STATUS_EXECUTED) {
+          return null;
+        }
+
+        if (row.remainingSourceSurplusKwhAfterWorkflow != null) {
+          return row.remainingSourceSurplusKwhAfterWorkflow;
+        }
+
+        return row.sourceSurplusKwhAtWorkflow - row.amountKwh;
+      },
+      renderCell: (params) => (params.value == null ? <span style={{ color: "#999" }}>-</span> : params.value),
+    },
+    {
+      field: "remainingDestinationDeficitKwhAfterWorkflow",
+      headerName: "Remaining Dest Deficit After Transfer kWh",
+      width: 180,
+      type: "number",
+      valueGetter: (_value, row: TransferWorkflow) => {
+        if (row.remainingDestinationDeficitKwhAfterWorkflow != null) {
+          return row.remainingDestinationDeficitKwhAfterWorkflow;
+        }
+
+        if (row.status >= STATUS_EXECUTED) {
+          return row.destinationDeficitKwhAtWorkflow - row.amountKwh;
+        }
+
+        return null;
+      },
+      renderCell: (params) => (params.value == null ? <span style={{ color: "#999" }}>-</span> : params.value),
+    },
+    {
       field: "destinationTransferRuleId",
       headerName: "Transfer Rule ID",
       width: 95,
       type: "number",
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Transfer</div><div>Rule ID</div></Box>,
-    },
-    {
-      field: "effectiveAtUtc",
-      headerName: "Effective (UTC)",
-      width: 180,
-      valueFormatter: (value) => (value ? new Date(value as string).toLocaleString() : ""),
     },
     {
       field: "priority",

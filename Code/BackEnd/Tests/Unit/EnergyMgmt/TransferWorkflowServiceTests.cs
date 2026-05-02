@@ -73,7 +73,7 @@ public class TransferWorkflowServiceTests
         {
             Id = 1,
             SourceAddressId = 1,
-            DistributionMode = (int)TransferDistributionMode.Fair,
+            DistributionModeEnum = TransferDistributionMode.Fair,
             IsEnabled = true,
         };
 
@@ -85,7 +85,7 @@ public class TransferWorkflowServiceTests
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
-                DistributionMode = (int)TransferDistributionMode.Fair
+                DistributionModeEnum = TransferDistributionMode.Fair
             },
             new DestinationTransferRule
             {
@@ -93,7 +93,7 @@ public class TransferWorkflowServiceTests
                 DestinationAddressId = 3,
                 IsEnabled = true,
                 Priority = 2,
-                DistributionMode = (int)TransferDistributionMode.Fair
+                DistributionModeEnum = TransferDistributionMode.Fair
             });
 
         await db.SaveChangesAsync();
@@ -113,8 +113,8 @@ public class TransferWorkflowServiceTests
         Assert.Equal(5m, to2.AmountKwh);
         Assert.Equal(5m, to3.AmountKwh);
 
-        Assert.All(result, x => Assert.Equal((int)TransferStatus.Planned, x.Status));
-        Assert.All(result, x => Assert.Equal((int)TriggerType.Auto, x.TriggerType));
+        Assert.All(result, x => Assert.Equal(TransferStatus.Planned, x.TransferStatusEnum));
+        Assert.All(result, x => Assert.Equal(TriggerType.Auto, x.TriggerTypeEnum));
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class TransferWorkflowServiceTests
         {
             Id = 1,
             SourceAddressId = 1,
-            DistributionMode = (int)TransferDistributionMode.Priority,
+            DistributionModeEnum = TransferDistributionMode.Priority,
             IsEnabled = true,
         };
 
@@ -146,7 +146,7 @@ public class TransferWorkflowServiceTests
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
-                DistributionMode = (int)TransferDistributionMode.Priority
+                DistributionModeEnum = TransferDistributionMode.Priority
             },
             new DestinationTransferRule
             {
@@ -154,7 +154,7 @@ public class TransferWorkflowServiceTests
                 DestinationAddressId = 3,
                 IsEnabled = true,
                 Priority = 2,
-                DistributionMode = (int)TransferDistributionMode.Priority
+                DistributionModeEnum = TransferDistributionMode.Priority
             });
 
         await db.SaveChangesAsync();
@@ -192,7 +192,7 @@ public class TransferWorkflowServiceTests
         {
             Id = 1,
             SourceAddressId = 101,
-            DistributionMode = (int)TransferDistributionMode.Weighted,
+            DistributionModeEnum = TransferDistributionMode.Weighted,
             IsEnabled = true,
         };
 
@@ -205,7 +205,7 @@ public class TransferWorkflowServiceTests
                 IsEnabled = true,
                 Priority = 1,
                 WeightPercent = 70m,
-                DistributionMode = (int)TransferDistributionMode.Weighted
+                DistributionModeEnum = TransferDistributionMode.Weighted
             },
             new DestinationTransferRule
             {
@@ -214,7 +214,7 @@ public class TransferWorkflowServiceTests
                 IsEnabled = true,
                 Priority = 2,
                 WeightPercent = 30m,
-                DistributionMode = (int)TransferDistributionMode.Weighted
+                DistributionModeEnum = TransferDistributionMode.Weighted
             });
 
         await db.SaveChangesAsync();
@@ -256,7 +256,7 @@ public class TransferWorkflowServiceTests
         {
             Id = 1,
             SourceAddressId = 1,
-            DistributionMode = (int)TransferDistributionMode.Fair,
+            DistributionModeEnum = TransferDistributionMode.Fair,
             IsEnabled = true,
         };
 
@@ -268,7 +268,7 @@ public class TransferWorkflowServiceTests
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
-                DistributionMode = (int)TransferDistributionMode.Fair
+                DistributionModeEnum = TransferDistributionMode.Fair
             });
 
         await db.SaveChangesAsync();
@@ -309,7 +309,7 @@ public class TransferWorkflowServiceTests
         {
             Id = 1,
             SourceAddressId = 1,
-            DistributionMode = (int)TransferDistributionMode.Fair,
+            DistributionModeEnum = TransferDistributionMode.Fair,
             IsEnabled = true,
         };
 
@@ -321,7 +321,7 @@ public class TransferWorkflowServiceTests
                 DestinationAddressId = 2,
                 IsEnabled = true,
                 Priority = 1,
-                DistributionMode = (int)TransferDistributionMode.Fair
+                DistributionModeEnum = TransferDistributionMode.Fair
             });
 
         await db.SaveChangesAsync();

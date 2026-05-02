@@ -33,6 +33,13 @@ public class TransferExecutionControllerIntegrationTests : IntegrationTestBase, 
             var executeDbFactory = executeScope.ServiceProvider.GetRequiredService<IDbContextFactory<VnmDbContext>>();
             await using var executeDb = await executeDbFactory.CreateDbContextAsync();
 
+            var executedWorkflow = await executeDb.TransferWorkflows
+                .FirstOrDefaultAsync(x => x.Id == workflowId);
+
+            Assert.NotNull(executedWorkflow);
+            Assert.Equal(5m, executedWorkflow!.RemainingSourceSurplusKwhAfterWorkflow);
+            Assert.Equal(0m, executedWorkflow.RemainingDestinationDeficitKwhAfterWorkflow);
+
             var ledger = await executeDb.TransferLedgerEntries
                 .OrderByDescending(x => x.Id)
                 .FirstOrDefaultAsync(x => x.TransferWorkflowId == workflowId);
@@ -109,7 +116,8 @@ public class TransferExecutionControllerIntegrationTests : IntegrationTestBase, 
             DestinationAddressId = destination.Id,
             SourceSurplusKwhAtWorkflow = 15,
             DestinationDeficitKwhAtWorkflow = 10,
-            RemainingSourceSurplusKwhAfterWorkflow = 5,
+            RemainingSourceSurplusKwhAfterWorkflow = null,
+            RemainingDestinationDeficitKwhAfterWorkflow = null,
             AmountKwh = 10,
             TriggerType = 0,
             Status = status,

@@ -215,11 +215,12 @@ public class TransferWorkflowService : ITransferWorkflowService
                 SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
                 DestinationDeficitKwhAtWorkflow = destinationNeedBefore,
                 AmountKwh = amount,
-                RemainingSourceSurplusKwhAfterWorkflow = remainingSourceAfter,
+                RemainingSourceSurplusKwhAfterWorkflow = null,
+                RemainingDestinationDeficitKwhAfterWorkflow = null,
                 BalanceDayUtc = dayStartUtc,
-                Status = (int)TransferStatus.Planned,
-                TriggerType = (int)TriggerType.Manual,
-                AppliedDistributionMode = (int)TransferDistributionMode.Fair
+                TransferStatusEnum = TransferStatus.Planned,
+                TriggerTypeEnum = TriggerType.Manual,
+                AppliedDistributionModeEnum = TransferDistributionMode.Fair
             });
 
             runningRemainingSource = remainingSourceAfter;
@@ -394,7 +395,7 @@ public class TransferWorkflowService : ITransferWorkflowService
         decimal amount,
         decimal sourceSurplusAtWorkflow,
         decimal destinationDeficitAtWorkflow,
-        decimal remainingSourceSurplusAfterWorkflow,
+        decimal _remainingSourceSurplusAfterWorkflow,
         DateTime dayUtc,
         TransferDistributionMode distributionMode,
         int? destinationTransferRuleId,
@@ -408,11 +409,12 @@ public class TransferWorkflowService : ITransferWorkflowService
             SourceSurplusKwhAtWorkflow = sourceSurplusAtWorkflow,
             DestinationDeficitKwhAtWorkflow = destinationDeficitAtWorkflow,
             AmountKwh = amount,
-            RemainingSourceSurplusKwhAfterWorkflow = remainingSourceSurplusAfterWorkflow,
+            RemainingSourceSurplusKwhAfterWorkflow = null,
+            RemainingDestinationDeficitKwhAfterWorkflow = null,
             BalanceDayUtc = dayUtc,
-            Status = (int)TransferStatus.Planned,
-            TriggerType = (int)TriggerType.Auto,
-            AppliedDistributionMode = (int)distributionMode,
+            TransferStatusEnum = TransferStatus.Planned,
+            TriggerTypeEnum = TriggerType.Auto,
+            AppliedDistributionModeEnum = distributionMode,
             DestinationTransferRuleId = destinationTransferRuleId,
             Priority = priority,
             WeightPercent = weightPercent
@@ -520,6 +522,7 @@ public class TransferWorkflowService : ITransferWorkflowService
                 existing.DestinationDeficitKwhAtWorkflow = desired.DestinationDeficitKwhAtWorkflow;
                 existing.AmountKwh = desired.AmountKwh;
                 existing.RemainingSourceSurplusKwhAfterWorkflow = desired.RemainingSourceSurplusKwhAfterWorkflow;
+                existing.RemainingDestinationDeficitKwhAfterWorkflow = desired.RemainingDestinationDeficitKwhAfterWorkflow;
                 existing.AppliedDistributionMode = desired.AppliedDistributionMode;
                 existing.DestinationTransferRuleId = desired.DestinationTransferRuleId;
                 existing.Priority = desired.Priority;

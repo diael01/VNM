@@ -6,7 +6,8 @@ export type TransferWorkflow = {
   destinationAddressId: number;
   sourceSurplusKwhAtWorkflow: number;
   destinationDeficitKwhAtWorkflow: number;
-  remainingSourceSurplusKwhAfterWorkflow: number;
+  remainingSourceSurplusKwhAfterWorkflow: number | null;
+  remainingDestinationDeficitKwhAfterWorkflow: number | null;
   amountKwh: number;
   triggerType: number;
   status: number;
