@@ -112,14 +112,23 @@ public sealed class FakeDashboardTransferWorkflowRedirectService : IDashboardTra
     public Task<List<TransferWorkflowDto>> GetTransferWorkflowsAsync(string accessToken, CancellationToken cancellationToken = default)
         => Task.FromResult(new List<TransferWorkflowDto>());
 
+    public Task<List<TransferWorkflowStatusHistoryDto>> GetTransferWorkflowHistoryAsync(string accessToken, CancellationToken cancellationToken = default)
+        => Task.FromResult(new List<TransferWorkflowStatusHistoryDto>
+        {
+            new()
+            {
+                Id = 1,
+                TransferWorkflowId = 123,
+                FromStatus = 0,
+                ToStatus = 1,
+                Note = "Approved from integration test",
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedBy = "integration-test"
+            }
+        });
+
     public Task<TransferWorkflowDto?> GetTransferWorkflowByIdAsync(string accessToken, int id, CancellationToken cancellationToken = default)
         => Task.FromResult<TransferWorkflowDto?>(null);
-
-    public Task<TransferWorkflowDto> CreateTransferWorkflowAsync(string accessToken, TransferWorkflowDto workflow, CancellationToken cancellationToken = default)
-        => Task.FromResult(workflow);
-
-    public Task<TransferWorkflowDto> UpdateTransferWorkflowAsync(string accessToken, int id, TransferWorkflowDto workflow, CancellationToken cancellationToken = default)
-        => Task.FromResult(workflow);
 
     public Task<TransferWorkflowDto> ApproveTransferWorkflowAsync(string accessToken, int id, string? note = null, CancellationToken cancellationToken = default)
         => Task.FromResult(BuildWorkflow(id, 1, note));
@@ -140,9 +149,6 @@ public sealed class FakeDashboardTransferWorkflowRedirectService : IDashboardTra
         LastSettleNote = note;
         return Task.FromResult(BuildWorkflow(id, 3, note));
     }
-
-    public Task<bool> DeleteTransferWorkflowAsync(string accessToken, int id, CancellationToken cancellationToken = default)
-        => Task.FromResult(true);
 
     private static TransferWorkflowDto BuildWorkflow(int id, int status, string? note)
     {

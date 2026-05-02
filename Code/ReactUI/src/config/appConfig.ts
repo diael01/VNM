@@ -47,6 +47,7 @@ const consumptionPath = import.meta.env.VITE_CONSUMPTION_PATH || "/api/v1/dashbo
 const dailyBalancePath = import.meta.env.VITE_DAILY_BALANCE_PATH || "/api/v1/dashboard/analytics/dailybalance"
 const transferRulesPath = import.meta.env.VITE_TRANSFER_RULE_PATH || "/api/v1/dashboard/transferRules"
 const transferWorkflowsPath = import.meta.env.VITE_TRANSFER_WORKFLOW_PATH || "/api/v1/dashboard/transferWorkflows"
+const transferHistoryPath = import.meta.env.VITE_TRANSFER_HISTORY_PATH || "/api/v1/dashboard/transfers/history"
 const sourcePoliciesPath = import.meta.env.VITE_SOURCE_POLICIES_PATH || "/api/v1/dashboard/sourcePolicies"
 
 export const appConfig = {
@@ -64,6 +65,7 @@ export const appConfig = {
     dailyBalance: dailyBalancePath,
     transferRules: transferRulesPath,
     transferWorkflows: transferWorkflowsPath,
+    transferHistory: transferHistoryPath,
     sourcePolicies: sourcePoliciesPath,
   },
   urls: {
@@ -79,6 +81,7 @@ export const appConfig = {
     dailyBalance: combine(apiBaseUrl, dailyBalancePath),
     transferRules: combine(apiBaseUrl, transferRulesPath),
     transferWorkflows: combine(apiBaseUrl, transferWorkflowsPath),
+    transferHistory: combine(apiBaseUrl, transferHistoryPath),
     sourcePolicies: combine(apiBaseUrl, sourcePoliciesPath),
   },
 }

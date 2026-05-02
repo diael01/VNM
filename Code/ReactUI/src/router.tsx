@@ -7,7 +7,7 @@ const InverterReadingsPage = lazy(() => import("./pages/InverterReadingsPage"));
 const Inverters = lazy(() => import("./pages/Inverters"));
 const AdrMgmt = lazy(() => import("./pages/AdrMgmt"));
 const TransferRules = lazy(() => import("./pages/TransferRules"));
-const NewTransfer = lazy(() => import("./pages/NewTransfer"));
+const Transitions = lazy(() => import("./pages/Transitions"));
 const ConsumptionPage = lazy(() => import("./pages/ConsumptionReadingsPage"));
 const DailyBalancePage = lazy(() => import("./pages/DailyBalancePage"));
 
@@ -27,7 +27,7 @@ export const router = createBrowserRouter([
           { path: "assets/addresses", element: withSuspense(<AdrMgmt />) },
           { path: "assets/inverters", element: withSuspense(<Inverters />) },
           { path: "transfers/rules", element: withSuspense(<TransferRules />) },
-          { path: "transfers/new", element: withSuspense(<NewTransfer />) },
+          { path: "transfers/new", element: withSuspense(<Transitions />) },
           { path: "data/inverterreadings", element: withSuspense(<InverterReadingsPage permissions={[]} />) },
           { path: "data/consumptionreadings", element: withSuspense(<ConsumptionPage permissions={[]} />) },
           { path: "analytics", element: <div>Analytics (placeholder)</div> },

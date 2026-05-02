@@ -9,6 +9,7 @@ namespace Services.Transfers;
 public interface ITransferWorkflowCrudService
 {
     Task<List<TransferWorkflowDto>> GetAllAsync();
+    Task<List<TransferWorkflowStatusHistoryDto>> GetAllHistoryAsync();
     Task<TransferWorkflowDto?> GetByIdAsync(int id);
     Task<List<TransferWorkflowStatusHistoryDto>> GetHistoryAsync(int id);
     Task<TransferWorkflowDto> CreateAsync(TransferWorkflowDto transferWorkflowDto);
@@ -48,6 +49,16 @@ public sealed class TransferWorkflowCrudService : ITransferWorkflowCrudService
     {
         var workflows = await _transferWorkflowRepository.GetAllAsync();
         return _mapper.Map<List<TransferWorkflowDto>>(workflows);
+    }
+
+    public async Task<List<TransferWorkflowStatusHistoryDto>> GetAllHistoryAsync()
+    {
+        var history = await _dbContext.TransferWorkflowStatusHistory
+            .AsNoTracking()
+            .OrderByDescending(h => h.CreatedAtUtc)
+            .ToListAsync();
+
+        return _mapper.Map<List<TransferWorkflowStatusHistoryDto>>(history);
     }
 
     public async Task<TransferWorkflowDto?> GetByIdAsync(int id)

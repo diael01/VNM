@@ -13,6 +13,23 @@ public class DashboardTransferWorkflowControllerIntegrationTests : IClassFixture
     }
 
     [Fact]
+    public async Task History_Endpoint_Returns_Status_Transitions()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("api/v1/dashboard/transfers/history");
+        response.EnsureSuccessStatusCode();
+
+        var dto = await response.Content.ReadFromJsonAsync<List<TransferWorkflowStatusHistoryDto>>();
+        Assert.NotNull(dto);
+        Assert.Single(dto!);
+        Assert.Equal(123, dto[0].TransferWorkflowId);
+        Assert.Equal(0, dto[0].FromStatus);
+        Assert.Equal(1, dto[0].ToStatus);
+        Assert.Equal("integration-test", dto[0].CreatedBy);
+    }
+
+    [Fact]
     public async Task Execute_Endpoint_Forwards_Note_And_Returns_Updated_Workflow()
     {
         var client = _factory.CreateClient();
