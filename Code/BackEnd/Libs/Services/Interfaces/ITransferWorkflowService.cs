@@ -1,5 +1,5 @@
 ﻿using Repositories.Models;
-public interface ITransferWorkflowService
+public interface ITransferWorkflowScheduledService
 {
     Task<IReadOnlyList<TransferWorkflow>> RunAutomaticWorkflowAsync(
         DateOnly day,
@@ -10,7 +10,4 @@ public interface ITransferWorkflowService
         DateOnly day,
         CancellationToken ct = default);
 
-    Task<IReadOnlyList<TransferWorkflow>> ExecuteManualTransferAsync(
-        ManualTransferRequest request,
-        CancellationToken ct = default);
 }

@@ -334,7 +334,7 @@ public class TransferWorkflowServiceTests
         Assert.Null(ex);
     }
 
-    private static TransferWorkflowService CreateSut(
+    private static TransferWorkflowScheduledService CreateSut(
         VnmDbContext db,
         TransferDistributionMode defaultMode)
     {
@@ -346,9 +346,9 @@ public class TransferWorkflowServiceTests
                
             });
 
-        return new TransferWorkflowService(
+        return new TransferWorkflowScheduledService(
             db,
-            NullLogger<TransferWorkflowService>.Instance);
+            NullLogger<TransferWorkflowScheduledService>.Instance);
     }
 
     private static void SeedAddresses(VnmDbContext db, params int[] ids)

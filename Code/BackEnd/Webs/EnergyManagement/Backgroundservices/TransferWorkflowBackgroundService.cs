@@ -51,7 +51,7 @@ public class TransferWorkflowBackgroundService : BackgroundService
                 using var scope = _scopeFactory.CreateScope();
 
                 var db = scope.ServiceProvider.GetRequiredService<VnmDbContext>();
-                var workflowService = scope.ServiceProvider.GetRequiredService<ITransferWorkflowService>();
+                var workflowService = scope.ServiceProvider.GetRequiredService<ITransferWorkflowScheduledService>();
 
                 var nowUtc = DateTime.UtcNow;
 

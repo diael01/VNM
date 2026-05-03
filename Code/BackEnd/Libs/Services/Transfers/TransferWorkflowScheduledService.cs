@@ -5,14 +5,14 @@ using Repositories.Models;
 
 namespace EnergyManagement.Services.Transfers;
 
-public class TransferWorkflowService : ITransferWorkflowService
+public class TransferWorkflowScheduledService : ITransferWorkflowScheduledService
 {
     private readonly VnmDbContext _db;
-    private readonly ILogger<TransferWorkflowService> _logger;
+    private readonly ILogger<TransferWorkflowScheduledService> _logger;
 
-    public TransferWorkflowService(
+    public TransferWorkflowScheduledService(
         VnmDbContext db,
-        ILogger<TransferWorkflowService> logger)
+        ILogger<TransferWorkflowScheduledService> logger)
     {
         _db = db;
         _logger = logger;
@@ -154,84 +154,6 @@ public class TransferWorkflowService : ITransferWorkflowService
         }
 
         return allResults;
-    }
-
-    public async Task<IReadOnlyList<TransferWorkflow>> ExecuteManualTransferAsync(
-        ManualTransferRequest request,
-        CancellationToken ct = default)
-    {
-        if (request.Targets == null || request.Targets.Count == 0)
-            return Array.Empty<TransferWorkflow>();
-
-        var dayStartUtc = ToUtcStartOfDay(request.Day);
-        var dayEndUtc = dayStartUtc.AddDays(1);
-
-        var positions = await GetAddressPositionsAsync(dayStartUtc, dayEndUtc, ct);
-        var positionsByAddress = positions.ToDictionary(x => x.AddressId);
-
-        if (!positionsByAddress.TryGetValue(request.SourceAddressId, out var sourcePosition))
-            throw new InvalidOperationException(
-                $"Source address {request.SourceAddressId} has no balance position for {request.Day}.");
-
-        // Do not allow a manual workflow to be created/changed after lifecycle action already happened.
-        if (await HasNonPlannedManualWorkflowsForSourceAsync(request.SourceAddressId, dayStartUtc, dayEndUtc, ct))
-            throw new InvalidOperationException(
-                $"Manual workflows for source {request.SourceAddressId} and day {request.Day} already contain non-Planned rows. Manual re-planning is not allowed.");
-
-        var desired = new List<TransferWorkflow>();
-        var runningRemainingSource = sourcePosition.RemainingSurplusKwh;
-
-        foreach (var target in request.Targets)
-        {
-            if (runningRemainingSource <= 0)
-                break;
-
-            if (target.RequestedKwh <= 0)
-                continue;
-
-            if (target.DestinationAddressId == request.SourceAddressId)
-                throw new InvalidOperationException("Source and destination cannot be the same address.");
-
-            if (!positionsByAddress.TryGetValue(target.DestinationAddressId, out var destinationPosition))
-                throw new InvalidOperationException(
-                    $"Destination address {target.DestinationAddressId} has no balance position for {request.Day}.");
-
-            var sourceAvailableBefore = decimal.Round(runningRemainingSource, 4);
-            var destinationNeedBefore = decimal.Round(destinationPosition.RemainingDeficitKwh, 4);
-
-            var amount = Math.Min(target.RequestedKwh, sourceAvailableBefore);
-            amount = Math.Min(amount, destinationNeedBefore);
-            amount = decimal.Round(amount, 4);
-
-            if (amount <= 0)
-                continue;
-
-            var remainingSourceAfter = decimal.Round(sourceAvailableBefore - amount, 4);
-
-            desired.Add(new TransferWorkflow
-            {
-                SourceAddressId = request.SourceAddressId,
-                DestinationAddressId = target.DestinationAddressId,
-                SourceSurplusKwhAtWorkflow = sourceAvailableBefore,
-                DestinationDeficitKwhAtWorkflow = destinationNeedBefore,
-                AmountKwh = amount,
-                RemainingSourceSurplusKwhAfterWorkflow = null,
-                RemainingDestinationDeficitKwhAfterWorkflow = null,
-                BalanceDayUtc = dayStartUtc,
-                TransferStatusEnum = TransferStatus.Planned,
-                TriggerTypeEnum = TriggerType.Manual,
-                AppliedDistributionModeEnum = TransferDistributionMode.Fair
-            });
-
-            runningRemainingSource = remainingSourceAfter;
-        }
-
-        return await UpsertManualPlannedRowsForSourceAsync(
-            request.SourceAddressId,
-            dayStartUtc,
-            dayEndUtc,
-            desired,
-            ct);
     }
 
     private sealed record DestinationEntry(DestinationTransferRule Rule, AddressPosition Position);
@@ -409,8 +331,9 @@ public class TransferWorkflowService : ITransferWorkflowService
             SourceSurplusKwhAtWorkflow = sourceSurplusAtWorkflow,
             DestinationDeficitKwhAtWorkflow = destinationDeficitAtWorkflow,
             AmountKwh = amount,
-            RemainingSourceSurplusKwhAfterWorkflow = null,
-            RemainingDestinationDeficitKwhAfterWorkflow = null,
+            SourceSurplusKwhAtExecution = null,
+            DestinationDeficitKwhAtExecution = null,
+            AmountAtExecutionKwh = null,
             BalanceDayUtc = dayUtc,
             TransferStatusEnum = TransferStatus.Planned,
             TriggerTypeEnum = TriggerType.Auto,
@@ -433,22 +356,6 @@ public class TransferWorkflowService : ITransferWorkflowService
             dayStartUtc,
             dayEndUtc,
             (int)TriggerType.Auto,
-            desiredWorkflows,
-            ct);
-    }
-
-    private async Task<List<TransferWorkflow>> UpsertManualPlannedRowsForSourceAsync(
-        int sourceAddressId,
-        DateTime dayStartUtc,
-        DateTime dayEndUtc,
-        List<TransferWorkflow> desiredWorkflows,
-        CancellationToken ct)
-    {
-        return await UpsertPlannedRowsForSourceAsync(
-            sourceAddressId,
-            dayStartUtc,
-            dayEndUtc,
-            (int)TriggerType.Manual,
             desiredWorkflows,
             ct);
     }
@@ -521,8 +428,9 @@ public class TransferWorkflowService : ITransferWorkflowService
                 existing.SourceSurplusKwhAtWorkflow = desired.SourceSurplusKwhAtWorkflow;
                 existing.DestinationDeficitKwhAtWorkflow = desired.DestinationDeficitKwhAtWorkflow;
                 existing.AmountKwh = desired.AmountKwh;
-                existing.RemainingSourceSurplusKwhAfterWorkflow = desired.RemainingSourceSurplusKwhAfterWorkflow;
-                existing.RemainingDestinationDeficitKwhAfterWorkflow = desired.RemainingDestinationDeficitKwhAfterWorkflow;
+                existing.SourceSurplusKwhAtExecution = desired.SourceSurplusKwhAtExecution;
+                existing.DestinationDeficitKwhAtExecution = desired.DestinationDeficitKwhAtExecution;
+                existing.AmountAtExecutionKwh = desired.AmountAtExecutionKwh;
                 existing.AppliedDistributionMode = desired.AppliedDistributionMode;
                 existing.DestinationTransferRuleId = desired.DestinationTransferRuleId;
                 existing.Priority = desired.Priority;
@@ -554,20 +462,6 @@ public class TransferWorkflowService : ITransferWorkflowService
             dayStartUtc,
             dayEndUtc,
             (int)TriggerType.Auto,
-            ct);
-    }
-
-    private async Task<bool> HasNonPlannedManualWorkflowsForSourceAsync(
-        int sourceAddressId,
-        DateTime dayStartUtc,
-        DateTime dayEndUtc,
-        CancellationToken ct)
-    {
-        return await HasNonPlannedWorkflowsForSourceAsync(
-            sourceAddressId,
-            dayStartUtc,
-            dayEndUtc,
-            (int)TriggerType.Manual,
             ct);
     }
 

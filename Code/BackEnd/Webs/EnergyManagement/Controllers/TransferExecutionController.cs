@@ -10,11 +10,11 @@ namespace EnergyManagement.Controllers;
 public class TransferExecutionController : ControllerBase
 {
     private readonly ITransferExecutionService _transferExecutionService;
-    private readonly ITransferWorkflowCrudService _transferWorkflowService;
+    private readonly ITransitionWorkflowService _transferWorkflowService;
 
     public TransferExecutionController(
         ITransferExecutionService transferExecutionService,
-        ITransferWorkflowCrudService transferWorkflowService)
+        ITransitionWorkflowService transferWorkflowService)
     {
         _transferExecutionService = transferExecutionService;
         _transferWorkflowService = transferWorkflowService;

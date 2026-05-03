@@ -88,3 +88,9 @@ public class TransferExecutionSimulatorOptions
     public string BaseUrl { get; set; } = string.Empty;
 }
 
+
+    public class TransferWorkflowCleanupOptions
+    {
+        public int ExpirationDays { get; set; } = 30;
+        public int RunIntervalMinutes { get; set; } = 1440; // default: once per day
+    }

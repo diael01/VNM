@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITransferRuleService, TransferRuleService>();
         services.AddScoped<ISourceTransferPolicyService, SourceTransferPolicyService>();
         services.AddScoped<ISourceTransferScheduleService, SourceTransferScheduleService>();
-        services.AddScoped<ITransferWorkflowCrudService, TransferWorkflowCrudService>();
+        services.AddScoped<ITransitionWorkflowService, TransitionWorkflowService>();
 
         // Register BFF redirect services
         services.AddScoped<IDashboardAddressRedirectService, DashboardAddressRedirectService>();
@@ -40,7 +40,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProviderSettlementService, ProviderSettlementService>();
         services.AddScoped<IAvailableBalanceService, AvailableBalanceService>();
-        services.AddScoped<ITransferWorkflowService, TransferWorkflowService>();  
+        services.AddScoped<ITransferWorkflowScheduledService, TransferWorkflowScheduledService>();  
         services.AddScoped<ISettlementModeResolver, SettlementModeResolver>(); 
         services.AddScoped<ISettlementModeStrategy, EnergySettlementModeStrategy>(); 
         services.AddScoped<ISettlementModeStrategy, MoneySettlementModeStrategy>(); 

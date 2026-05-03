@@ -60,6 +60,10 @@ builder.Services.Configure<MeteringOptions>(
 
 builder.Services.Configure<DailyBalanceComputationOptions>(
     builder.Configuration.GetSection("DailyBalanceComputation"));
+builder.Services.Configure<TransferWorkflowCleanupOptions>(
+    builder.Configuration.GetSection("TransferWorkflowCleanup"));
+
+builder.Services.AddHostedService<TransferWorkflowCleanupBackgroundService>();    
 
 // ---------------------
 // HTTP client for polling

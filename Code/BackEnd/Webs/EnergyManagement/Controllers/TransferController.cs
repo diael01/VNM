@@ -8,9 +8,9 @@ namespace EnergyManagement.Services.Transfers;
 [Route("api/v1/transfers")]
 public class TransfersController : ControllerBase
 {
-    private readonly ITransferWorkflowService _service;
+    private readonly ITransferWorkflowScheduledService _service;
 
-    public TransfersController(ITransferWorkflowService service)
+    public TransfersController(ITransferWorkflowScheduledService service)
     {
         _service = service;
     }
@@ -32,13 +32,5 @@ public class TransfersController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("manual")]
-    public async Task<IActionResult> RunManual(
-        [FromBody] ManualTransferRequest request,
-        CancellationToken ct)
-    {
-        var result = await _service.ExecuteManualTransferAsync(request, ct);
-        return Ok(result);
-    }
 }
 

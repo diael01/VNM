@@ -9,7 +9,7 @@ namespace Repositories.Models
     {
         public VnmDbContext CreateDbContext(string[] args)
         {
-            // Build config from appsettings and user secrets
+            // Build config from appsettings and user secrets.
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true)
@@ -17,7 +17,16 @@ namespace Repositories.Models
                 .AddEnvironmentVariables()
                 .Build();
 
-            var connectionString = config.GetConnectionString("DefaultConnection");
+            var connectionString =
+                config.GetConnectionString("VnmDb") ??
+                config.GetConnectionString("DefaultConnection");
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Missing SQL connection string. Configure it in user-secrets/appsettings as ConnectionStrings:VnmDb (or ConnectionStrings:DefaultConnection).");
+            }
+
             var optionsBuilder = new DbContextOptionsBuilder<VnmDbContext>();
             optionsBuilder.UseSqlServer(connectionString);
             return new VnmDbContext(optionsBuilder.Options);

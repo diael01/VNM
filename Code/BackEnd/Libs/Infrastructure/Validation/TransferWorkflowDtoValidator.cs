@@ -39,9 +39,20 @@ public class TransferWorkflowDtoValidator : CustomValidator<TransferWorkflowDto>
             .GreaterThanOrEqualTo(0)
             .WithMessage("Destination deficit must be >= 0.");
 
-        RuleFor(x => x.RemainingSourceSurplusKwhAfterWorkflow)
+        RuleFor(x => x.SourceSurplusKwhAtExecution)
             .GreaterThanOrEqualTo(0)
-            .WithMessage("Remaining source surplus must be >= 0.");
+            .When(x => x.SourceSurplusKwhAtExecution.HasValue)
+            .WithMessage("Source surplus at execution must be >= 0.");
+
+        RuleFor(x => x.DestinationDeficitKwhAtExecution)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.DestinationDeficitKwhAtExecution.HasValue)
+            .WithMessage("Destination deficit at execution must be >= 0.");
+
+        RuleFor(x => x.AmountAtExecutionKwh)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.AmountAtExecutionKwh.HasValue)
+            .WithMessage("Amount at execution must be >= 0.");
 
         RuleFor(x => x.AppliedDistributionMode)
             .InclusiveBetween(0, 2)

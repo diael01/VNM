@@ -112,6 +112,24 @@ function normalizeDateOnly(value: string): string {
   return parsed.toISOString().slice(0, 10);
 }
 
+function formatEffectiveUtc(value: unknown): string {
+  if (!value) {
+    return "";
+  }
+
+  const parsed = new Date(String(value));
+  if (Number.isNaN(parsed.getTime())) {
+    return "-";
+  }
+
+  // Treat default .NET DateTime.MinValue (year 1) as invalid for display.
+  if (parsed.getFullYear() === 1) {
+    return "-";
+  }
+
+  return parsed.toLocaleString();
+}
+
 function normalizeModeSpecificFields(workflow: TransferWorkflow): TransferWorkflow {
   const mode = toNumber(workflow.appliedDistributionMode, FAIR_MODE);
 
@@ -128,10 +146,11 @@ function normalizeWorkflow(workflow: TransferWorkflow): TransferWorkflow {
     sourceAddressId: toNumber(workflow.sourceAddressId),
     destinationAddressId: toNumber(workflow.destinationAddressId),
     amountKwh: toNumber(workflow.amountKwh),
+    amountAtExecutionKwh: toNullableNumber(workflow.amountAtExecutionKwh),
     sourceSurplusKwhAtWorkflow: toNumber(workflow.sourceSurplusKwhAtWorkflow),
     destinationDeficitKwhAtWorkflow: toNumber(workflow.destinationDeficitKwhAtWorkflow),
-    remainingSourceSurplusKwhAfterWorkflow: toNullableNumber(workflow.remainingSourceSurplusKwhAfterWorkflow),
-    remainingDestinationDeficitKwhAfterWorkflow: toNullableNumber(workflow.remainingDestinationDeficitKwhAfterWorkflow),
+    sourceSurplusKwhAtExecution: toNullableNumber(workflow.sourceSurplusKwhAtExecution),
+    destinationDeficitKwhAtExecution: toNullableNumber(workflow.destinationDeficitKwhAtExecution),
     triggerType: toNumber(workflow.triggerType),
     status: toNumber(workflow.status),
     appliedDistributionMode: toNumber(workflow.appliedDistributionMode),
@@ -352,6 +371,7 @@ export default function Transitions() {
     {
       field: "sourceAddressId",
       headerName: "Src Address",
+      description: "Source address supplying the energy",
       width: 160,
       type: "singleSelect",
       valueOptions: addressOptions,
@@ -359,6 +379,7 @@ export default function Transitions() {
     {
       field: "destinationAddressId",
       headerName: "Dest Address",
+      description: "Destination address receiving the energy",
       width: 160,
       type: "singleSelect",
       valueOptions: addressOptions,
@@ -366,6 +387,7 @@ export default function Transitions() {
     {
       field: "statusActions",
       headerName: "Actions",
+      description: "Available status transitions for this workflow",
       width: 210,
       sortable: false,
       filterable: false,
@@ -398,6 +420,7 @@ export default function Transitions() {
     {
       field: "status",
       headerName: "Status",
+      description: "Current lifecycle status of the workflow",
       width: 100,
       type: "singleSelect",
       valueOptions: STATUS_OPTIONS,
@@ -405,6 +428,7 @@ export default function Transitions() {
     {
       field: "triggerType",
       headerName: "Trigger",
+      description: "Whether the workflow was triggered manually or automatically",
       width: 90,
       type: "singleSelect",
       valueOptions: TRIGGER_OPTIONS,
@@ -412,6 +436,7 @@ export default function Transitions() {
     {
       field: "appliedDistributionMode",
       headerName: "Distrib Mode",
+      description: "Energy distribution mode applied: Fair, Priority, or Weighted",
       width: 90,
       type: "singleSelect",
       valueOptions: MODE_OPTIONS,
@@ -420,6 +445,7 @@ export default function Transitions() {
     {
       field: "balanceDayUtc",
       headerName: "Balance Day",
+      description: "The accounting/energy day being balanced",
       width: 110,
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Balance</div><div>Day</div></Box>,
       valueFormatter: (value) => (value ? new Date(value as string).toLocaleDateString() : ""),
@@ -427,32 +453,46 @@ export default function Transitions() {
     {
       field: "effectiveAtUtc",
       headerName: "Effective (UTC)",
+      description: "Exact timestamp when Execute happened",
       width: 130,
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Effective</div><div>(UTC)</div></Box>,
-      valueFormatter: (value) => (value ? new Date(value as string).toLocaleString() : ""),
+      valueFormatter: (value) => formatEffectiveUtc(value),
     },
     {
       field: "amountKwh",
       headerName: "Amount kWh",
+      description: "Energy amount transferred/planned",
       width: 90,
       type: "number",
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Amount</div><div>kWh</div></Box>,
     },
     {
+      field: "amountAtExecutionKwh",
+      headerName: "Executed Amount kWh",
+      description: "Actual energy amount captured at execution time",
+      width: 120,
+      type: "number",
+      renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Executed</div><div>Amount kWh</div></Box>,
+      renderCell: (params) => (params.value == null ? <span style={{ color: "#999" }}>-</span> : params.value),
+    },
+    {
       field: "sourceSurplusKwhAtWorkflow",
       headerName: "Src Surplus Before Transfer kWh",
+      description: "Frozen snapshot of source surplus used to decide the transfer",
       width: 130,
       type: "number",
     },
     {
       field: "destinationDeficitKwhAtWorkflow",
       headerName: "Dest Deficit Before Transfer kWh",
+      description: "Frozen snapshot of destination deficit used to decide the transfer",
       width: 150,
       type: "number",
     },
     {
-      field: "remainingSourceSurplusKwhAfterWorkflow",
-      headerName: "Remaining Src Surplus After Transfer kWh",
+      field: "sourceSurplusKwhAtExecution",
+      headerName: "Src Surplus At Execution kWh",
+      description: "Remaining source surplus after Execute",
       width: 170,
       type: "number",
       valueGetter: (_value, row: TransferWorkflow) => {
@@ -460,8 +500,8 @@ export default function Transitions() {
           return null;
         }
 
-        if (row.remainingSourceSurplusKwhAfterWorkflow != null) {
-          return row.remainingSourceSurplusKwhAfterWorkflow;
+        if (row.sourceSurplusKwhAtExecution != null) {
+          return row.sourceSurplusKwhAtExecution;
         }
 
         return row.sourceSurplusKwhAtWorkflow - row.amountKwh;
@@ -469,13 +509,14 @@ export default function Transitions() {
       renderCell: (params) => (params.value == null ? <span style={{ color: "#999" }}>-</span> : params.value),
     },
     {
-      field: "remainingDestinationDeficitKwhAfterWorkflow",
-      headerName: "Remaining Dest Deficit After Transfer kWh",
+      field: "destinationDeficitKwhAtExecution",
+      headerName: "Dest Deficit At Execution kWh",
+      description: "Remaining destination deficit after Execute",
       width: 180,
       type: "number",
       valueGetter: (_value, row: TransferWorkflow) => {
-        if (row.remainingDestinationDeficitKwhAfterWorkflow != null) {
-          return row.remainingDestinationDeficitKwhAfterWorkflow;
+        if (row.destinationDeficitKwhAtExecution != null) {
+          return row.destinationDeficitKwhAtExecution;
         }
 
         if (row.status >= STATUS_EXECUTED) {
@@ -489,6 +530,7 @@ export default function Transitions() {
     {
       field: "destinationTransferRuleId",
       headerName: "Transfer Rule ID",
+      description: "Transfer rule that generated this workflow",
       width: 95,
       type: "number",
       renderHeader: () => <Box sx={{ lineHeight: 1.2, textAlign: "center" }}><div>Transfer</div><div>Rule ID</div></Box>,
@@ -496,6 +538,7 @@ export default function Transitions() {
     {
       field: "priority",
       headerName: "Priority",
+      description: "Execution priority (only applicable in Priority distribution mode)",
       width: 85,
       type: "number",
       renderCell: (params) => {
@@ -506,6 +549,7 @@ export default function Transitions() {
     {
       field: "weightPercent",
       headerName: "Weight %",
+      description: "Energy allocation weight in percent (only applicable in Weighted distribution mode)",
       width: 90,
       type: "number",
       renderCell: (params) => {
@@ -513,7 +557,7 @@ export default function Transitions() {
         return isWeightedMode(mode) ? (params.value ?? "") : <span style={{ color: "#999" }}>-</span>;
       },
     },
-    { field: "notes", headerName: "Notes", width: 180 },
+    { field: "notes", headerName: "Notes", description: "Optional notes attached to this workflow", width: 180 },
   ];
 
   const historyColumns: GridColDef[] = [

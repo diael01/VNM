@@ -36,24 +36,64 @@ public sealed class TransferExecutionService : ITransferExecutionService
         var userNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
         var executionNote = userNote ?? "Manual execution from VNM workflow.";
 
+        var executionRequestedAtUtc = DateTime.UtcNow;
+        var executionDayStartUtc = executionRequestedAtUtc.Date;
+        var executionDayEndUtc = executionDayStartUtc.AddDays(1);
+
+        var currentPositions = await _db.DailyEnergyBalances
+            .Where(x =>
+                x.Day >= executionDayStartUtc &&
+                x.Day < executionDayEndUtc &&
+                (x.AddressId == workflow.SourceAddressId || x.AddressId == workflow.DestinationAddressId))
+            .Select(x => new
+            {
+                x.AddressId,
+                x.SurplusKwh,
+                x.DeficitKwh
+            })
+            .ToListAsync(ct);
+
+        var currentSourceSurplusKwh = currentPositions
+            .Where(x => x.AddressId == workflow.SourceAddressId)
+            .Select(x => x.SurplusKwh)
+            .FirstOrDefault();
+
+        var currentDestinationDeficitKwh = currentPositions
+            .Where(x => x.AddressId == workflow.DestinationAddressId)
+            .Select(x => x.DeficitKwh)
+            .FirstOrDefault();
+
+        var executableKwh = decimal.Round(
+            Math.Min(
+                workflow.AmountKwh,
+                Math.Min(currentSourceSurplusKwh, currentDestinationDeficitKwh)),
+            4);
+
+        if (executableKwh <= 0)
+            throw new InvalidOperationException(
+                $"Workflow {workflowId} cannot be executed because the current transferable amount is 0 kWh.");
+
         var request = new TransferExecutionRequest
         {
             WorkflowId = workflow.Id,
             SourceAddressId = workflow.SourceAddressId,
             DestinationAddressId = workflow.DestinationAddressId,
-            AmountKwh = workflow.AmountKwh,
-            BalanceDay = DateOnly.FromDateTime(workflow.BalanceDayUtc),
-            RequestedAtUtc = DateTime.UtcNow,
+            AmountKwh = executableKwh,
+            BalanceDay = DateOnly.FromDateTime(executionDayStartUtc),
+            RequestedAtUtc = executionRequestedAtUtc,
             RequestedBy = executedBy,
             Notes = executionNote
         };
 
         _logger.LogInformation(
-            "Executing transfer workflow {WorkflowId}. Source={Source}, Destination={Destination}, AmountKwh={AmountKwh}",
+            "Executing transfer workflow {WorkflowId}. Source={Source}, Destination={Destination}, ApprovedAmountKwh={ApprovedAmountKwh}, ExecutableAmountKwh={ExecutableAmountKwh}, CurrentSourceSurplusKwh={CurrentSourceSurplusKwh}, CurrentDestinationDeficitKwh={CurrentDestinationDeficitKwh}",
             workflow.Id,
             workflow.SourceAddressId,
             workflow.DestinationAddressId,
-            workflow.AmountKwh);
+            workflow.AmountKwh,
+            executableKwh,
+            currentSourceSurplusKwh,
+            currentDestinationDeficitKwh);
 
         var result = await _adapter.ExecuteAsync(request, ct);
 
@@ -84,8 +124,8 @@ public sealed class TransferExecutionService : ITransferExecutionService
             TransferWorkflowId = workflow.Id,
             SourceAddressId = workflow.SourceAddressId,
             DestinationAddressId = workflow.DestinationAddressId,
-            BalanceDay = DateOnly.FromDateTime(workflow.BalanceDayUtc),
-            AmountKwh = workflow.AmountKwh,
+            BalanceDay = DateOnly.FromDateTime(executionDayStartUtc),
+            AmountKwh = executableKwh,
             ExecutedAtUtc = result.ExecutedAtUtc,
             ExecutionReference = result.ExternalReference ?? Guid.NewGuid().ToString("N"),
             Notes = executionNote
@@ -93,12 +133,9 @@ public sealed class TransferExecutionService : ITransferExecutionService
 
         workflow.TransferStatusEnum = TransferStatus.Executed;
         workflow.EffectiveAtUtc = DateTime.UtcNow;
-        workflow.RemainingSourceSurplusKwhAfterWorkflow = decimal.Round(
-            Math.Max(0m, workflow.SourceSurplusKwhAtWorkflow - workflow.AmountKwh),
-            4);
-        workflow.RemainingDestinationDeficitKwhAfterWorkflow = decimal.Round(
-            Math.Max(0m, workflow.DestinationDeficitKwhAtWorkflow - workflow.AmountKwh),
-            4);
+        workflow.AmountAtExecutionKwh = executableKwh;
+        workflow.SourceSurplusKwhAtExecution = decimal.Round(currentSourceSurplusKwh, 4);
+        workflow.DestinationDeficitKwhAtExecution = decimal.Round(currentDestinationDeficitKwh, 4);
         workflow.UpdatedAtUtc = DateTime.UtcNow;
         workflow.UpdatedBy = executedBy;
 

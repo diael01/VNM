@@ -13,9 +13,10 @@ public class TransferWorkflowDto
     public int DestinationAddressId { get; set; }
     public decimal SourceSurplusKwhAtWorkflow { get; set; }
     public decimal DestinationDeficitKwhAtWorkflow { get; set; }
-    public decimal? RemainingSourceSurplusKwhAfterWorkflow { get; set; }
-    public decimal? RemainingDestinationDeficitKwhAfterWorkflow { get; set; }
+    public decimal? SourceSurplusKwhAtExecution { get; set; }
+    public decimal? DestinationDeficitKwhAtExecution { get; set; }
     public decimal AmountKwh { get; set; }
+    public decimal? AmountAtExecutionKwh { get; set; }
     public int TriggerType { get; set; }
     public int Status { get; set; }
     public string? Notes { get; set; }
