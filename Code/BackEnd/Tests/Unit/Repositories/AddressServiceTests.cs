@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
 using Services.Inverter;
+using Services.Profiles;
 using Infrastructure.DTOs;
 using Repositories.Models;
 using Repositories.Models;
 using Xunit;
 using Infrastructure.DTOs;
+using AutoMapper;
 
 namespace BackEnd.Tests.Unit.Repositories;
 
@@ -24,7 +26,8 @@ public class AddressServiceTests
     {
         using var context = CreateContext("Address_Service_CRUD");
         var repository = new AddressRepository(context);
-        var service = new AddressService(repository, null); // Pass null for IMapper if not used in test
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<AddressProfile>()).CreateMapper();
+        var service = new AddressService(repository, mapper);
 
         var dto = new AddressDto
         {
@@ -35,18 +38,6 @@ public class AddressServiceTests
             StreetNumber = "123",
             PostalCode = "00000",
                 // InverterId = 1
-        };
-
-        // Simulate mapping manually for test
-        var address = new Address
-        {
-            Country = dto.Country,
-            County = dto.County,
-            City = dto.City,
-            Street = dto.Street,
-            StreetNumber = dto.StreetNumber,
-            PostalCode = dto.PostalCode,
-                // InverterId = dto.InverterId
         };
 
         var created = await service.CreateAsync(dto);

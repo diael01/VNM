@@ -37,8 +37,8 @@ public class TransferExecutionControllerIntegrationTests : IntegrationTestBase, 
                 .FirstOrDefaultAsync(x => x.Id == workflowId);
 
             Assert.NotNull(executedWorkflow);
-            Assert.Equal(5m, executedWorkflow!.RemainingSourceSurplusKwhAfterWorkflow);
-            Assert.Equal(0m, executedWorkflow.RemainingDestinationDeficitKwhAfterWorkflow);
+            Assert.Equal(5m, executedWorkflow!.SourceSurplusKwhAtExecution);
+            Assert.Equal(0m, executedWorkflow.DestinationDeficitKwhAtExecution);
 
             var ledger = await executeDb.TransferLedgerEntries
                 .OrderByDescending(x => x.Id)
@@ -116,8 +116,8 @@ public class TransferExecutionControllerIntegrationTests : IntegrationTestBase, 
             DestinationAddressId = destination.Id,
             SourceSurplusKwhAtWorkflow = 15,
             DestinationDeficitKwhAtWorkflow = 10,
-            RemainingSourceSurplusKwhAfterWorkflow = null,
-            RemainingDestinationDeficitKwhAfterWorkflow = null,
+            SourceSurplusKwhAtExecution = null,
+            DestinationDeficitKwhAtExecution = null,
             AmountKwh = 10,
             TriggerType = 0,
             Status = status,

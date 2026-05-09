@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
 using Services.Inverter;
+using Services.Assets.Profiles;
 using Repositories.Models;
 using Repositories.Models;
 using Xunit;
@@ -24,7 +25,7 @@ public class InverterInfoServiceTests
     {
         using var context = CreateContext("InverterInfo_Service_CRUD");
         var repository = new InverterInfoRepository(context);
-        var mapper = new MapperConfiguration(cfg => { }).CreateMapper();
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<InverterProfile>()).CreateMapper();
         var service = new InverterInfoService(repository, mapper);
 
         var info = new InverterInfoDto

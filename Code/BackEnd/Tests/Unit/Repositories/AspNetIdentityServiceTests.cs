@@ -27,6 +27,31 @@ public class AspNetIdentityServiceTests
         var userClaimRepo = new AspNetUserClaimRepository(context);
         var service = new AspNetIdentityService(roleRepo, roleClaimRepo, userRepo, userClaimRepo, context);
 
+        var adminRole = await service.CreateRoleAsync(new AspNetRole { Id = "r-admin", Name = "admin" });
+        var contributorsRole = await service.CreateRoleAsync(new AspNetRole { Id = "r-contributors", Name = "contributors" });
+        await service.CreateRoleClaimAsync(new AspNetRoleClaim { RoleId = adminRole.Id, ClaimType = "permission", ClaimValue = "dashboard:retry" });
+        await service.CreateRoleClaimAsync(new AspNetRoleClaim { RoleId = contributorsRole.Id, ClaimType = "permission", ClaimValue = "dashboard:read" });
+
+        var aliceUser = await service.CreateUserAsync(new AspNetUser
+        {
+            Id = "u-alice",
+            UserName = "alice",
+            Email = "alice@example.com",
+            PhoneNumber = "555-0100",
+            ExternalSubjectId = "alice-subject"
+        });
+        var bobUser = await service.CreateUserAsync(new AspNetUser
+        {
+            Id = "u-bob",
+            UserName = "bob",
+            Email = "bob@example.com",
+            PhoneNumber = "555-0200",
+            ExternalSubjectId = "bob-subject"
+        });
+
+        await service.AssignRoleToUserAsync(aliceUser.Id, adminRole.Id);
+        await service.AssignRoleToUserAsync(bobUser.Id, contributorsRole.Id);
+
         var roles = (await service.GetAllRolesAsync()).ToList();
         Assert.Contains(roles, r => r.Name == "admin");
         Assert.Contains(roles, r => r.Name == "contributors");

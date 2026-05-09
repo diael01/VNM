@@ -43,8 +43,14 @@ public class TransferRuleServiceTests
         };
 
         DestinationTransferRule? addedEntity = null;
+        var sourcePolicy = new SourceTransferPolicy
+        {
+            Id = dto.SourceTransferPolicyId,
+            SourceAddressId = 99
+        };
 
         _mapper.Setup(m => m.Map<DestinationTransferRule>(dto)).Returns(mappedEntity);
+        _sourcePolicyRepo.Setup(r => r.GetByIdAsync(dto.SourceTransferPolicyId, default)).ReturnsAsync(sourcePolicy);
         _repo.Setup(r => r.AddAsync(It.IsAny<DestinationTransferRule>(), default))
             .Callback<DestinationTransferRule, CancellationToken>((e, _) => addedEntity = e)
             .ReturnsAsync((DestinationTransferRule e, CancellationToken _) => e);
@@ -99,8 +105,14 @@ public class TransferRuleServiceTests
         };
 
         DestinationTransferRule? updatedEntity = null;
+        var sourcePolicy = new SourceTransferPolicy
+        {
+            Id = dto.SourceTransferPolicyId,
+            SourceAddressId = 99
+        };
 
         _repo.Setup(r => r.GetByIdAsync(routeId, default)).ReturnsAsync(existing);
+        _sourcePolicyRepo.Setup(r => r.GetByIdAsync(dto.SourceTransferPolicyId, default)).ReturnsAsync(sourcePolicy);
         _repo.Setup(r => r.UpdateAsync(It.IsAny<DestinationTransferRule>(), default))
             .Callback<DestinationTransferRule, CancellationToken>((e, _) => updatedEntity = e)
             .ReturnsAsync((DestinationTransferRule e, CancellationToken _) => e);
