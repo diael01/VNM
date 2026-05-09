@@ -46,14 +46,11 @@ public class AddressService : IAddressService
         var address = await _repository.GetByIdAsync(id, cancellationToken);
         if (address == null)
         {
-            address = _mapper.Map<Address>(addressDto);
-            address.Id = id;
+            throw new KeyNotFoundException($"Address {id} was not found.");
         }
-        else
-        {
-            _mapper.Map(addressDto, address);
-            address.Id = id;
-        }
+
+        _mapper.Map(addressDto, address);
+        address.Id = id;
 
         return await _repository.UpdateAsync(address, cancellationToken);
     }

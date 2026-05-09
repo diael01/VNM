@@ -71,11 +71,14 @@ New-Item -ItemType Directory -Path $coverageRoot | Out-Null
 if (-not $SkipBackend) {
     Write-Host 'Running backend tests with coverage...'
 
-    $backendProjects = @(
-        (Join-Path $repoRoot 'BackEnd\Tests\Unit\Repositories\RepositoriesUnit.csproj'),
-        (Join-Path $repoRoot 'BackEnd\Tests\Unit\InverterPolling\InverterPollingUnit.csproj'),
-        (Join-Path $repoRoot 'BackEnd\Tests\Unit\EventBusHarness\EventBusHarnessUnit.csproj')
-    )
+  $unitTestRoot = Join-Path $repoRoot 'BackEnd\Tests\Unit'
+  $backendProjects = Get-ChildItem -Path $unitTestRoot -Recurse -Filter '*.csproj' |
+    Sort-Object FullName |
+    ForEach-Object { $_.FullName }
+
+  if (-not $backendProjects -or $backendProjects.Count -eq 0) {
+    throw "No unit test projects were found under '$unitTestRoot'."
+  }
 
     $backendFailures = @()
 
@@ -103,6 +106,9 @@ if (-not $SkipBackend) {
         'tool', 'run', $reportGeneratorCommand,
         "-reports:$($coverageReports -join ';')",
         "-targetdir:$backendReportRoot",
+        '-assemblyfilters:+Repositories;+Services;+Infrastructure;+EventBusCore',
+        '-classfilters:-Microsoft.AspNetCore.OpenApi.Generated*',
+        '-filefilters:-*\Migrations\*;-*\obj\*;-*\bin\*;-*.g.cs;-*.g.i.cs',
         '-reporttypes:Html;TextSummary'
       )
 

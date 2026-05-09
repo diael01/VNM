@@ -49,14 +49,11 @@ public class InverterInfoService : IInverterInfoService
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
         if (entity == null)
         {
-            entity = _mapper.Map<InverterInfo>(dto);
-            entity.Id = id;
+            throw new KeyNotFoundException($"InverterInfo {id} was not found.");
         }
-        else
-        {
-            _mapper.Map(dto, entity);
-            entity.Id = id;
-        }
+
+        _mapper.Map(dto, entity);
+        entity.Id = id;
 
         var updated = await _repository.UpdateAsync(entity, cancellationToken);
         return _mapper.Map<InverterInfoDto>(updated);

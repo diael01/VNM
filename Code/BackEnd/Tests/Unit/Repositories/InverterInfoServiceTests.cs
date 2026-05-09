@@ -3,7 +3,6 @@ using Repositories.CRUD.Repositories;
 using Services.Inverter;
 using Services.Assets.Profiles;
 using Repositories.Models;
-using Repositories.Models;
 using Xunit;
 using Infrastructure.DTOs;
 using AutoMapper;
@@ -56,5 +55,32 @@ public class InverterInfoServiceTests
 
         var notFound = await service.GetByIdAsync(created.Id);
         Assert.Null(notFound);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenEntityDoesNotExist_ThrowsKeyNotFound()
+    {
+        using var context = CreateContext("InverterInfo_Service_Update_Fallback");
+        var repository = new InverterInfoRepository(context);
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<InverterProfile>()).CreateMapper();
+        var service = new InverterInfoService(repository, mapper);
+
+        var dto = new InverterInfoDto
+        {
+            Model = "FallbackModel",
+            Manufacturer = "FallbackBrand",
+            SerialNumber = "SN-FALLBACK",
+            AddressId = 7
+        };
+
+        try
+        {
+            await service.UpdateAsync(321, dto);
+            throw new Xunit.Sdk.XunitException("Expected KeyNotFoundException was not thrown.");
+        }
+        catch (KeyNotFoundException error)
+        {
+            Assert.Contains("InverterInfo 321", error.Message);
+        }
     }
 }

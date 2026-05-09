@@ -4,9 +4,7 @@ using Services.Inverter;
 using Services.Profiles;
 using Infrastructure.DTOs;
 using Repositories.Models;
-using Repositories.Models;
 using Xunit;
-using Infrastructure.DTOs;
 using AutoMapper;
 
 namespace BackEnd.Tests.Unit.Repositories;
@@ -69,5 +67,34 @@ public class AddressServiceTests
 
         var notFound = await service.GetByIdAsync(created.Id);
         Assert.Null(notFound);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenEntityDoesNotExist_ThrowsKeyNotFound()
+    {
+        using var context = CreateContext("Address_Service_Update_Fallback");
+        var repository = new AddressRepository(context);
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<AddressProfile>()).CreateMapper();
+        var service = new AddressService(repository, mapper);
+
+        var dto = new AddressDto
+        {
+            Country = "RO",
+            County = "CJ",
+            City = "Cluj",
+            Street = "Memo",
+            StreetNumber = "7",
+            PostalCode = "400000"
+        };
+
+        try
+        {
+            await service.UpdateAsync(123, dto);
+            throw new Xunit.Sdk.XunitException("Expected KeyNotFoundException was not thrown.");
+        }
+        catch (KeyNotFoundException error)
+        {
+            Assert.Contains("Address 123", error.Message);
+        }
     }
 }

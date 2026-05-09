@@ -144,4 +144,125 @@ public class TransferRuleServiceTests
         Assert.Equal(dto.WeightPercent, updatedEntity.WeightPercent);
         Assert.Equal(routeId, updated.Id);
     }
+
+    [Fact]
+    public async Task GetAllAsync_AndGetByIdAsync_MapRepositoryResults()
+    {
+        var entity = new DestinationTransferRule
+        {
+            Id = 5,
+            SourceTransferPolicyId = 1,
+            DestinationAddressId = 9,
+            IsEnabled = true,
+            Priority = 2,
+            DistributionMode = 1,
+            MaxDailyKwh = 11,
+            WeightPercent = 33
+        };
+
+        _repo.Setup(r => r.GetAllAsync(default)).ReturnsAsync([entity]);
+        _repo.Setup(r => r.GetByIdAsync(5, default)).ReturnsAsync(entity);
+        _repo.Setup(r => r.GetByIdAsync(999, default)).ReturnsAsync((DestinationTransferRule?)null);
+        _mapper.Setup(m => m.Map<List<TransferRuleDto>>(It.IsAny<IEnumerable<DestinationTransferRule>>()))
+            .Returns((IEnumerable<DestinationTransferRule> src) => src.Select(MapDto).ToList());
+        _mapper.Setup(m => m.Map<TransferRuleDto>(It.IsAny<DestinationTransferRule>()))
+            .Returns((DestinationTransferRule src) => MapDto(src));
+
+        var sut = new TransferRuleService(_repo.Object, _sourcePolicyRepo.Object, _workflowRepo.Object, _mapper.Object);
+
+        var all = await sut.GetAllAsync();
+        var byId = await sut.GetByIdAsync(5);
+        var missing = await sut.GetByIdAsync(999);
+
+        Assert.Single(all);
+        Assert.Equal(5, all[0].Id);
+        Assert.NotNull(byId);
+        Assert.Equal(9, byId!.DestinationAddressId);
+        Assert.Null(missing);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ThrowsWhenPolicyMissing()
+    {
+        var dto = new TransferRuleDto
+        {
+            SourceTransferPolicyId = 7,
+            DestinationAddressId = 8
+        };
+
+        _sourcePolicyRepo.Setup(r => r.GetByIdAsync(dto.SourceTransferPolicyId, default))
+            .ReturnsAsync((SourceTransferPolicy?)null);
+
+        var sut = new TransferRuleService(_repo.Object, _sourcePolicyRepo.Object, _workflowRepo.Object, _mapper.Object);
+
+        var error = await Assert.ThrowsAsync<KeyNotFoundException>(() => sut.CreateAsync(dto));
+        Assert.Contains("SourceTransferPolicy 7", error.Message);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ThrowsWhenSourceAndDestinationMatch()
+    {
+        var dto = new TransferRuleDto
+        {
+            SourceTransferPolicyId = 4,
+            DestinationAddressId = 10
+        };
+
+        _sourcePolicyRepo.Setup(r => r.GetByIdAsync(dto.SourceTransferPolicyId, default))
+            .ReturnsAsync(new SourceTransferPolicy { Id = 4, SourceAddressId = 10 });
+
+        var sut = new TransferRuleService(_repo.Object, _sourcePolicyRepo.Object, _workflowRepo.Object, _mapper.Object);
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.CreateAsync(dto));
+        Assert.Contains("Source and destination cannot be the same address", error.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ThrowsWhenRuleMissing()
+    {
+        _repo.Setup(r => r.GetByIdAsync(404, default)).ReturnsAsync((DestinationTransferRule?)null);
+
+        var sut = new TransferRuleService(_repo.Object, _sourcePolicyRepo.Object, _workflowRepo.Object, _mapper.Object);
+
+        var error = await Assert.ThrowsAsync<KeyNotFoundException>(() => sut.UpdateAsync(404, new TransferRuleDto()));
+        Assert.Contains("DestinationTransferRule 404", error.Message);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_UnlinksLinkedWorkflows_BeforeDeletingRule()
+    {
+        var workflowA = new TransferWorkflow { Id = 1, DestinationTransferRuleId = 42 };
+        var workflowB = new TransferWorkflow { Id = 2, DestinationTransferRuleId = 42 };
+        var updatedWorkflows = new List<TransferWorkflow>();
+
+        _workflowRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TransferWorkflow, bool>>>(), default))
+            .ReturnsAsync([workflowA, workflowB]);
+        _workflowRepo.Setup(r => r.UpdateAsync(It.IsAny<TransferWorkflow>(), default))
+            .Callback<TransferWorkflow, CancellationToken>((workflow, _) => updatedWorkflows.Add(workflow))
+            .ReturnsAsync((TransferWorkflow workflow, CancellationToken _) => workflow);
+        _repo.Setup(r => r.DeleteAsync(42, default)).ReturnsAsync(true);
+
+        var sut = new TransferRuleService(_repo.Object, _sourcePolicyRepo.Object, _workflowRepo.Object, _mapper.Object);
+
+        var deleted = await sut.DeleteAsync(42);
+
+        Assert.True(deleted);
+        Assert.Equal(2, updatedWorkflows.Count);
+        Assert.All(updatedWorkflows, workflow => Assert.Null(workflow.DestinationTransferRuleId));
+    }
+
+    private static TransferRuleDto MapDto(DestinationTransferRule src)
+    {
+        return new TransferRuleDto
+        {
+            Id = src.Id,
+            SourceTransferPolicyId = src.SourceTransferPolicyId,
+            DestinationAddressId = src.DestinationAddressId,
+            IsEnabled = src.IsEnabled,
+            Priority = src.Priority,
+            DistributionMode = src.DistributionMode,
+            MaxDailyKwh = src.MaxDailyKwh,
+            WeightPercent = src.WeightPercent,
+        };
+    }
 }
