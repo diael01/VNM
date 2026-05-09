@@ -46,8 +46,18 @@ public class InverterInfoService : IInverterInfoService
 
     public async Task<InverterInfoDto> UpdateAsync(int id, InverterInfoDto dto, CancellationToken cancellationToken = default)
     {
-        var entity = _mapper.Map<InverterInfo>(dto);
-        entity.Id = id;
+        var entity = await _repository.GetByIdAsync(id, cancellationToken);
+        if (entity == null)
+        {
+            entity = _mapper.Map<InverterInfo>(dto);
+            entity.Id = id;
+        }
+        else
+        {
+            _mapper.Map(dto, entity);
+            entity.Id = id;
+        }
+
         var updated = await _repository.UpdateAsync(entity, cancellationToken);
         return _mapper.Map<InverterInfoDto>(updated);
     }

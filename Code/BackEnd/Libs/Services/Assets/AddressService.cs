@@ -43,8 +43,18 @@ public class AddressService : IAddressService
 
     public async Task<Address> UpdateAsync(int id, AddressDto addressDto, CancellationToken cancellationToken = default)
     {
-        var address = _mapper.Map<Address>(addressDto);
-        address.Id = id;
+        var address = await _repository.GetByIdAsync(id, cancellationToken);
+        if (address == null)
+        {
+            address = _mapper.Map<Address>(addressDto);
+            address.Id = id;
+        }
+        else
+        {
+            _mapper.Map(addressDto, address);
+            address.Id = id;
+        }
+
         return await _repository.UpdateAsync(address, cancellationToken);
     }
 
