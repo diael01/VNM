@@ -130,6 +130,14 @@ function formatEffectiveUtc(value: unknown): string {
   return parsed.toLocaleString();
 }
 
+function formatHistoryAddressLabel(addressId: number, addressLabelById: Map<number, string>): string {
+  if (!Number.isFinite(addressId) || addressId <= 0) {
+    return "-";
+  }
+
+  return addressLabelById.get(addressId) ?? `Unknown Address (${addressId})`;
+}
+
 function normalizeModeSpecificFields(workflow: TransferWorkflow): TransferWorkflow {
   const mode = toNumber(workflow.appliedDistributionMode, FAIR_MODE);
 
@@ -250,6 +258,7 @@ export default function Transitions() {
   } = useQuery({
     queryKey: ["transferWorkflowStatusHistory"],
     queryFn: getAllTransferWorkflowHistory,
+    enabled: activeTab === "history",
     refetchInterval: 30_000,
   });
 
@@ -260,6 +269,11 @@ export default function Transitions() {
 
   const addressOptions = useMemo(
     () => addresses.map((address) => ({ value: address.id, label: labelAddress(address) })),
+    [addresses],
+  );
+
+  const addressLabelById = useMemo(
+    () => new Map(addresses.map((address) => [address.id, labelAddress(address)])),
     [addresses],
   );
 
@@ -565,6 +579,24 @@ export default function Transitions() {
       field: "transferWorkflowId",
       headerName: "Workflow ID",
       width: 120,
+    },
+    {
+      field: "sourceAddressId",
+      headerName: "Src Address",
+      width: 200,
+      valueGetter: (value) => {
+        const id = toNumber(value, 0);
+        return formatHistoryAddressLabel(id, addressLabelById);
+      },
+    },
+    {
+      field: "destinationAddressId",
+      headerName: "Dest Address",
+      width: 200,
+      valueGetter: (value) => {
+        const id = toNumber(value, 0);
+        return formatHistoryAddressLabel(id, addressLabelById);
+      },
     },
     {
       field: "fromStatus",

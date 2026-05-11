@@ -1,9 +1,11 @@
 using AutoMapper;
+using EnergyManagement.Services.Providers;
 using Infrastructure.Enums;
 using Infrastructure.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
 using Repositories.Models;
+using Moq;
 using Services.Profiles;
 using Services.Transfers;
 using Xunit;
@@ -25,7 +27,12 @@ public class TransitionWorkflowServiceTests
     {
         var mapper = new MapperConfiguration(cfg => cfg.AddProfile<TransferWorkflowProfile>()).CreateMapper();
         var repo = new TransferWorkflowRepository(db);
-        return new TransitionWorkflowService(repo, mapper, db);
+        var providerSettlementService = new Mock<IProviderSettlementService>();
+        providerSettlementService
+            .Setup(x => x.SettleWorkflowAsync(It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProviderSettlement());
+
+        return new TransitionWorkflowService(repo, mapper, db, providerSettlementService.Object);
     }
 
     [Fact]

@@ -4,6 +4,7 @@ using Infrastructure.Enums;
 using Microsoft.EntityFrameworkCore;
 using Repositories.CRUD.Repositories;
 using Repositories.Models;
+using EnergyManagement.Services.Providers;
 
 namespace Services.Transfers;
 
@@ -31,15 +32,18 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
     private readonly ITransferWorkflowRepository _transferWorkflowRepository;
     private readonly IMapper _mapper;
     private readonly VnmDbContext _dbContext;
+    private readonly IProviderSettlementService _providerSettlementService;
 
     public TransitionWorkflowService(
         ITransferWorkflowRepository transferWorkflowRepository,
         IMapper mapper,
-        VnmDbContext dbContext)
+        VnmDbContext dbContext,
+        IProviderSettlementService providerSettlementService)
     {
         _transferWorkflowRepository = transferWorkflowRepository;
         _mapper = mapper;
         _dbContext = dbContext;
+        _providerSettlementService = providerSettlementService;
     }
 
     public async Task<List<TransferWorkflowDto>> GetAllAsync(CancellationToken ct = default)
@@ -53,9 +57,21 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
         var history = await _dbContext.TransferWorkflowStatusHistory
             .AsNoTracking()
             .OrderByDescending(h => h.CreatedAtUtc)
+            .Select(h => new TransferWorkflowStatusHistoryDto
+            {
+                Id = h.Id,
+                TransferWorkflowId = h.TransferWorkflowId,
+                SourceAddressId = h.TransferWorkflow.SourceAddressId,
+                DestinationAddressId = h.TransferWorkflow.DestinationAddressId,
+                FromStatus = h.FromStatus,
+                ToStatus = h.ToStatus,
+                Note = h.Note,
+                CreatedAtUtc = h.CreatedAtUtc,
+                CreatedBy = h.CreatedBy
+            })
             .ToListAsync(ct);
 
-        return _mapper.Map<List<TransferWorkflowStatusHistoryDto>>(history);
+        return history;
     }
 
     public async Task<TransferWorkflowDto?> GetByIdAsync(int id, CancellationToken ct = default)
@@ -70,9 +86,21 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
             .AsNoTracking()
             .Where(h => h.TransferWorkflowId == id)
             .OrderBy(h => h.CreatedAtUtc)
+            .Select(h => new TransferWorkflowStatusHistoryDto
+            {
+                Id = h.Id,
+                TransferWorkflowId = h.TransferWorkflowId,
+                SourceAddressId = h.TransferWorkflow.SourceAddressId,
+                DestinationAddressId = h.TransferWorkflow.DestinationAddressId,
+                FromStatus = h.FromStatus,
+                ToStatus = h.ToStatus,
+                Note = h.Note,
+                CreatedAtUtc = h.CreatedAtUtc,
+                CreatedBy = h.CreatedBy
+            })
             .ToListAsync(ct);
 
-        return _mapper.Map<List<TransferWorkflowStatusHistoryDto>>(history);
+        return history;
     }
 
     public Task<TransferWorkflowDto> ApproveAsync(int id, string? note = null, CancellationToken ct = default)
@@ -84,8 +112,25 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
     public Task<TransferWorkflowDto> ExecuteAsync(int id, string? note = null, CancellationToken ct = default)
         => TransitionStatusAsync(id, StatusExecuted, string.IsNullOrWhiteSpace(note) ? "Workflow has been executed" : note, ct);
 
-    public Task<TransferWorkflowDto> SettleAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, StatusSettled, string.IsNullOrWhiteSpace(note) ? "Workflow has been settled" : note, ct);
+    public async Task<TransferWorkflowDto> SettleAsync(int id, string? note = null, CancellationToken ct = default)
+    {
+        var workflow = await _transferWorkflowRepository.GetByIdAsync(id)
+            ?? throw new InvalidOperationException($"Transfer workflow {id} was not found.");
+
+        if (workflow.Status == StatusSettled)
+            return _mapper.Map<TransferWorkflowDto>(workflow);
+
+        if (!IsValidStatusTransition(workflow.Status, StatusSettled))        
+            throw new InvalidOperationException($"Invalid status transition: {workflow.Status} -> {StatusSettled}.");
+
+        var effectiveNote = string.IsNullOrWhiteSpace(note) ? "Workflow has been settled" : note;
+        await _providerSettlementService.SettleWorkflowAsync(id, effectiveNote, ct);
+
+        var updatedWorkflow = await _transferWorkflowRepository.GetByIdAsync(id)
+            ?? throw new InvalidOperationException($"Transfer workflow {id} was not found.");
+
+        return _mapper.Map<TransferWorkflowDto>(updatedWorkflow);
+    }
 
 
 

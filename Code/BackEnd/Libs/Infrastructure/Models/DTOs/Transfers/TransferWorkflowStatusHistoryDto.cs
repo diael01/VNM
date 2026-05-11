@@ -4,6 +4,8 @@ public class TransferWorkflowStatusHistoryDto
 {
     public int Id { get; set; }
     public int TransferWorkflowId { get; set; }
+    public int SourceAddressId { get; set; }
+    public int DestinationAddressId { get; set; }
     public int? FromStatus { get; set; }
     public int ToStatus { get; set; }
     public string? Note { get; set; }

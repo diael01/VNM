@@ -76,6 +76,14 @@ public class TransferExecutionControllerIntegrationTests : IntegrationTestBase, 
 
         Assert.NotNull(settleHistory);
         Assert.Equal(settleNote, settleHistory!.Note);
+
+        var settlement = await settleDb.ProviderSettlements
+            .OrderByDescending(x => x.Id)
+            .FirstOrDefaultAsync(x => x.TransferWorkflowId == workflowId);
+
+        Assert.NotNull(settlement);
+        Assert.Equal(workflowId, settlement!.TransferWorkflowId);
+        Assert.Equal(settleNote, settlement.Note);
     }
 
     private async Task<int> SeedWorkflowAsync(int status)
