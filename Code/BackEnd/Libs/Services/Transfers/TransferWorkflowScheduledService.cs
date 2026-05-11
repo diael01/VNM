@@ -543,6 +543,6 @@ public class AddressPosition
 
 Planned --Approve--> Approved --Execute--> Executed --Settle--> Settled
 Planned --Reject--> Rejected
-Approved --Cancel--> Cancelled
+Approved --Reject--> Rejected
 Approved --Execute fails--> Failed
 Failed --Retry Execute--> Executed */

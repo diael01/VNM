@@ -17,15 +17,15 @@ public class ProvidersController : ControllerBase
         _service = service;
     }
 
-    [HttpPost("settle/{addressId}/{day}")]
-    public async Task<IActionResult> Settle(int addressId, DateOnly day)
-        => Ok(await _service.ProcessSettlementAsync(addressId, day));
+    [HttpPost("settle/{sourceAddressId}/{destinationAddressId}/{day}")]
+    public async Task<IActionResult> Settle(int sourceAddressId, int destinationAddressId, DateOnly day)
+        => Ok(await _service.ProcessSettlementAsync(sourceAddressId, destinationAddressId, day));
 
-    [HttpGet("{addressId}/{day}")]
-    public async Task<IActionResult> Get(int addressId, DateOnly day)
+    [HttpGet("{sourceAddressId}/{destinationAddressId}/{day}")]
+    public async Task<IActionResult> Get(int sourceAddressId, int destinationAddressId, DateOnly day)
     {
         var result = await _db.ProviderSettlements
-            .FirstOrDefaultAsync(x => x.AddressId == addressId && DateOnly.FromDateTime(x.Day) == day);
+            .FirstOrDefaultAsync(x => x.SourceAddressId == sourceAddressId && x.DestinationAddressId == destinationAddressId && DateOnly.FromDateTime(x.CreatedAtUtc) == day);
 
         return result == null ? NotFound() : Ok(result);
     }

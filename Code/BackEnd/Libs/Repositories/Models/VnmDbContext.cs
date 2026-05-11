@@ -182,18 +182,17 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<ProviderSettlement>(entity =>
         {
-            entity.HasIndex(e => e.AddressId, "IX_ProviderSettlements_AddressId");
+            entity.HasIndex(e => e.SourceAddressId, "IX_ProviderSettlements_AddressId");
 
-            entity.Property(e => e.AcceptedKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.SettledKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.EnergyCreditKwh).HasColumnType("decimal(18, 5)");
-            entity.Property(e => e.InjectedKwh).HasColumnType("decimal(18, 5)");
+            entity.Property(e => e.SubmittedKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.MonetaryCredit).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.RatePerKwh).HasColumnType("decimal(18, 5)");
 
-            entity.HasOne(d => d.Address).WithMany(p => p.ProviderSettlements)
-                .HasForeignKey(d => d.AddressId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ProviderSettlements_Addresses");
+        /*      entity.HasOne(d => d.SourceAddressId).WithMany(p => p.TransferWorkflowSourceAddresses)
+                .HasForeignKey(d => d.SourceAddressId)
+                .OnDelete(DeleteBehavior.ClientSetNull); */
         });
 
         modelBuilder.Entity<SourceTransferPolicy>(entity =>

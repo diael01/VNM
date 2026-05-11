@@ -26,8 +26,7 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
     private const int StatusExecuted = 2;
     private const int StatusSettled = 3;
     private const int StatusRejected = 4;
-    private const int StatusCancelled = 5;
-    private const int StatusFailed = 6;
+    private const int StatusFailed = 5;
 
     private readonly ITransferWorkflowRepository _transferWorkflowRepository;
     private readonly IMapper _mapper;
@@ -143,11 +142,10 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
         return from switch
         {
             StatusPlanned => to is StatusApproved or StatusRejected,
-            StatusApproved => to is StatusExecuted or StatusCancelled,
+            StatusApproved => to is StatusExecuted or StatusRejected,
             StatusExecuted => to is StatusSettled or StatusFailed,
-            StatusFailed => to is StatusExecuted or StatusCancelled,
+            StatusFailed => to is StatusExecuted or StatusRejected,
             StatusRejected => false,
-            StatusCancelled => to is StatusPlanned,
             StatusSettled => false,
             _ => false,
         };

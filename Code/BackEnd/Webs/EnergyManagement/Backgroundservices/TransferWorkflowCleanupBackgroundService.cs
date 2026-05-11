@@ -45,16 +45,16 @@ namespace EnergyManagement.Services.Transfers
                     {
                         var oldStatus = wf.TransferStatusEnum;
 
-                        wf.TransferStatusEnum = TransferStatus.Cancelled;
+                        wf.TransferStatusEnum = TransferStatus.Rejected;
 
                         dbContext.TransferWorkflowStatusHistory.Add(new TransferWorkflowStatusHistory
                         {
                             TransferWorkflowId = wf.Id,
                             FromStatusEnum = oldStatus,
-                            ToStatusEnum = TransferStatus.Cancelled,
+                            ToStatusEnum = TransferStatus.Rejected,
                             UpdatedAtUtc = DateTime.UtcNow,
                             UpdatedBy = "System",
-                            Note = $"Auto-cancelled after {_options.ExpirationDays} days"
+                            Note = $"Auto-rejected after {_options.ExpirationDays} days"
                         });
                     }
 

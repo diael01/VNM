@@ -23,7 +23,7 @@ public class SettlementModeResolver : ISettlementModeResolver
         if (Enum.TryParse<ProviderSettlementMode>(_options.CurrentMode, true, out var mode))
             return mode;
 
-        return ProviderSettlementMode.Money;
+        return ProviderSettlementMode.Monetary;
     }
 
     public ISettlementModeStrategy Resolve(ProviderSettlementMode mode)

@@ -7,13 +7,17 @@ public partial class ProviderSettlement : AuditableEntity
 {
     public int Id { get; set; }
 
-    public int AddressId { get; set; }
+    public int? TransferWorkflowId { get; set; }
 
-    public DateTime Day { get; set; }
+  public int SourceAddressId { get; set; }
 
-    public decimal InjectedKwh { get; set; }
+    public int DestinationAddressId { get; set; }
 
-    public decimal AcceptedKwh { get; set; }
+     public DateTime Day { get; set; }
+
+    public decimal SubmittedKwh { get; set; } //what we submitted to provider/grid for settlement
+    
+    public decimal SettledKwh { get; set; } //what provider accepted/credited  
 
     public decimal RatePerKwh { get; set; }
 
@@ -21,9 +25,10 @@ public partial class ProviderSettlement : AuditableEntity
 
     public decimal EnergyCreditKwh { get; set; }
 
-    public DateTime ProcessedAtUtc { get; set; }
-
     public int SettlementMode { get; set; }
 
-    public virtual Address Address { get; set; } = null!;
+     public string? Note { get; set; }
+
+    public virtual TransferWorkflow? TransferWorkflow { get; set; }
+
 }

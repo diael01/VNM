@@ -10,7 +10,6 @@ using Repositories.Models;
 
 namespace EnergyManagement.Services.ModeSwitching
 {
-  
     public interface ISettlementModeStrategy
     {
         ProviderSettlementMode SettlementMode { get; }
@@ -18,6 +17,17 @@ namespace EnergyManagement.Services.ModeSwitching
         void FillSettlement(
             ProviderSettlement settlement,
             DailyEnergyBalance balance,
+            decimal ratePerKwh,
+            decimal acceptanceRate);
+
+        /// <summary>
+        /// Used when settling a specific executed workflow.
+        /// Do not recalculate from the current DailyEnergyBalance here; the workflow was already executed,
+        /// so settlement must use the executed workflow amount snapshot.
+        /// </summary>
+        void FillSettlementFromExecutedWorkflowAmount(
+            ProviderSettlement settlement,
+            decimal executedKwh,
             decimal ratePerKwh,
             decimal acceptanceRate);
 

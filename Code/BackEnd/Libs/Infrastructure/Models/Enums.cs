@@ -1,8 +1,10 @@
 namespace Infrastructure.Enums;
 public enum ProviderSettlementMode
 {
-    Money = 0,
-    EnergyCredit = 1
+    EnergyCredit = 0,
+    Monetary = 1,
+    SimulatedGrid = 2,
+    ManualAdjustment = 3
 }
 
 public enum TransferDistributionMode
@@ -18,7 +20,6 @@ Approved = user accepted it
 Executed = system actually performed it
 Settled = accounting/legal/provider settlement completed
 Rejected = user explicitly refused the plan
-Cancelled = previously acceptable row was stopped/voided before execution
 Failed = execution was attempted but failed */
 public enum TransferStatus
 {
@@ -27,8 +28,7 @@ public enum TransferStatus
     Executed = 2,
     Settled = 3,
     Rejected = 4,
-    Cancelled = 5,
-    Failed = 6  
+    Failed = 5
 }
 
 
