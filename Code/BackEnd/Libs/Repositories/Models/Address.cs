@@ -29,8 +29,6 @@ public partial class Address : AuditableEntity
 
     public virtual ICollection<InverterReading> InverterReadings { get; set; } = new List<InverterReading>();
 
-    public virtual ICollection<ProviderSettlement> ProviderSettlements { get; set; } = new List<ProviderSettlement>();
-
     public virtual ICollection<SourceTransferPolicy> SourceTransferPolicies { get; set; } = new List<SourceTransferPolicy>();
 
     public virtual ICollection<TransferWorkflow> TransferWorkflowDestinationAddresses { get; set; } = new List<TransferWorkflow>();

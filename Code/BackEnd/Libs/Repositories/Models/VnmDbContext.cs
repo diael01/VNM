@@ -182,7 +182,7 @@ public partial class VnmDbContext : DbContext
 
         modelBuilder.Entity<ProviderSettlement>(entity =>
         {
-            entity.HasIndex(e => e.SourceAddressId, "IX_ProviderSettlements_AddressId");
+            entity.HasIndex(e => e.SourceAddressId, "IX_ProviderSettlements_SourceAddressId");
 
             entity.Property(e => e.SettledKwh).HasColumnType("decimal(18, 5)");
             entity.Property(e => e.EnergyCreditKwh).HasColumnType("decimal(18, 5)");

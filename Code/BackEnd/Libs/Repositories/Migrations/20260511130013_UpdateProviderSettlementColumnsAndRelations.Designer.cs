@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repositories.Models;
 
@@ -11,9 +12,11 @@ using Repositories.Models;
 namespace Repositories.Migrations
 {
     [DbContext(typeof(VnmDbContext))]
-    partial class VnmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260511130013_UpdateProviderSettlementColumnsAndRelations")]
+    partial class UpdateProviderSettlementColumnsAndRelations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -509,6 +512,9 @@ namespace Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AddressId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -557,9 +563,12 @@ namespace Repositories.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AddressId");
+
                     b.HasIndex("TransferWorkflowId");
 
-                    b.HasIndex(new[] { "SourceAddressId" }, "IX_ProviderSettlements_SourceAddressId");
+                    b.HasIndex(new[] { "SourceAddressId" }, "IX_ProviderSettlements_AddressId")
+                        .HasDatabaseName("IX_ProviderSettlements_AddressId1");
 
                     b.ToTable("ProviderSettlements");
                 });
@@ -965,6 +974,10 @@ namespace Repositories.Migrations
 
             modelBuilder.Entity("Repositories.Models.ProviderSettlement", b =>
                 {
+                    b.HasOne("Repositories.Models.Address", null)
+                        .WithMany("ProviderSettlements")
+                        .HasForeignKey("AddressId");
+
                     b.HasOne("Repositories.Models.TransferWorkflow", "TransferWorkflow")
                         .WithMany()
                         .HasForeignKey("TransferWorkflowId");
@@ -1051,6 +1064,8 @@ namespace Repositories.Migrations
                     b.Navigation("InverterInfos");
 
                     b.Navigation("InverterReadings");
+
+                    b.Navigation("ProviderSettlements");
 
                     b.Navigation("SourceTransferPolicies");
 
