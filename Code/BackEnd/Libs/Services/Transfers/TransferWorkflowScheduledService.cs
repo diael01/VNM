@@ -32,13 +32,14 @@ public class TransferWorkflowScheduledService : ITransferWorkflowScheduledServic
         var dayEndUtc = dayStartUtc.AddDays(1);
 
         // Important rule:
-        // As long as all auto rows are still Planned, the scheduler may refresh them.
-        // Once the user touched the workflow lifecycle (Approved/Executed/Settled/Rejected/etc.),
-        // planning is frozen for that source/day to avoid overwriting business decisions.
-        if (await HasNonPlannedAutoWorkflowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct))
+        // As long as rows are still Planned, the scheduler may refresh them.
+        // Once an auto workflow is Approved or Executed, planning pauses for that source/day
+        // until that active workflow is completed. Completed workflows such as Settled,
+        // Rejected, Cancelled, or Failed do not block new planning cycles later the same day.
+        if (await HasActiveAutoWorkflowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct))
         {
             _logger.LogWarning(
-                "Skipping automatic workflow refresh for Source={Source} Day={Day} because at least one auto workflow for this source/day is no longer Planned.",
+                "Skipping automatic workflow refresh for Source={Source} Day={Day} because an active auto workflow already exists.",
                 sourceAddressId,
                 day);
 
@@ -451,13 +452,13 @@ public class TransferWorkflowScheduledService : ITransferWorkflowScheduledServic
         return result;
     }
 
-    private async Task<bool> HasNonPlannedAutoWorkflowsForSourceAsync(
+    private async Task<bool> HasActiveAutoWorkflowsForSourceAsync(
         int sourceAddressId,
         DateTime dayStartUtc,
         DateTime dayEndUtc,
         CancellationToken ct)
     {
-        return await HasNonPlannedWorkflowsForSourceAsync(
+        return await HasActiveWorkflowsForSourceAsync(
             sourceAddressId,
             dayStartUtc,
             dayEndUtc,
@@ -465,7 +466,7 @@ public class TransferWorkflowScheduledService : ITransferWorkflowScheduledServic
             ct);
     }
 
-    private async Task<bool> HasNonPlannedWorkflowsForSourceAsync(
+    private async Task<bool> HasActiveWorkflowsForSourceAsync(
         int sourceAddressId,
         DateTime dayStartUtc,
         DateTime dayEndUtc,
@@ -477,7 +478,10 @@ public class TransferWorkflowScheduledService : ITransferWorkflowScheduledServic
             x.BalanceDayUtc >= dayStartUtc &&
             x.BalanceDayUtc < dayEndUtc &&
             x.TriggerType == triggerType &&
-            x.Status != (int)TransferStatus.Planned,
+            (
+                x.Status == (int)TransferStatus.Approved ||
+                x.Status == (int)TransferStatus.Executed
+            ),
             ct);
     }
 

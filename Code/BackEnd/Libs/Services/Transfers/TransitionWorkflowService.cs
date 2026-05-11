@@ -22,13 +22,6 @@ public interface ITransitionWorkflowService
 
 public sealed class TransitionWorkflowService : ITransitionWorkflowService
 {
-    private const int StatusPlanned = 0;
-    private const int StatusApproved = 1;
-    private const int StatusExecuted = 2;
-    private const int StatusSettled = 3;
-    private const int StatusRejected = 4;
-    private const int StatusFailed = 5;
-
     private readonly ITransferWorkflowRepository _transferWorkflowRepository;
     private readonly IMapper _mapper;
     private readonly VnmDbContext _dbContext;
@@ -104,24 +97,25 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
     }
 
     public Task<TransferWorkflowDto> ApproveAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, StatusApproved, string.IsNullOrWhiteSpace(note) ? "Workflow has been approved" : note, ct);
+        => TransitionStatusAsync(id, TransferStatus.Approved, string.IsNullOrWhiteSpace(note) ? "Workflow has been approved" : note, ct);
 
     public Task<TransferWorkflowDto> RejectAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, StatusRejected, string.IsNullOrWhiteSpace(note) ? "Workflow has been rejected" : note, ct);
+        => TransitionStatusAsync(id, TransferStatus.Rejected, string.IsNullOrWhiteSpace(note) ? "Workflow has been rejected" : note, ct);
 
     public Task<TransferWorkflowDto> ExecuteAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, StatusExecuted, string.IsNullOrWhiteSpace(note) ? "Workflow has been executed" : note, ct);
+        => TransitionStatusAsync(id, TransferStatus.Executed, string.IsNullOrWhiteSpace(note) ? "Workflow has been executed" : note, ct);
 
     public async Task<TransferWorkflowDto> SettleAsync(int id, string? note = null, CancellationToken ct = default)
     {
         var workflow = await _transferWorkflowRepository.GetByIdAsync(id)
             ?? throw new InvalidOperationException($"Transfer workflow {id} was not found.");
 
-        if (workflow.Status == StatusSettled)
+        if (workflow.Status == (int)TransferStatus.Settled)
             return _mapper.Map<TransferWorkflowDto>(workflow);
 
-        if (!IsValidStatusTransition(workflow.Status, StatusSettled))        
-            throw new InvalidOperationException($"Invalid status transition: {workflow.Status} -> {StatusSettled}.");
+        var fromStatus = (TransferStatus)workflow.Status;
+        if (!IsValidStatusTransition(fromStatus, TransferStatus.Settled))
+            throw new InvalidOperationException($"Invalid status transition: {(int)fromStatus} -> {(int)TransferStatus.Settled}.");
 
         var effectiveNote = string.IsNullOrWhiteSpace(note) ? "Workflow has been settled" : note;
         await _providerSettlementService.SettleWorkflowAsync(id, effectiveNote, ct);
@@ -134,28 +128,25 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
 
 
 
-    private async Task<TransferWorkflowDto> TransitionStatusAsync(int id, int toStatus, string? note, CancellationToken ct = default)
+    private async Task<TransferWorkflowDto> TransitionStatusAsync(int id, TransferStatus toStatus, string? note, CancellationToken ct = default)
     {
         var workflow = await _transferWorkflowRepository.GetByIdAsync(id)
             ?? throw new InvalidOperationException($"Transfer workflow {id} was not found.");
 
-        if (workflow is null)
-            throw new InvalidOperationException($"Transfer workflow {id} was not found.");
-
-        if (!IsValidStatusTransition(workflow.Status, toStatus))        
-            throw new InvalidOperationException($"Invalid status transition: {workflow.Status} -> {toStatus}.");
+        var fromStatus = (TransferStatus)workflow.Status;
+        if (!IsValidStatusTransition(fromStatus, toStatus))
+            throw new InvalidOperationException($"Invalid status transition: {(int)fromStatus} -> {(int)toStatus}.");
         
-        if (workflow.Status == toStatus)        
+        if (workflow.Status == (int)toStatus)
             return _mapper.Map<TransferWorkflowDto>(workflow);
         
         var nowUtc = DateTime.UtcNow;
-        var fromStatus = workflow.Status;
-        workflow.Status = toStatus;
+        workflow.Status = (int)toStatus;
         workflow.EffectiveAtUtc = nowUtc;
         workflow.UpdatedAtUtc = nowUtc;
         workflow.UpdatedBy = "system"; //todo: get the user from context
 
-        if (toStatus == StatusExecuted)
+        if (toStatus == TransferStatus.Executed)
         {
                 workflow.SourceSurplusKwhAtExecution = decimal.Round(
                 Math.Max(0m, workflow.SourceSurplusKwhAtWorkflow - workflow.AmountKwh),
@@ -169,8 +160,8 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
         _dbContext.TransferWorkflowStatusHistory.Add(new TransferWorkflowStatusHistory
         {
             TransferWorkflowId = workflow.Id,
-            FromStatus = fromStatus,
-            ToStatus = toStatus,
+            FromStatus = (int)fromStatus,
+            ToStatus = (int)toStatus,
             Note = note,
             UpdatedAtUtc = nowUtc,
             UpdatedBy = "system"  //todo: get the user from context          
@@ -180,18 +171,18 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
         return _mapper.Map<TransferWorkflowDto>(updated);
     }
 
-    private static bool IsValidStatusTransition(int from, int to)
+    private static bool IsValidStatusTransition(TransferStatus from, TransferStatus to)
     {
         if (from == to) return true;
 
         return from switch
         {
-            StatusPlanned => to is StatusApproved or StatusRejected,
-            StatusApproved => to is StatusExecuted or StatusRejected,
-            StatusExecuted => to is StatusSettled or StatusFailed,
-            StatusFailed => to is StatusExecuted or StatusRejected,
-            StatusRejected => false,
-            StatusSettled => false,
+            TransferStatus.Planned => to is TransferStatus.Approved or TransferStatus.Rejected,
+            TransferStatus.Approved => to is TransferStatus.Executed or TransferStatus.Rejected,
+            TransferStatus.Executed => to is TransferStatus.Settled or TransferStatus.Failed,
+            TransferStatus.Failed => to is TransferStatus.Executed or TransferStatus.Rejected,
+            TransferStatus.Rejected => false,
+            TransferStatus.Settled => false,
             _ => false,
         };
     }
