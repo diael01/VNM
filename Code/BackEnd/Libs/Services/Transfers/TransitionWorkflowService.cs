@@ -97,13 +97,28 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
     }
 
     public Task<TransferWorkflowDto> ApproveAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, TransferStatus.Approved, string.IsNullOrWhiteSpace(note) ? "Workflow has been approved" : note, ct);
+    {
+        var effectiveNote = string.IsNullOrWhiteSpace(note)
+            ? "Workflow has been approved"
+            : note;
+
+        return TransitionStatusAsync(id, TransferStatus.Approved, effectiveNote, ct);
+    }
 
     public Task<TransferWorkflowDto> RejectAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, TransferStatus.Discontinued, BuildDiscontinuedNote(DiscontinuedReason.UserRejected, note), ct);
+    {
+        var effectiveNote = BuildDiscontinuedNote(DiscontinuedReason.UserRejected, note);
+        return TransitionStatusAsync(id, TransferStatus.Discontinued, effectiveNote, ct);
+    }
 
     public Task<TransferWorkflowDto> ExecuteAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, TransferStatus.Executed, string.IsNullOrWhiteSpace(note) ? "Workflow has been executed" : note, ct);
+    {
+        var effectiveNote = string.IsNullOrWhiteSpace(note)
+            ? "Workflow has been executed"
+            : note;
+
+        return TransitionStatusAsync(id, TransferStatus.Executed, effectiveNote, ct);
+    }
 
     public async Task<TransferWorkflowDto> SettleAsync(int id, string? note = null, CancellationToken ct = default)
     {
@@ -174,17 +189,25 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
 
     private static bool IsValidStatusTransition(TransferStatus from, TransferStatus to)
     {
-        if (from == to) return true;
+        if (from == to)
+            return true;
 
-        return from switch
-        {
-            TransferStatus.Planned => to is TransferStatus.Approved or TransferStatus.Discontinued,
-            TransferStatus.Approved => to is TransferStatus.Executed or TransferStatus.Discontinued,
-            TransferStatus.Executed => to is TransferStatus.Settled,
-            TransferStatus.Discontinued => false,
-            TransferStatus.Settled => false,
-            _ => false,
-        };
+        if (from == TransferStatus.Planned)
+            return to is TransferStatus.Approved or TransferStatus.Discontinued;
+
+        if (from == TransferStatus.Approved)
+            return to is TransferStatus.Executed or TransferStatus.Discontinued;
+
+        if (from == TransferStatus.Executed)
+            return to == TransferStatus.Settled;
+
+        if (from == TransferStatus.Discontinued)
+            return false;
+
+        if (from == TransferStatus.Settled)
+            return false;
+
+        return false;
     }
 
     private static string BuildDiscontinuedNote(DiscontinuedReason reason, string? extraNote)

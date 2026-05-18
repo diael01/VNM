@@ -150,4 +150,118 @@ public class SourceTransferScheduleServiceTests
 
         Assert.True(deleted);
     }
+
+    [Fact]
+    public async Task CreateAsync_Once_UsesFutureStartDateAsNextRun()
+    {
+        SourceTransferSchedule? added = null;
+        _repo.Setup(r => r.AddAsync(It.IsAny<SourceTransferSchedule>(), default))
+            .Callback<SourceTransferSchedule, CancellationToken>((e, _) => added = e)
+            .ReturnsAsync((SourceTransferSchedule e, CancellationToken _) => e);
+
+        var futureStart = DateTime.UtcNow.AddHours(2);
+        var dto = new SourceTransferScheduleDto
+        {
+            SourceTransferPolicyId = 1,
+            IsEnabled = true,
+            ScheduleType = (int)ScheduleType.Once,
+            ExecutionMode = (int)ExecutionMode.PlanOnly,
+            StartDateUtc = futureStart,
+            NextRunUtc = null
+        };
+
+        var sut = new SourceTransferScheduleService(_repo.Object, _mapper);
+        await sut.CreateAsync(dto);
+
+        Assert.NotNull(added);
+        Assert.NotNull(added!.NextRunUtc);
+        Assert.Equal(futureStart, added.NextRunUtc!.Value);
+    }
+
+    [Fact]
+    public async Task CreateAsync_Interval_WithoutRepeatEveryUnit_Throws()
+    {
+        var dto = new SourceTransferScheduleDto
+        {
+            SourceTransferPolicyId = 1,
+            IsEnabled = true,
+            ScheduleType = (int)ScheduleType.Interval,
+            ExecutionMode = (int)ExecutionMode.PlanOnly,
+            StartDateUtc = DateTime.UtcNow,
+            RepeatEveryValue = 10,
+            RepeatEveryUnit = null
+        };
+
+        var sut = new SourceTransferScheduleService(_repo.Object, _mapper);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.CreateAsync(dto));
+
+        Assert.Contains("RepeatEveryUnit", ex.Message);
+    }
+
+    [Fact]
+    public async Task CreateAsync_Monthly_ComputesNextRunWithConfiguredDay()
+    {
+        SourceTransferSchedule? added = null;
+        _repo.Setup(r => r.AddAsync(It.IsAny<SourceTransferSchedule>(), default))
+            .Callback<SourceTransferSchedule, CancellationToken>((e, _) => added = e)
+            .ReturnsAsync((SourceTransferSchedule e, CancellationToken _) => e);
+
+        var dto = new SourceTransferScheduleDto
+        {
+            SourceTransferPolicyId = 1,
+            IsEnabled = true,
+            ScheduleType = (int)ScheduleType.Monthly,
+            ExecutionMode = (int)ExecutionMode.PlanOnly,
+            StartDateUtc = DateTime.UtcNow,
+            DayOfMonth = 1,
+            TimeOfDayUtc = TimeSpan.Zero
+        };
+
+        var sut = new SourceTransferScheduleService(_repo.Object, _mapper);
+        await sut.CreateAsync(dto);
+
+        Assert.NotNull(added);
+        Assert.NotNull(added!.NextRunUtc);
+        Assert.Equal(1, added.NextRunUtc!.Value.Day);
+        Assert.True(added.NextRunUtc.Value > DateTime.UtcNow.AddMinutes(-1));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_EnabledWeeklySchedule_ComputesNextRunWhenMissing()
+    {
+        var existing = new SourceTransferSchedule
+        {
+            Id = 20,
+            SourceTransferPolicyId = 1,
+            IsEnabled = true,
+            ScheduleType = (int)ScheduleType.Weekly,
+            ExecutionMode = (int)ExecutionMode.PlanOnly,
+            StartDateUtc = DateTime.UtcNow.AddDays(-3),
+            DayOfWeek = (int)DateTime.UtcNow.DayOfWeek,
+            TimeOfDayUtc = TimeSpan.Zero,
+            NextRunUtc = null
+        };
+
+        _repo.Setup(r => r.GetByIdAsync(20, default)).ReturnsAsync(existing);
+        _repo.Setup(r => r.UpdateAsync(existing, default)).ReturnsAsync(existing);
+
+        var dto = new SourceTransferScheduleDto
+        {
+            SourceTransferPolicyId = 1,
+            IsEnabled = true,
+            ScheduleType = (int)ScheduleType.Weekly,
+            ExecutionMode = (int)ExecutionMode.PlanOnly,
+            StartDateUtc = DateTime.UtcNow,
+            DayOfWeek = (int)DateTime.UtcNow.DayOfWeek,
+            TimeOfDayUtc = TimeSpan.Zero,
+            NextRunUtc = null
+        };
+
+        var sut = new SourceTransferScheduleService(_repo.Object, _mapper);
+        var updated = await sut.UpdateAsync(20, dto);
+
+        Assert.NotNull(existing.NextRunUtc);
+        Assert.NotNull(updated.NextRunUtc);
+        Assert.True(updated.NextRunUtc!.Value > DateTime.UtcNow.AddDays(5));
+    }
 }

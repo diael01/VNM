@@ -269,13 +269,14 @@ public class SettlementAndSchedulerServiceTests
     public async Task Scheduler_RunAutomaticWorkflow_DeletesExistingPlannedRows_WhenNoSurplus()
     {
         await using var db = CreateContext("Scheduler_Delete");
+        var today = DateTime.UtcNow.Date;
 
         db.TransferWorkflows.Add(new TransferWorkflow
         {
             Id = 1,
             SourceAddressId = 10,
             DestinationAddressId = 20,
-            BalanceDayUtc = new DateTime(2026, 5, 11, 0, 0, 0, DateTimeKind.Utc),
+            BalanceDayUtc = today,
             SourceSurplusKwhAtWorkflow = 5,
             DestinationDeficitKwhAtWorkflow = 2,
             AmountKwh = 2,
@@ -294,7 +295,7 @@ public class SettlementAndSchedulerServiceTests
         db.DailyEnergyBalances.Add(new DailyEnergyBalance
         {
             AddressId = 10,
-            Day = new DateTime(2026, 5, 11, 0, 0, 0, DateTimeKind.Utc),
+            Day = today,
             ProducedKwh = 0,
             ConsumedKwh = 0,
             SurplusKwh = 0,
@@ -308,9 +309,93 @@ public class SettlementAndSchedulerServiceTests
 
         var sut = new TransferWorkflowScheduledService(db, NullLogger<TransferWorkflowScheduledService>.Instance);
 
-        var workflows = await sut.RunAutomaticWorkflowForSourceAsync(10, new DateOnly(2026, 5, 11));
+    var workflows = await sut.RunAutomaticWorkflowForSourceAsync(10, DateOnly.FromDateTime(today));
 
         Assert.Empty(workflows);
         Assert.Empty(await db.TransferWorkflows.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Scheduler_RunAutomaticWorkflowForSource_DiscontinuesPreviousDayPlannedAndApproved_WithReasonNotes()
+    {
+        await using var db = CreateContext("Scheduler_Discontinue_PreviousDay_Open");
+
+        db.TransferWorkflows.AddRange(
+            new TransferWorkflow
+            {
+                Id = 1,
+                SourceAddressId = 10,
+                DestinationAddressId = 20,
+                BalanceDayUtc = DateTime.UtcNow.Date.AddDays(-1),
+                SourceSurplusKwhAtWorkflow = 5,
+                DestinationDeficitKwhAtWorkflow = 2,
+                AmountKwh = 2,
+                Status = (int)TransferStatus.Planned,
+                TriggerType = (int)TriggerType.Auto,
+                SettlementMode = 0,
+                AppliedDistributionMode = (int)TransferDistributionMode.Fair
+            },
+            new TransferWorkflow
+            {
+                Id = 2,
+                SourceAddressId = 10,
+                DestinationAddressId = 30,
+                BalanceDayUtc = DateTime.UtcNow.Date.AddDays(-1),
+                SourceSurplusKwhAtWorkflow = 6,
+                DestinationDeficitKwhAtWorkflow = 3,
+                AmountKwh = 3,
+                Status = (int)TransferStatus.Approved,
+                TriggerType = (int)TriggerType.Auto,
+                SettlementMode = 0,
+                AppliedDistributionMode = (int)TransferDistributionMode.Fair
+            });
+
+        db.SourceTransferPolicies.Add(new SourceTransferPolicy
+        {
+            Id = 1,
+            SourceAddressId = 10,
+            DistributionMode = (int)TransferDistributionMode.Fair,
+            IsEnabled = true
+        });
+
+        db.DailyEnergyBalances.Add(new DailyEnergyBalance
+        {
+            AddressId = 10,
+            Day = DateTime.UtcNow.Date,
+            ProducedKwh = 0,
+            ConsumedKwh = 0,
+            SurplusKwh = 0,
+            DeficitKwh = 0,
+            CalculatedAtUtc = DateTime.UtcNow,
+            Status = "Computed",
+            NetKwh = 0,
+            NetPerAddressKwh = 0
+        });
+
+        await db.SaveChangesAsync();
+
+        var sut = new TransferWorkflowScheduledService(db, NullLogger<TransferWorkflowScheduledService>.Instance);
+
+        await sut.RunAutomaticWorkflowForSourceAsync(10, DateOnly.FromDateTime(DateTime.UtcNow));
+
+        var plannedExpired = await db.TransferWorkflows.SingleAsync(x => x.Id == 1);
+        var approvedExpired = await db.TransferWorkflows.SingleAsync(x => x.Id == 2);
+
+        Assert.Equal((int)TransferStatus.Discontinued, plannedExpired.Status);
+        Assert.Equal("Expired: workflow was still Planned and was not approved/executed before the day changed", plannedExpired.Notes);
+
+        Assert.Equal((int)TransferStatus.Discontinued, approvedExpired.Status);
+        Assert.Equal("Expired: workflow was Approved but not executed before the day changed", approvedExpired.Notes);
+
+        var history = await db.TransferWorkflowStatusHistory
+            .Where(x => x.TransferWorkflowId == 1 || x.TransferWorkflowId == 2)
+            .OrderBy(x => x.TransferWorkflowId)
+            .ToListAsync();
+
+        Assert.Equal(2, history.Count);
+        Assert.Equal((int)TransferStatus.Discontinued, history[0].ToStatus);
+        Assert.Equal((int)TransferStatus.Discontinued, history[1].ToStatus);
+        Assert.Contains("Expired: workflow was still Planned", history[0].Note);
+        Assert.Contains("Expired: workflow was Approved", history[1].Note);
     }
 }

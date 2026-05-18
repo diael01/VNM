@@ -8,6 +8,7 @@ using Repositories.Models;
 using Moq;
 using Services.Profiles;
 using Services.Transfers;
+using System.Reflection;
 using Xunit;
 
 namespace Tests.Transfers;
@@ -33,6 +34,18 @@ public class TransitionWorkflowServiceTests
             .ReturnsAsync(new ProviderSettlement());
 
         return new TransitionWorkflowService(repo, mapper, db, providerSettlementService.Object);
+    }
+
+    private static (TransitionWorkflowService Sut, Mock<IProviderSettlementService> ProviderSettlementServiceMock) CreateSutWithMocks(VnmDbContext db)
+    {
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<TransferWorkflowProfile>()).CreateMapper();
+        var repo = new TransferWorkflowRepository(db);
+        var providerSettlementService = new Mock<IProviderSettlementService>();
+        providerSettlementService
+            .Setup(x => x.SettleWorkflowAsync(It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProviderSettlement());
+
+        return (new TransitionWorkflowService(repo, mapper, db, providerSettlementService.Object), providerSettlementService);
     }
 
     [Fact]
@@ -115,6 +128,50 @@ public class TransitionWorkflowServiceTests
     }
 
     [Fact]
+    public async Task RejectAsync_WritesDefaultDiscontinuedNoteToWorkflowAndHistory()
+    {
+        await using var db = CreateContext("TransitionWorkflow_Reject_DefaultNote");
+        db.TransferWorkflows.Add(NewWorkflow(1, TransferStatus.Planned));
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+
+        var dto = await sut.RejectAsync(1);
+
+        Assert.Equal((int)TransferStatus.Discontinued, dto.Status);
+
+        var workflow = await db.TransferWorkflows.SingleAsync(x => x.Id == 1);
+        Assert.Equal("Rejected by user", workflow.Notes);
+
+        var history = await db.TransferWorkflowStatusHistory.SingleAsync(x => x.TransferWorkflowId == 1);
+        Assert.Equal((int)TransferStatus.Planned, history.FromStatus);
+        Assert.Equal((int)TransferStatus.Discontinued, history.ToStatus);
+        Assert.Equal("Rejected by user", history.Note);
+    }
+
+    [Fact]
+    public async Task RejectAsync_AppendsUserNoteAndPersistsToWorkflowAndHistory()
+    {
+        await using var db = CreateContext("TransitionWorkflow_Reject_CustomNote");
+        db.TransferWorkflows.Add(NewWorkflow(1, TransferStatus.Approved));
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+
+        var dto = await sut.RejectAsync(1, "manual stop");
+
+        Assert.Equal((int)TransferStatus.Discontinued, dto.Status);
+
+        var workflow = await db.TransferWorkflows.SingleAsync(x => x.Id == 1);
+        Assert.Equal("Rejected by user. manual stop", workflow.Notes);
+
+        var history = await db.TransferWorkflowStatusHistory.SingleAsync(x => x.TransferWorkflowId == 1);
+        Assert.Equal((int)TransferStatus.Approved, history.FromStatus);
+        Assert.Equal((int)TransferStatus.Discontinued, history.ToStatus);
+        Assert.Equal("Rejected by user. manual stop", history.Note);
+    }
+
+    [Fact]
     public async Task Transition_WhenMissing_Throws()
     {
         await using var db = CreateContext("TransitionWorkflow_Missing");
@@ -187,6 +244,103 @@ public class TransitionWorkflowServiceTests
         var history = await db.TransferWorkflowStatusHistory.SingleAsync(x => x.TransferWorkflowId == 1);
         Assert.Equal((int)TransferStatus.Approved, history.FromStatus);
         Assert.Equal((int)TransferStatus.Executed, history.ToStatus);
+    }
+
+    [Fact]
+    public async Task SettleAsync_WhenAlreadySettled_ReturnsWithoutCallingProviderService()
+    {
+        await using var db = CreateContext("TransitionWorkflow_Settle_AlreadySettled");
+        db.TransferWorkflows.Add(NewWorkflow(1, TransferStatus.Settled));
+        await db.SaveChangesAsync();
+
+        var (sut, providerMock) = CreateSutWithMocks(db);
+
+        var dto = await sut.SettleAsync(1);
+
+        Assert.Equal((int)TransferStatus.Settled, dto.Status);
+        providerMock.Verify(x => x.SettleWorkflowAsync(It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SettleAsync_WhenExecuted_UsesDefaultSettleNote()
+    {
+        await using var db = CreateContext("TransitionWorkflow_Settle_DefaultNote");
+        db.TransferWorkflows.Add(NewWorkflow(1, TransferStatus.Executed));
+        await db.SaveChangesAsync();
+
+        var (sut, providerMock) = CreateSutWithMocks(db);
+
+        _ = await sut.SettleAsync(1);
+
+        providerMock.Verify(
+            x => x.SettleWorkflowAsync(
+                1,
+                "Workflow has been settled",
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public void BuildDiscontinuedNote_CoversAllReasonBranches()
+    {
+        var method = typeof(TransitionWorkflowService).GetMethod(
+            "BuildDiscontinuedNote",
+            BindingFlags.NonPublic | BindingFlags.Static);
+
+        Assert.NotNull(method);
+
+        var rejectedDefault = (string)method!.Invoke(null, new object?[] { DiscontinuedReason.UserRejected, null })!;
+        var rejectedWithNote = (string)method.Invoke(null, new object?[] { DiscontinuedReason.UserRejected, "x" })!;
+        var failedWithDetail = (string)method.Invoke(null, new object?[] { DiscontinuedReason.ExecutionFailed, "boom" })!;
+        var expiredBeforeApproval = (string)method.Invoke(null, new object?[] { DiscontinuedReason.ExpiredBeforeApproval, null })!;
+        var expiredBeforeExecution = (string)method.Invoke(null, new object?[] { DiscontinuedReason.ExpiredBeforeExecution, null })!;
+
+        Assert.Equal("Rejected by user", rejectedDefault);
+        Assert.Equal("Rejected by user. x", rejectedWithNote);
+        Assert.Equal("Failed while performing ExecuteWorkflowAsync: boom", failedWithDetail);
+        Assert.Contains("Expired: workflow was still Planned", expiredBeforeApproval);
+        Assert.Contains("Expired: workflow was Approved", expiredBeforeExecution);
+    }
+
+    [Fact]
+    public async Task Transition_FromDiscontinued_ThrowsForAnyFurtherTransition()
+    {
+        await using var db = CreateContext("TransitionWorkflow_FromDiscontinued_Invalid");
+        db.TransferWorkflows.Add(NewWorkflow(1, TransferStatus.Discontinued));
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ExecuteAsync(1));
+        Assert.Contains("Invalid status transition", ex.Message);
+    }
+
+    [Fact]
+    public async Task Transition_FromSettled_ThrowsForAnyFurtherTransition()
+    {
+        await using var db = CreateContext("TransitionWorkflow_FromSettled_Invalid");
+        db.TransferWorkflows.Add(NewWorkflow(1, TransferStatus.Settled));
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ApproveAsync(1));
+        Assert.Contains("Invalid status transition", ex.Message);
+    }
+
+    [Fact]
+    public async Task Transition_FromUnknownStatus_Throws()
+    {
+        await using var db = CreateContext("TransitionWorkflow_FromUnknown_Invalid");
+        var wf = NewWorkflow(1, TransferStatus.Planned);
+        wf.Status = 999;
+        db.TransferWorkflows.Add(wf);
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ApproveAsync(1));
+        Assert.Contains("Invalid status transition", ex.Message);
     }
 
     private static TransferWorkflow NewWorkflow(int id, TransferStatus status)
