@@ -27,9 +27,8 @@ const STATUS_OPTIONS = [
   { value: 1, label: "Approved" },
   { value: 2, label: "Executed" },
   { value: 3, label: "Settled" },
-  { value: 4, label: "Rejected" },
+  { value: 4, label: "Discontinued" },
   { value: 5, label: "Cancelled" },
-  { value: 6, label: "Failed" },
 ];
 
 const TRIGGER_OPTIONS = [
@@ -41,15 +40,14 @@ const FAIR_MODE = 0;
 const PRIORITY_MODE = 1;
 const WEIGHTED_MODE = 2;
 
-type TabKey = "planned" | "execution" | "executed" | "settled" | "rejected" | "failed" | "history";
+type TabKey = "planned" | "execution" | "executed" | "settled" | "discontinued" | "history";
 
 const TAB_FILTERS: Record<TabKey, (status: number) => boolean> = {
   planned: (status) => status === STATUS_PLANNED,
   execution: (status) => status === STATUS_APPROVED,
   executed: (status) => status === STATUS_EXECUTED,
   settled: (status) => status === STATUS_SETTLED,
-  rejected: (status) => status === STATUS_REJECTED,
-  failed: (status) => status === STATUS_FAILED,
+  discontinued: (status) => status === STATUS_DISCONTINUED,
   history: () => false,
 };
 
@@ -57,8 +55,7 @@ const STATUS_PLANNED = 0;
 const STATUS_APPROVED = 1;
 const STATUS_EXECUTED = 2;
 const STATUS_SETTLED = 3;
-const STATUS_REJECTED = 4;
-const STATUS_FAILED = 6;
+const STATUS_DISCONTINUED = 4;
 
 function labelAddress(address: Address): string {
   return `${address.id} - ${address.city}, ${address.street} ${address.streetNumber}`;
@@ -180,17 +177,15 @@ function getStatusActions(status: number): StatusAction[] {
     case STATUS_PLANNED:
       return [
         { label: "Approve", nextStatus: STATUS_APPROVED },
-        { label: "Reject", nextStatus: STATUS_REJECTED },
+        { label: "Reject", nextStatus: STATUS_DISCONTINUED },
       ];
     case STATUS_APPROVED:
       return [
         { label: "Execute", nextStatus: STATUS_EXECUTED },
-        { label: "Reject", nextStatus: STATUS_REJECTED },
+        { label: "Reject", nextStatus: STATUS_DISCONTINUED },
       ];
     case STATUS_EXECUTED:
       return [{ label: "Settle", nextStatus: STATUS_SETTLED }];
-    case STATUS_FAILED:
-      return [{ label: "Retry Execute", nextStatus: STATUS_EXECUTED }];
     default:
       return [];
   }
@@ -292,8 +287,7 @@ export default function Transitions() {
     execution: rowsForCounts.filter((row) => TAB_FILTERS.execution(row.status)).length,
     executed: rowsForCounts.filter((row) => TAB_FILTERS.executed(row.status)).length,
     settled: rowsForCounts.filter((row) => TAB_FILTERS.settled(row.status)).length,
-    rejected: rowsForCounts.filter((row) => TAB_FILTERS.rejected(row.status)).length,
-    failed: rowsForCounts.filter((row) => TAB_FILTERS.failed(row.status)).length,
+    discontinued: rowsForCounts.filter((row) => TAB_FILTERS.discontinued(row.status)).length,
     history: historyRowsForCounts.length,
   }), [historyRowsForCounts.length, rowsForCounts]);
 
@@ -364,7 +358,7 @@ export default function Transitions() {
         await approveTransferWorkflow(row.id);
       } else if (nextStatus === STATUS_EXECUTED) {
         await executeTransferWorkflow(row.id);
-      } else if (nextStatus === STATUS_REJECTED) {
+      } else if (nextStatus === STATUS_DISCONTINUED) {
         await rejectTransferWorkflow(row.id);
       } else if (nextStatus === STATUS_SETTLED) {
         await settleTransferWorkflow(row.id);
@@ -672,14 +666,13 @@ export default function Transitions() {
         onChange={(_event, value: TabKey) => setActiveTab(value)}
         sx={{ mb: 1, borderBottom: 1, borderColor: "divider" }}
       >
-        {(["planned", "execution", "executed", "settled", "rejected", "failed", "history"] as TabKey[]).map((key) => {
+        {(["planned", "execution", "executed", "settled", "discontinued", "history"] as TabKey[]).map((key) => {
           const labels: Record<TabKey, string> = {
             planned: "Planned",
             execution: "Approved",
             executed: "Executed",
             settled: "Settled",
-            rejected: "Rejected",
-            failed: "Failed",
+            discontinued: "Discontinued",
             history: "History",
           };
 
@@ -691,11 +684,11 @@ export default function Transitions() {
                 minWidth:
                   key === "execution"
                     ? 210
+                    : key === "discontinued"
+                      ? 205
                     : key === "history"
                       ? 160
-                      : key === "failed"
-                        ? 140
-                        : key === "planned" || key === "executed" || key === "settled" || key === "rejected"
+                      : key === "planned" || key === "executed" || key === "settled"
                           ? 165
                           : 130,
               }}

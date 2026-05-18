@@ -123,7 +123,7 @@ public class TransferExecutionServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenAdapterFails_MarksWorkflowFailedAndAddsHistory()
+    public async Task ExecuteAsync_WhenAdapterFails_MarksWorkflowDiscontinuedAndAddsHistory()
     {
         await using var db = CreateContext("TransferExecution_AdapterFails");
 
@@ -182,14 +182,14 @@ public class TransferExecutionServiceTests
         await sut.ExecuteAsync(1, "tester", "  failed attempt  ", CancellationToken.None);
 
         var workflow = await db.TransferWorkflows.SingleAsync(x => x.Id == 1);
-        Assert.Equal((int)TransferStatus.Failed, workflow.Status);
+        Assert.Equal((int)TransferStatus.Discontinued, workflow.Status);
         Assert.Equal("system", workflow.UpdatedBy);
 
         var history = await db.TransferWorkflowStatusHistory.SingleAsync(x => x.TransferWorkflowId == 1);
         Assert.Equal((int)TransferStatus.Approved, history.FromStatus);
-        Assert.Equal((int)TransferStatus.Failed, history.ToStatus);
+        Assert.Equal((int)TransferStatus.Discontinued, history.ToStatus);
         Assert.Equal("tester", history.UpdatedBy);
-        Assert.Contains("Error=boom", history.Note);
+        Assert.Contains("Failed while performing ExecuteWorkflowAsync: boom", history.Note);
         Assert.Contains("UserNote=failed attempt", history.Note);
 
         Assert.Empty(await db.TransferLedgerEntries.ToListAsync());

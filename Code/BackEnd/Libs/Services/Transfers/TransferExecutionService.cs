@@ -101,7 +101,10 @@ public sealed class TransferExecutionService : ITransferExecutionService
 
         if (!result.Success)
         {
-            workflow.TransferStatusEnum = TransferStatus.Failed;
+            var failureNote = BuildFailureHistoryNote(result.ErrorMessage, userNote);
+
+            workflow.TransferStatusEnum = TransferStatus.Discontinued;
+            workflow.Notes = failureNote;
             workflow.UpdatedAtUtc = DateTime.UtcNow;
             workflow.UpdatedBy = executedBy;
 
@@ -112,7 +115,7 @@ public sealed class TransferExecutionService : ITransferExecutionService
                 ToStatus = workflow.Status,
                 UpdatedAtUtc = DateTime.UtcNow,
                 UpdatedBy = executedBy ?? "system",
-                Note = BuildFailureHistoryNote(result.ErrorMessage, userNote)
+                Note = failureNote
             });
 
             await _db.SaveChangesAsync(ct);
@@ -154,13 +157,24 @@ public sealed class TransferExecutionService : ITransferExecutionService
 
     private static string BuildFailureHistoryNote(string? errorMessage, string? userNote)
     {
-        var failure = string.IsNullOrWhiteSpace(errorMessage)
-            ? "Transfer execution failed."
-            : $"Transfer execution failed. Error={errorMessage}";
+        var failureReasonText = string.IsNullOrWhiteSpace(errorMessage)
+            ? "Unknown reason"
+            : errorMessage;
+
+        var failure = BuildDiscontinuedNote(DiscontinuedReason.ExecutionFailed, failureReasonText);
 
         return string.IsNullOrWhiteSpace(userNote)
             ? failure
             : $"{failure} UserNote={userNote}";
+    }
+
+    private static string BuildDiscontinuedNote(DiscontinuedReason reason, string details)
+    {
+        return reason switch
+        {
+            DiscontinuedReason.ExecutionFailed => $"Failed while performing ExecuteWorkflowAsync: {details}",
+            _ => details
+        };
     }
 
     private static string BuildSuccessHistoryNote(string? externalReference, string? userNote)

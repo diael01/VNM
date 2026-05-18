@@ -34,34 +34,39 @@ namespace EnergyManagement.Services.Transfers
                     using var scope = _scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<VnmDbContext>();
 
-                    var expirationThreshold = DateTime.UtcNow.AddDays(-_options.ExpirationDays);
+                    var todayStartUtc = DateTime.UtcNow.Date;
 
-                    var oldApprovedWorkflows = await dbContext.TransferWorkflows
-                        .Where(w => w.Status == (int)TransferStatus.Approved
-                                 && w.CreatedAtUtc < expirationThreshold)
+                    var expiredWorkflows = await dbContext.TransferWorkflows
+                        .Where(w =>
+                            w.BalanceDayUtc < todayStartUtc &&
+                            (w.Status == (int)TransferStatus.Planned || w.Status == (int)TransferStatus.Approved))
                         .ToListAsync(stoppingToken);
 
-                    foreach (var wf in oldApprovedWorkflows)
+                    foreach (var wf in expiredWorkflows)
                     {
                         var oldStatus = wf.TransferStatusEnum;
+                        var note = BuildExpiredNote(oldStatus);
 
-                        wf.TransferStatusEnum = TransferStatus.Rejected;
+                        wf.TransferStatusEnum = TransferStatus.Discontinued;
+                        wf.Notes = note;
+                        wf.UpdatedAtUtc = DateTime.UtcNow;
+                        wf.UpdatedBy = "system";
 
                         dbContext.TransferWorkflowStatusHistory.Add(new TransferWorkflowStatusHistory
                         {
                             TransferWorkflowId = wf.Id,
                             FromStatusEnum = oldStatus,
-                            ToStatusEnum = TransferStatus.Rejected,
+                            ToStatusEnum = TransferStatus.Discontinued,
                             UpdatedAtUtc = DateTime.UtcNow,
                             UpdatedBy = "System",
-                            Note = $"Auto-rejected after {_options.ExpirationDays} days"
+                            Note = note
                         });
                     }
 
-                    if (oldApprovedWorkflows.Any())
+                    if (expiredWorkflows.Any())
                     {
                         await dbContext.SaveChangesAsync(stoppingToken);
-                        _logger.LogInformation("Cleaned up {Count} old workflows", oldApprovedWorkflows.Count);
+                        _logger.LogInformation("Discontinued {Count} expired workflows from previous days", expiredWorkflows.Count);
                     }
                 }
                 catch (Exception ex)
@@ -71,6 +76,23 @@ namespace EnergyManagement.Services.Transfers
 
                 await Task.Delay(TimeSpan.FromMinutes(_options.RunIntervalMinutes), stoppingToken);
             }
+        }
+
+        private static string BuildExpiredNote(TransferStatus fromStatus)
+        {
+            var reason = fromStatus switch
+            {
+                TransferStatus.Planned => DiscontinuedReason.ExpiredBeforeApproval,
+                TransferStatus.Approved => DiscontinuedReason.ExpiredBeforeExecution,
+                _ => DiscontinuedReason.ExpiredBeforeExecution
+            };
+
+            return reason switch
+            {
+                DiscontinuedReason.ExpiredBeforeApproval => "Expired: workflow was still Planned and was not approved/executed before the day changed",
+                DiscontinuedReason.ExpiredBeforeExecution => "Expired: workflow was Approved but not executed before the day changed",
+                _ => "Expired: workflow was not completed before the day changed"
+            };
         }
     }
 }

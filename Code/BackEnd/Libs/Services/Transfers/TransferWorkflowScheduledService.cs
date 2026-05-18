@@ -23,6 +23,8 @@ public class TransferWorkflowScheduledService : ITransferWorkflowScheduledServic
         DateOnly day,
         CancellationToken ct = default)
     {
+        await DiscontinuePreviousDayOpenWorkflowsAsync(sourceAddressId, ct);
+
         _logger.LogInformation(
             "RunAutomaticWorkflowForSourceAsync START Source={Source} Day={Day}",
             sourceAddressId,
@@ -35,7 +37,7 @@ public class TransferWorkflowScheduledService : ITransferWorkflowScheduledServic
         // As long as rows are still Planned, the scheduler may refresh them.
         // Once an auto workflow is Approved or Executed, planning pauses for that source/day
         // until that active workflow is completed. Completed workflows such as Settled,
-        // Rejected, Cancelled, or Failed do not block new planning cycles later the same day.
+        // Discontinued or Cancelled do not block new planning cycles later the same day.
         if (await HasActiveAutoWorkflowsForSourceAsync(sourceAddressId, dayStartUtc, dayEndUtc, ct))
         {
             _logger.LogWarning(
@@ -533,6 +535,51 @@ public class TransferWorkflowScheduledService : ITransferWorkflowScheduledServic
             await _db.SaveChangesAsync(ct);
         }
     }
+
+    private async Task DiscontinuePreviousDayOpenWorkflowsAsync(int sourceAddressId, CancellationToken ct)
+    {
+        var todayUtc = DateTime.UtcNow.Date;
+
+        var stale = await _db.TransferWorkflows
+            .Where(x =>
+                x.SourceAddressId == sourceAddressId &&
+                x.BalanceDayUtc < todayUtc &&
+                (x.Status == (int)TransferStatus.Planned || x.Status == (int)TransferStatus.Approved))
+            .ToListAsync(ct);
+
+        if (stale.Count == 0)
+            return;
+
+        var nowUtc = DateTime.UtcNow;
+
+        foreach (var wf in stale)
+        {
+            var fromStatus = wf.TransferStatusEnum;
+            var note = fromStatus switch
+            {
+                TransferStatus.Planned => "Expired: workflow was still Planned and was not approved/executed before the day changed",
+                TransferStatus.Approved => "Expired: workflow was Approved but not executed before the day changed",
+                _ => "Expired: workflow was not completed before the day changed"
+            };
+
+            wf.TransferStatusEnum = TransferStatus.Discontinued;
+            wf.Notes = note;
+            wf.UpdatedAtUtc = nowUtc;
+            wf.UpdatedBy = "system";
+
+            _db.TransferWorkflowStatusHistory.Add(new TransferWorkflowStatusHistory
+            {
+                TransferWorkflowId = wf.Id,
+                FromStatus = (int)fromStatus,
+                ToStatus = (int)TransferStatus.Discontinued,
+                UpdatedAtUtc = nowUtc,
+                UpdatedBy = "system",
+                Note = note,
+            });
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
 }
 
 public class AddressPosition
@@ -546,7 +593,6 @@ public class AddressPosition
 /* Best practical flow
 
 Planned --Approve--> Approved --Execute--> Executed --Settle--> Settled
-Planned --Reject--> Rejected
-Approved --Reject--> Rejected
-Approved --Execute fails--> Failed
-Failed --Retry Execute--> Executed */
+Planned --Reject--> Discontinued
+Approved --Reject--> Discontinued
+Approved --Execute fails--> Discontinued */

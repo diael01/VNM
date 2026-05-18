@@ -19,16 +19,22 @@ Planned = proposal exists
 Approved = user accepted it
 Executed = system actually performed it
 Settled = accounting/legal/provider settlement completed
-Rejected = user explicitly refused the plan
-Failed = execution was attempted but failed */
+Discontinued = workflow stopped (rejected by user, failed execution, or expired) */
 public enum TransferStatus
 {
     Planned = 0,
     Approved = 1,
     Executed = 2,
     Settled = 3,
-    Rejected = 4,
-    Failed = 5
+    Discontinued = 4
+}
+
+public enum DiscontinuedReason
+{
+    UserRejected = 0,
+    ExecutionFailed = 1,
+    ExpiredBeforeApproval = 2,
+    ExpiredBeforeExecution = 3
 }
 
 

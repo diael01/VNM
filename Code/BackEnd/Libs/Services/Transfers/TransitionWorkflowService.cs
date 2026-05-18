@@ -100,7 +100,7 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
         => TransitionStatusAsync(id, TransferStatus.Approved, string.IsNullOrWhiteSpace(note) ? "Workflow has been approved" : note, ct);
 
     public Task<TransferWorkflowDto> RejectAsync(int id, string? note = null, CancellationToken ct = default)
-        => TransitionStatusAsync(id, TransferStatus.Rejected, string.IsNullOrWhiteSpace(note) ? "Workflow has been rejected" : note, ct);
+        => TransitionStatusAsync(id, TransferStatus.Discontinued, BuildDiscontinuedNote(DiscontinuedReason.UserRejected, note), ct);
 
     public Task<TransferWorkflowDto> ExecuteAsync(int id, string? note = null, CancellationToken ct = default)
         => TransitionStatusAsync(id, TransferStatus.Executed, string.IsNullOrWhiteSpace(note) ? "Workflow has been executed" : note, ct);
@@ -142,6 +142,7 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
         
         var nowUtc = DateTime.UtcNow;
         workflow.Status = (int)toStatus;
+        workflow.Notes = note;
         workflow.EffectiveAtUtc = nowUtc;
         workflow.UpdatedAtUtc = nowUtc;
         workflow.UpdatedBy = "system"; //todo: get the user from context
@@ -177,13 +178,31 @@ public sealed class TransitionWorkflowService : ITransitionWorkflowService
 
         return from switch
         {
-            TransferStatus.Planned => to is TransferStatus.Approved or TransferStatus.Rejected,
-            TransferStatus.Approved => to is TransferStatus.Executed or TransferStatus.Rejected,
-            TransferStatus.Executed => to is TransferStatus.Settled or TransferStatus.Failed,
-            TransferStatus.Failed => to is TransferStatus.Executed or TransferStatus.Rejected,
-            TransferStatus.Rejected => false,
+            TransferStatus.Planned => to is TransferStatus.Approved or TransferStatus.Discontinued,
+            TransferStatus.Approved => to is TransferStatus.Executed or TransferStatus.Discontinued,
+            TransferStatus.Executed => to is TransferStatus.Settled,
+            TransferStatus.Discontinued => false,
             TransferStatus.Settled => false,
             _ => false,
         };
+    }
+
+    private static string BuildDiscontinuedNote(DiscontinuedReason reason, string? extraNote)
+    {
+        var baseNote = reason switch
+        {
+            DiscontinuedReason.UserRejected => "Rejected by user",
+            DiscontinuedReason.ExecutionFailed => "Failed while performing ExecuteWorkflowAsync",
+            DiscontinuedReason.ExpiredBeforeApproval => "Expired: workflow was still Planned and was not approved/executed before the day changed",
+            DiscontinuedReason.ExpiredBeforeExecution => "Expired: workflow was Approved but not executed before the day changed",
+            _ => "Workflow was discontinued"
+        };
+
+        if (string.IsNullOrWhiteSpace(extraNote))
+            return baseNote;
+
+        return reason == DiscontinuedReason.UserRejected
+            ? $"{baseNote}. {extraNote.Trim()}"
+            : $"{baseNote}: {extraNote.Trim()}";
     }
 }
